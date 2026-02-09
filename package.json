@@ -1,0 +1,28 @@
+{
+  "name": "prisma-dids",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.6.1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check"
+  },
+  "devDependencies": {
+    "turbo": "^2.6.1",
+    "@types/node": "^24.10.1",
+    "typescript": "^5.7.2",
+    "eslint": "^9.39.1",
+    "prettier": "^3.4.2"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

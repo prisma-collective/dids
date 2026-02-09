@@ -1,0 +1,36 @@
+{
+  "name": "@prisma-dids/sdk",
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "default": "./dist/browser.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest src",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@emurgo/cardano-serialization-lib-browser": "^15.0.3",
+    "@emurgo/cardano-serialization-lib-nodejs": "^15.0.3",
+    "@noble/ed25519": "^3.0.0",
+    "@prisma-dids/types": "workspace:*",
+    "axios": "^1.7.9",
+    "bs58": "^6.0.0",
+    "lucid-cardano": "^0.10.7"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.13",
+    "typescript": "^5.7.2",
+    "vitest": "^4.0.13"
+  }
+}
