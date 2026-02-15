@@ -4,7 +4,7 @@
  */
 
 /** Status of a Verifiable Credential */
-export type VCStatus = 'active' | 'revoked' | 'pending';
+export type VCStatus = 'active' | 'revoked' | 'pending' | 'not_found';
 
 /** Credential types supported by Prisma DIDs */
 export type CredentialType = 'ContributionCredential' | 'MembershipCredential' | 'AchievementCredential';

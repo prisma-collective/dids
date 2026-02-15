@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import type { ConnectedWallet } from '../contexts/WalletContext';
 import type { Network } from './NetworkSelector';
 import { fetchLatestDIDEvent, DIDEventRecord } from '../services/didService';
@@ -8,6 +9,19 @@ import { CreateDID } from './CreateDID';
 import { UpdateDID } from './UpdateDID';
 import { RevokeDID } from './RevokeDID';
 import { deriveDID, hexToBytes } from '@prisma-dids/sdk/browser';
+import {
+  Tabs,
+  TabList,
+  Tab,
+  TabPanel,
+  Badge,
+  Button,
+  ErrorState,
+  EmptyState,
+  Card,
+} from '@prisma-dids/ui';
+import { DIDManagerSkeleton } from './DIDManagerSkeleton';
+import { ExternalLink, RefreshCw } from 'lucide-react';
 
 async function hexStakeAddressToBech32(hexAddress: string): Promise<string> {
   const CSL = await import('@emurgo/cardano-serialization-lib-browser');
@@ -30,8 +44,6 @@ interface DIDManagerProps {
   network: Network;
 }
 
-type Tab = 'status' | 'create' | 'update' | 'revoke';
-
 interface DIDStatus {
   loading: boolean;
   did: string | null;
@@ -40,7 +52,8 @@ interface DIDStatus {
 }
 
 export function DIDManager({ wallet, network }: DIDManagerProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('status');
+  const t = useTranslations('didManager');
+  const [activeTab, setActiveTab] = useState('status');
   const [status, setStatus] = useState<DIDStatus>({
     loading: true,
     did: null,
@@ -53,33 +66,23 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
     setStatus(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      // Get stake address from wallet
-      console.log('[DIDManager] Getting reward addresses...');
       const rewardAddresses = await wallet.api.getRewardAddresses();
-      console.log('[DIDManager] Reward addresses:', rewardAddresses);
 
       if (!rewardAddresses || rewardAddresses.length === 0) {
         setStatus({
           loading: false,
           did: null,
           currentEvent: null,
-          error: 'No stake address found in wallet.',
+          error: t('errors.noStakeAddress'),
         });
         return;
       }
 
       const stakeAddressHex = rewardAddresses[0];
-      console.log('[DIDManager] Converting hex to bech32:', stakeAddressHex);
       const stakeAddressBech32 = await hexStakeAddressToBech32(stakeAddressHex);
-      console.log('[DIDManager] Bech32 stake address:', stakeAddressBech32);
-
       const did = deriveDID(stakeAddressBech32);
-      console.log('[DIDManager] Derived DID:', did);
 
-      // Check if DID exists on-chain
-      console.log('[DIDManager] Fetching latest DID event from API...');
       const currentEvent = await fetchLatestDIDEvent(did, network);
-      console.log('[DIDManager] Current event:', currentEvent);
 
       setStatus({
         loading: false,
@@ -88,11 +91,8 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
         error: null,
       });
 
-      // Auto-select appropriate tab
       if (!currentEvent) {
         setActiveTab('create');
-      } else if (currentEvent.event.action === 'revoke') {
-        setActiveTab('status');
       } else {
         setActiveTab('status');
       }
@@ -103,7 +103,7 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
         loading: false,
         did: null,
         currentEvent: null,
-        error: err instanceof Error ? err.message : 'Failed to check DID status',
+        error: err instanceof Error ? err.message : t('errors.checkFailed'),
       });
     }
   }, [wallet, network]);
@@ -125,27 +125,15 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
   };
 
   if (status.loading) {
-    return (
-      <div className="did-manager">
-        <div className="loading-state">
-          <div className="spinner" />
-          <p>Checking DID status...</p>
-        </div>
-      </div>
-    );
+    return <DIDManagerSkeleton />;
   }
 
   if (status.error) {
     return (
-      <div className="did-manager">
-        <div className="error-state">
-          <h3>Error</h3>
-          <p className="error-message">{status.error}</p>
-          <button onClick={checkDIDStatus} className="btn btn-primary">
-            Retry
-          </button>
-        </div>
-      </div>
+      <ErrorState
+        message={status.error}
+        onRetry={checkDIDStatus}
+      />
     );
   }
 
@@ -153,159 +141,163 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
   const hasExistingDID = status.currentEvent !== null;
 
   return (
-    <div className="did-manager">
-      <div className="tabs">
-        <button
-          className={`tab ${activeTab === 'status' ? 'active' : ''}`}
-          onClick={() => setActiveTab('status')}
-        >
-          Status
-        </button>
-        {!hasExistingDID && (
-          <button
-            className={`tab ${activeTab === 'create' ? 'active' : ''}`}
-            onClick={() => setActiveTab('create')}
-          >
-            Create
-          </button>
-        )}
-        {hasExistingDID && !isRevoked && (
-          <>
-            <button
-              className={`tab ${activeTab === 'update' ? 'active' : ''}`}
-              onClick={() => setActiveTab('update')}
-            >
-              Update
-            </button>
-            <button
-              className={`tab ${activeTab === 'revoke' ? 'active' : ''}`}
-              onClick={() => setActiveTab('revoke')}
-            >
-              Revoke
-            </button>
-          </>
-        )}
-      </div>
+    <div className="w-full">
+      <Tabs value={activeTab} defaultValue="status" onValueChange={setActiveTab}>
+        <TabList>
+          <Tab value="status">{t('tabs.status')}</Tab>
+          {!hasExistingDID && <Tab value="create">{t('tabs.create')}</Tab>}
+          {hasExistingDID && !isRevoked && (
+            <>
+              <Tab value="update">{t('tabs.update')}</Tab>
+              <Tab value="revoke">{t('tabs.revoke')}</Tab>
+            </>
+          )}
+        </TabList>
 
-      <div className="tab-content">
-        {activeTab === 'status' && (
-          <div className="did-status">
-            <h3>Your DID Status</h3>
+        <TabPanel value="status">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-text-primary mb-4">
+              {t('yourStatus')}
+            </h3>
 
-            <div className="status-details">
-              <div className="status-item">
-                <label>DID:</label>
-                <code className="did-value">{status.did}</code>
-              </div>
+            <div className="text-left space-y-3 mb-4">
+              {/* DID */}
+              <Card className="p-3">
+                <label className="block text-xs text-text-secondary uppercase mb-1">DID</label>
+                <code className="text-sm break-all text-text-primary">{status.did}</code>
+              </Card>
 
               {hasExistingDID ? (
                 <>
-                  <div className="status-item">
-                    <label>Status:</label>
-                    <span className={`status-badge ${isRevoked ? 'revoked' : 'active'}`}>
-                      {isRevoked ? 'Revoked' : 'Active'}
-                    </span>
-                  </div>
-                  <div className="status-item">
-                    <label>Version:</label>
-                    <code>{status.currentEvent!.event.v}</code>
-                  </div>
-                  <div className="status-item">
-                    <label>Last Action:</label>
-                    <code>{status.currentEvent!.event.action}</code>
-                  </div>
-                  <div className="status-item">
-                    <label>IPFS CID:</label>
-                    <code>{status.currentEvent!.event.ipfs}</code>
-                    <a
-                      href={`https://gateway.pinata.cloud/ipfs/${status.currentEvent!.event.ipfs}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="link"
-                    >
-                      View
-                    </a>
-                  </div>
-                  <div className="status-item">
-                    <label>Last Tx:</label>
-                    <a
-                      href={getExplorerUrl(status.currentEvent!.txHash)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="link"
-                    >
-                      {status.currentEvent!.txHash.substring(0, 20)}...
-                    </a>
-                  </div>
+                  {/* Status */}
+                  <Card className="p-3 flex items-center justify-between">
+                    <label className="text-xs text-text-secondary uppercase">{t('statusLabel')}</label>
+                    <Badge variant={isRevoked ? 'error' : 'success'} dot>
+                      {isRevoked ? t('revoked') : t('active')}
+                    </Badge>
+                  </Card>
+
+                  {/* Version */}
+                  <Card className="p-3 flex items-center justify-between">
+                    <label className="text-xs text-text-secondary uppercase">{t('version')}</label>
+                    <code className="text-sm text-text-primary">{status.currentEvent!.event.v}</code>
+                  </Card>
+
+                  {/* Last Action */}
+                  <Card className="p-3 flex items-center justify-between">
+                    <label className="text-xs text-text-secondary uppercase">{t('lastAction')}</label>
+                    <code className="text-sm text-text-primary">{status.currentEvent!.event.action}</code>
+                  </Card>
+
+                  {/* IPFS CID */}
+                  <Card className="p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs text-text-secondary uppercase">IPFS CID</label>
+                      <a
+                        href={`https://gateway.pinata.cloud/ipfs/${status.currentEvent!.event.ipfs}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary text-xs hover:underline inline-flex items-center gap-1"
+                      >
+                        {t('view')} <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                    <code className="text-sm break-all text-text-primary">{status.currentEvent!.event.ipfs}</code>
+                  </Card>
+
+                  {/* Last Tx */}
+                  <Card className="p-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs text-text-secondary uppercase">{t('lastTx')}</label>
+                      <a
+                        href={getExplorerUrl(status.currentEvent!.txHash)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary text-sm hover:underline inline-flex items-center gap-1"
+                      >
+                        {status.currentEvent!.txHash.substring(0, 20)}...
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                  </Card>
                 </>
               ) : (
-                <div className="no-did-message">
-                  <p>No DID found for this wallet.</p>
-                  <button
-                    onClick={() => setActiveTab('create')}
-                    className="btn btn-primary"
-                  >
-                    Create Your DID
-                  </button>
-                </div>
+                <EmptyState
+                  title={t('noDIDTitle')}
+                  description={t('noDIDDescription')}
+                  action={
+                    <Button onClick={() => setActiveTab('create')}>
+                      {t('createYourDID')}
+                    </Button>
+                  }
+                />
               )}
             </div>
 
             {hasExistingDID && !isRevoked && (
-              <div className="status-actions">
-                <button
-                  onClick={() => setActiveTab('update')}
-                  className="btn btn-secondary"
-                >
-                  Update DID
-                </button>
-                <button
-                  onClick={() => setActiveTab('revoke')}
-                  className="btn btn-danger-outline"
-                >
-                  Revoke DID
-                </button>
+              <div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
+                <Button variant="secondary" onClick={() => setActiveTab('update')}>
+                  {t('updateDIDButton')}
+                </Button>
+                <Button variant="danger" onClick={() => setActiveTab('revoke')}>
+                  {t('revokeDIDButton')}
+                </Button>
               </div>
             )}
 
             {isRevoked && (
-              <div className="revoked-message">
-                <p>This DID has been revoked and can no longer be used.</p>
+              <div role="alert" className="mt-4 p-3 bg-error/10 rounded-lg text-error text-sm text-center">
+                {t('revokedMessage')}
               </div>
             )}
 
-            <button onClick={checkDIDStatus} className="btn btn-link refresh-btn">
-              Refresh Status
+            <button
+              type="button"
+              onClick={checkDIDStatus}
+              className="mt-4 text-sm text-text-secondary hover:text-primary transition-colors inline-flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-primary outline-none rounded px-3 py-2.5 min-h-[44px]"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              {t('refresh')}
             </button>
           </div>
+        </TabPanel>
+
+        {!hasExistingDID && (
+          <TabPanel value="create">
+            <CreateDID
+              wallet={wallet}
+              network={network}
+              onComplete={handleOperationComplete}
+            />
+          </TabPanel>
         )}
 
-        {activeTab === 'create' && (
-          <CreateDID
-            wallet={wallet}
-            network={network}
-            onComplete={handleOperationComplete}
-          />
-        )}
+        {hasExistingDID && !isRevoked && (
+          <>
+            <TabPanel value="update">
+              {status.did && (
+                <UpdateDID
+                  wallet={wallet}
+                  network={network}
+                  currentDID={status.did}
+                  onComplete={handleOperationComplete}
+                />
+              )}
+            </TabPanel>
 
-        {activeTab === 'update' && status.did && (
-          <UpdateDID
-            wallet={wallet}
-            network={network}
-            currentDID={status.did}
-            onComplete={handleOperationComplete}
-          />
+            <TabPanel value="revoke">
+              {status.did && (
+                <RevokeDID
+                  wallet={wallet}
+                  network={network}
+                  currentDID={status.did}
+                  onComplete={handleOperationComplete}
+                />
+              )}
+            </TabPanel>
+          </>
         )}
-
-        {activeTab === 'revoke' && status.did && (
-          <RevokeDID
-            wallet={wallet}
-            network={network}
-            currentDID={status.did}
-            onComplete={handleOperationComplete}
-          />
-        )}
-      </div>
+      </Tabs>
     </div>
   );
 }

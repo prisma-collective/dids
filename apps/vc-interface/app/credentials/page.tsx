@@ -61,7 +61,6 @@ export default function CredentialsPage() {
 
   const handleShareSubmit = async () => {
     // Mock share - in real app would generate SD-JWT presentation
-    // The share URL would point to the verify page with the presentation
     return `${window.location.origin}/verify?presentation=mock-sd-jwt-presentation`;
   };
 
@@ -87,7 +86,6 @@ export default function CredentialsPage() {
   return (
     <>
       <CredentialInbox
-        config={defaultConfig}
         credentials={mockCredentials}
         onShareCredential={handleShare}
         onViewCredential={handleViewDetail}
@@ -103,7 +101,6 @@ export default function CredentialsPage() {
           onShare={() => {
             setViewMode('share');
           }}
-          theme={defaultConfig.THEME}
           network={defaultConfig.NETWORK}
         />
       )}
