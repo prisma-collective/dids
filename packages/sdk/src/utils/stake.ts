@@ -1,4 +1,4 @@
-import { Address, BaseAddress, RewardAddress } from './cardano-serialization';
+import { Address, BaseAddress, RewardAddress } from './cardano-serialization.js';
 
 /**
  * Derives stake address (stake1...) from a base address (addr1...).

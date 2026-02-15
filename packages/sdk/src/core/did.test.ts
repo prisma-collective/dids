@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveDID, generateDIDDocument } from './did';
+import { deriveDID, generateDIDDocument } from './did.js';
 
 describe('did', () => {
   describe('deriveDID', () => {

@@ -1,5 +1,5 @@
 import bs58 from 'bs58';
-import { hexToBytes, concatBytes } from './encoding';
+import { hexToBytes, concatBytes } from './encoding.js';
 
 /**
  * Extracts the raw 32-byte Ed25519 public key from a CIP-30 COSE_Key.

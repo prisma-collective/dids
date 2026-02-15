@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hexToBytes, bytesToHex, utf8ToBytes, bytesToUtf8, concatBytes } from './encoding';
+import { hexToBytes, bytesToHex, utf8ToBytes, bytesToUtf8, concatBytes } from './encoding.js';
 
 describe('encoding', () => {
   describe('hexToBytes / bytesToHex round-trip', () => {

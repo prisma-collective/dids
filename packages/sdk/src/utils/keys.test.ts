@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hexToPublicKeyMultibase, isValidPublicKeyMultibase } from './keys';
+import { hexToPublicKeyMultibase, isValidPublicKeyMultibase } from './keys.js';
 
 describe('keys', () => {
   describe('hexToPublicKeyMultibase', () => {

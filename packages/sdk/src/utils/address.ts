@@ -3,8 +3,8 @@
  * Handles conversion between hex and bech32 address formats
  */
 
-import { Address, RewardAddress } from './cardano-serialization';
-import { hexToBytes } from './encoding';
+import { Address, RewardAddress } from './cardano-serialization.js';
+import { hexToBytes } from './encoding.js';
 
 /**
  * Decodes a CIP-30 hex-encoded address to bech32 format

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveStakeAddressFromBaseAddress } from './stake';
+import { deriveStakeAddressFromBaseAddress } from './stake.js';
 
 describe('stake', () => {
   describe('deriveStakeAddressFromBaseAddress', () => {

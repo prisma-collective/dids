@@ -1,6 +1,6 @@
-import { ed25519 } from '../utils/crypto-setup';
-import { deriveStakeAddressFromBaseAddress } from '../utils/stake';
-import { utf8ToBytes, hexToBytes } from '../utils/encoding';
+import { ed25519 } from '../utils/crypto-setup.js';
+import { deriveStakeAddressFromBaseAddress } from '../utils/stake.js';
+import { utf8ToBytes, hexToBytes } from '../utils/encoding.js';
 import type { DIDEvent, DidEventPayload, PrismaPayloadSig } from '@prisma-dids/types';
 
 /**

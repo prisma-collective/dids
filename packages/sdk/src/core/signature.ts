@@ -1,5 +1,5 @@
 import type { CIP30API, DidEventPayload, PrismaPayloadSig, DIDEvent } from '@prisma-dids/types';
-import { utf8ToBytes, bytesToHex } from '../utils/encoding';
+import { utf8ToBytes, bytesToHex } from '../utils/encoding.js';
 
 /**
  * Signs a DID event payload using CIP-30 wallet per §3.3.1

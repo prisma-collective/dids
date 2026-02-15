@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildCreatePayload, buildUpdatePayload, buildRevokePayload } from './payload';
+import { buildCreatePayload, buildUpdatePayload, buildRevokePayload } from './payload.js';
 
 describe('payload', () => {
   describe('buildCreatePayload', () => {

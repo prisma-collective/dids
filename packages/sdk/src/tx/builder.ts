@@ -1,6 +1,6 @@
 import { Lucid, Blockfrost } from 'lucid-cardano';
 import { L_DID } from '@prisma-dids/types';
-import { serializeDIDMetadata } from './metadata';
+import { serializeDIDMetadata } from './metadata.js';
 import type { DIDEvent, NetworkConfig } from '@prisma-dids/types';
 
 export async function submitDIDEvent(

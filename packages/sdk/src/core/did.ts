@@ -1,5 +1,5 @@
 import type { DIDDocument } from '@prisma-dids/types';
-import { hexToPublicKeyMultibase } from '../utils/keys';
+import { hexToPublicKeyMultibase } from '../utils/keys.js';
 
 /**
  * Derives DID from stake address per §2.1.1

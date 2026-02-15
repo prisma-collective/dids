@@ -1,4 +1,4 @@
-import type { ChainProvider, DIDEventRecord } from './types';
+import type { ChainProvider, DIDEventRecord } from './types.js';
 
 export class KoiosProvider implements ChainProvider {
   constructor(private network: 'preprod' | 'mainnet') {}

@@ -4,15 +4,15 @@
 export const SDK_VERSION = '0.1.0';
 
 // Core modules (browser-compatible)
-export * from './core/did';
-export * from './core/payload';
-export * from './core/signature';
-export * from './core/ipfs';
+export * from './core/did.js';
+export * from './core/payload.js';
+export * from './core/signature.js';
+export * from './core/ipfs.js';
 
 // Utilities (browser-compatible)
-export * from './utils/keys';
-export * from './utils/constants';
-export * from './utils/encoding';
+export * from './utils/keys.js';
+export * from './utils/constants.js';
+export * from './utils/encoding.js';
 
 // ============================================================================
 // Node.js-only exports (require cardano-serialization-lib-nodejs)
@@ -20,16 +20,16 @@ export * from './utils/encoding';
 // ============================================================================
 
 // Verification (requires stake address derivation)
-export * from './core/verification';
+export * from './core/verification.js';
 
 // Stake utilities
-export * from './utils/stake';
+export * from './utils/stake.js';
 
 // Providers (typically used in API routes)
-export * from './providers/types';
-export * from './providers/blockfrost';
-export * from './providers/koios';
+export * from './providers/types.js';
+export * from './providers/blockfrost.js';
+export * from './providers/koios.js';
 
 // Transaction building
-export * from './tx/builder';
-export * from './tx/metadata';
+export * from './tx/builder.js';
+export * from './tx/metadata.js';
