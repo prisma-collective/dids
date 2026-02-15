@@ -1,0 +1,159 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "back": "Back",
+    "network": "Network",
+    "preprod": "Preprod",
+    "mainnet": "Mainnet",
+    "mainnetWarning": "Real ADA will be used",
+    "skipToContent": "Skip to content"
+  },
+  "dashboard": {
+    "title": "Prisma DIDs",
+    "subtitle": "W3C Decentralized Identifiers on Cardano",
+    "getStarted": "Get Started",
+    "connectPrompt": "Connect your Cardano wallet to create or manage your DID.",
+    "features": {
+      "createDIDs": "Create W3C-compliant DIDs",
+      "anchorStake": "Anchor to your stake address",
+      "storeIPFS": "Store DID Documents on IPFS",
+      "updateRevoke": "Update and revoke as needed"
+    }
+  },
+  "wallet": {
+    "connect": "Connect Wallet",
+    "disconnect": "Disconnect",
+    "connected": "Connected",
+    "noWallets": "No Cardano wallets detected.",
+    "installHint": "Please install a CIP-30 compatible wallet like"
+  },
+  "didManager": {
+    "checkingStatus": "Checking DID status...",
+    "yourStatus": "Your DID Status",
+    "tabs": {
+      "status": "Status",
+      "create": "Create",
+      "update": "Update",
+      "revoke": "Revoke"
+    },
+    "statusLabel": "Status",
+    "active": "Active",
+    "revoked": "Revoked",
+    "version": "Version",
+    "lastAction": "Last Action",
+    "lastTx": "Last Tx",
+    "view": "View",
+    "refresh": "Refresh Status",
+    "noDIDTitle": "No DID Found",
+    "noDIDDescription": "No DID found for this wallet. Create one to get started.",
+    "createYourDID": "Create Your DID",
+    "revokedMessage": "This DID has been revoked and can no longer be used.",
+    "updateDIDButton": "Update DID",
+    "revokeDIDButton": "Revoke DID",
+    "errors": {
+      "noStakeAddress": "No stake address found in wallet.",
+      "checkFailed": "Failed to check DID status"
+    }
+  },
+  "createDID": {
+    "title": "Create DID",
+    "description": "Create a W3C-compliant Decentralized Identifier anchored to your Cardano stake address.",
+    "createButton": "Create DID",
+    "errorTitle": "Error Creating DID",
+    "successTitle": "DID Created Successfully!",
+    "tryAgain": "Try Again",
+    "createAnother": "Create Another DID",
+    "viewIPFS": "View on IPFS",
+    "viewExplorer": "View on Explorer",
+    "transaction": "Transaction",
+    "errors": {
+      "noRewardAddresses": "No reward addresses found. Please ensure your wallet has a stake key.",
+      "noUsedAddresses": "No used addresses found. Please fund your wallet first.",
+      "unknown": "An unknown error occurred"
+    },
+    "steps": {
+      "gettingAddresses": "Getting wallet addresses",
+      "derivingDID": "Deriving DID",
+      "generatingDoc": "Generating DID Document",
+      "pinningIPFS": "Pinning to IPFS",
+      "buildingPayload": "Building payload",
+      "signing": "Sign in wallet",
+      "submittingTx": "Submitting transaction"
+    }
+  },
+  "updateDID": {
+    "title": "Update DID",
+    "description": "Update your DID Document with new information or service endpoints.",
+    "updateButton": "Update DID",
+    "errorTitle": "Error Updating DID",
+    "successTitle": "DID Updated Successfully!",
+    "tryAgain": "Try Again",
+    "done": "Done",
+    "didToUpdate": "DID to Update",
+    "serviceEndpoint": "Service Endpoint (optional)",
+    "newVersion": "New Version",
+    "newIPFS": "New IPFS CID",
+    "viewIPFS": "View on IPFS",
+    "viewExplorer": "View on Explorer",
+    "transaction": "Transaction",
+    "errors": {
+      "noDID": "Please enter a DID.",
+      "didNotFound": "DID not found. Cannot update a DID that does not exist.",
+      "didRevoked": "Cannot update a revoked DID.",
+      "walletMismatch": "Wallet stake address does not match DID.",
+      "noRewardAddresses": "No reward addresses found.",
+      "noUsedAddresses": "No used addresses found.",
+      "unknown": "An unknown error occurred"
+    },
+    "steps": {
+      "fetchingCurrent": "Fetching current state",
+      "generatingDoc": "Generating DID Document",
+      "pinningIPFS": "Pinning to IPFS",
+      "buildingPayload": "Building payload",
+      "signing": "Sign in wallet",
+      "submittingTx": "Submitting transaction"
+    }
+  },
+  "revokeDID": {
+    "title": "Revoke DID",
+    "description": "Permanently revoke a DID. This cannot be undone.",
+    "revokeButton": "Revoke DID",
+    "errorTitle": "Error Revoking DID",
+    "successTitle": "DID Revoked Successfully",
+    "tryAgain": "Try Again",
+    "done": "Done",
+    "didToRevoke": "DID to Revoke",
+    "finalVersion": "Final Version",
+    "revocationCID": "Revocation CID",
+    "viewIPFS": "View on IPFS",
+    "viewExplorer": "View on Explorer",
+    "transaction": "Transaction",
+    "errors": {
+      "noDID": "Please enter a DID.",
+      "didNotFound": "DID not found. Cannot revoke a DID that does not exist.",
+      "alreadyRevoked": "DID is already revoked.",
+      "walletMismatch": "Wallet stake address does not match DID.",
+      "noRewardAddresses": "No reward addresses found.",
+      "noUsedAddresses": "No used addresses found.",
+      "unknown": "An unknown error occurred"
+    },
+    "revokedWarning": "This DID can no longer be updated or used for authentication.",
+    "confirmTitle": "Confirm Revocation",
+    "confirmQuestion": "Are you sure you want to revoke this DID?",
+    "confirmWarning": "This action is permanent. The DID will no longer be valid for authentication and cannot be updated after revocation.",
+    "cancelButton": "Cancel",
+    "confirmRevoke": "Yes, Revoke DID",
+    "steps": {
+      "fetchingCurrent": "Fetching current state",
+      "pinningIPFS": "Pinning revocation document",
+      "buildingPayload": "Building payload",
+      "signing": "Sign in wallet",
+      "submittingTx": "Submitting transaction"
+    }
+  }
+}

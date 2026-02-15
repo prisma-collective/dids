@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { ConnectedWallet } from '../contexts/WalletContext';
 import type { Network } from './NetworkSelector';
 import { fetchLatestDIDEvent, DIDEventRecord } from '../services/didService';
@@ -15,6 +16,14 @@ import {
 import { Lucid, Blockfrost } from 'lucid-cardano';
 import { L_DID } from '@prisma-dids/types';
 import type { DIDEvent } from '@prisma-dids/types';
+import {
+  Button,
+  Input,
+  Card,
+  Modal,
+  ProgressSteps,
+} from '@prisma-dids/ui';
+import { AlertTriangle, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 
 async function hexStakeAddressToBech32(hexAddress: string): Promise<string> {
   const CSL = await import('@emurgo/cardano-serialization-lib-browser');
@@ -58,17 +67,25 @@ interface RevokeDIDState {
   error?: string;
 }
 
+const stepOrder: Step[] = [
+  'fetching-current',
+  'pinning-ipfs',
+  'building-payload',
+  'signing',
+  'submitting-tx',
+];
+
 export function RevokeDID({ wallet, network, currentDID, onComplete }: RevokeDIDProps) {
   const [did, setDid] = useState(currentDID || '');
   const [state, setState] = useState<RevokeDIDState>({ step: 'idle' });
+  const t = useTranslations('revokeDID');
 
   const handleRevoke = async () => {
     if (!did) {
-      setState({ step: 'error', error: 'Please enter a DID' });
+      setState({ step: 'error', error: t('errors.noDID') });
       return;
     }
 
-    // Show confirmation first
     if (state.step === 'idle') {
       setState({ step: 'confirm' });
       return;
@@ -77,139 +94,68 @@ export function RevokeDID({ wallet, network, currentDID, onComplete }: RevokeDID
     setState({ step: 'fetching-current' });
 
     try {
-      // Step 1: Fetch current DID event
       const currentEvent = await fetchLatestDIDEvent(did, network);
-
-      if (!currentEvent) {
-        throw new Error('DID not found. Cannot revoke a DID that does not exist.');
-      }
-
-      if (currentEvent.event.action === 'revoke') {
-        throw new Error('DID is already revoked.');
-      }
+      if (!currentEvent) throw new Error(t('errors.didNotFound'));
+      if (currentEvent.event.action === 'revoke') throw new Error(t('errors.alreadyRevoked'));
 
       setState(prev => ({ ...prev, currentEvent }));
 
-      // Step 2: Get addresses from wallet
       const rewardAddresses = await wallet.api.getRewardAddresses();
-      if (!rewardAddresses || rewardAddresses.length === 0) {
-        throw new Error('No reward addresses found.');
-      }
-
+      if (!rewardAddresses || rewardAddresses.length === 0) throw new Error(t('errors.noRewardAddresses'));
       const usedAddresses = await wallet.api.getUsedAddresses();
-      if (!usedAddresses || usedAddresses.length === 0) {
-        throw new Error('No used addresses found.');
-      }
+      if (!usedAddresses || usedAddresses.length === 0) throw new Error(t('errors.noUsedAddresses'));
 
       const baseAddressHex = usedAddresses[0];
       const stakeAddressHex = rewardAddresses[0];
-
-      // Verify the stake address matches the DID
       const stakeAddressBech32 = await hexStakeAddressToBech32(stakeAddressHex);
       const expectedDID = `did:cardano:${stakeAddressBech32}`;
+      if (did !== expectedDID) throw new Error(t('errors.walletMismatch'));
 
-      if (did !== expectedDID) {
-        throw new Error(`Wallet stake address does not match DID. Expected wallet with stake address from ${did}`);
-      }
-
-      // Step 3: Create revoked DID Document
       setState(prev => ({ ...prev, step: 'pinning-ipfs' }));
-
       const revokedDocument = {
-        '@context': [
-          'https://www.w3.org/ns/did/v1',
-        ],
+        '@context': ['https://www.w3.org/ns/did/v1'],
         id: did,
         status: 'revoked',
         revokedAt: new Date().toISOString(),
       };
 
       const pinataJwt = process.env.NEXT_PUBLIC_PINATA_JWT;
-
-      if (!pinataJwt) {
-        throw new Error('Pinata JWT not configured. Set NEXT_PUBLIC_PINATA_JWT in .env.local');
-      }
-
-      const pinata = new PinataClient({
-        jwt: pinataJwt,
-      });
-
+      if (!pinataJwt) throw new Error('Pinata JWT not configured.');
+      const pinata = new PinataClient({ jwt: pinataJwt });
       const revokedCid = await pinata.pinJSON(revokedDocument);
       setState(prev => ({ ...prev, revokedCid }));
 
-      // Step 4: Build and sign revoke payload
       setState(prev => ({ ...prev, step: 'building-payload' }));
-
       const revokePayload = buildRevokePayload({
-        did,
-        ipfsCid: revokedCid,
-        prevTxHash: currentEvent.txHash,
-        version: currentEvent.event.v + 1,
+        did, ipfsCid: revokedCid, prevTxHash: currentEvent.txHash, version: currentEvent.event.v + 1,
       });
 
       setState(prev => ({ ...prev, step: 'signing' }));
-
-      const payloadSig = await signDIDPayload(
-        wallet.api,
-        revokePayload,
-        baseAddressHex
-      );
-
+      const payloadSig = await signDIDPayload(wallet.api, revokePayload, baseAddressHex);
       const didEvent: DIDEvent = buildDIDEvent(revokePayload, payloadSig);
-      console.log('Revoke DID Event created:', didEvent);
 
-      // Submit transaction to blockchain (indexer will verify on read)
       setState(prev => ({ ...prev, step: 'submitting-tx' }));
-
       const blockfrostKey = network === 'mainnet'
         ? process.env.NEXT_PUBLIC_BLOCKFROST_MAINNET_KEY
         : process.env.NEXT_PUBLIC_BLOCKFROST_PREPROD_KEY;
+      if (!blockfrostKey) throw new Error(`Blockfrost API key not configured for ${network}`);
 
-      if (!blockfrostKey) {
-        throw new Error(`Blockfrost API key not configured for ${network}`);
-      }
-
-      // Initialize Lucid with Blockfrost
       const lucid = await Lucid.new(
-        new Blockfrost(
-          `https://cardano-${network}.blockfrost.io/api/v0`,
-          blockfrostKey
-        ),
+        new Blockfrost(`https://cardano-${network}.blockfrost.io/api/v0`, blockfrostKey),
         network === 'mainnet' ? 'Mainnet' : 'Preprod'
       );
-
-      // Connect wallet to Lucid (CIP-30 wallet API is compatible)
       lucid.selectWallet(wallet.api as any);
 
-      // Build transaction with DID metadata (chunked for Cardano's 64-byte string limit)
       const metadata = serializeDIDMetadata(didEvent);
-      const tx = await lucid
-        .newTx()
-        .attachMetadata(L_DID, metadata[L_DID])
-        .complete();
-
-      // Sign with wallet
+      const tx = await lucid.newTx().attachMetadata(L_DID, metadata[L_DID]).complete();
       const signedTx = await tx.sign().complete();
-
-      // Submit to blockchain
       const txHash = await signedTx.submit();
-      console.log('Revoke transaction submitted:', txHash);
 
-      // Step 7: Success!
-      setState({
-        step: 'complete',
-        currentEvent,
-        revokedCid,
-        txHash,
-      });
-
-      // Call onComplete callback if provided
-      if (onComplete) {
-        onComplete();
-      }
+      setState({ step: 'complete', currentEvent, revokedCid, txHash });
+      onComplete?.();
 
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'An unknown error occurred';
+      const message = err instanceof Error ? err.message : t('errors.unknown');
       setState({ step: 'error', error: message });
     }
   };
@@ -223,154 +169,149 @@ export function RevokeDID({ wallet, network, currentDID, onComplete }: RevokeDID
     setState({ step: 'idle' });
   };
 
-  const getStepMessage = (step: Step): string => {
-    switch (step) {
-      case 'fetching-current': return 'Fetching current DID state...';
-      case 'pinning-ipfs': return 'Pinning revocation document to IPFS...';
-      case 'building-payload': return 'Building revoke payload...';
-      case 'signing': return 'Please sign in your wallet...';
-      case 'submitting-tx': return 'Submitting transaction to blockchain...';
-      default: return '';
-    }
+  const stepLabels: Record<string, string> = {
+    'fetching-current': t('steps.fetchingCurrent'),
+    'pinning-ipfs': t('steps.pinningIPFS'),
+    'building-payload': t('steps.buildingPayload'),
+    'signing': t('steps.signing'),
+    'submitting-tx': t('steps.submittingTx'),
   };
 
+  const progressSteps = stepOrder.map((s) => ({
+    id: s,
+    label: stepLabels[s] || s,
+  }));
+
   const getExplorerUrl = (txHash: string) => {
-    const base = network === 'mainnet'
-      ? 'https://cardanoscan.io'
-      : 'https://preprod.cardanoscan.io';
+    const base = network === 'mainnet' ? 'https://cardanoscan.io' : 'https://preprod.cardanoscan.io';
     return `${base}/transaction/${txHash}`;
   };
 
   if (state.step === 'error') {
     return (
-      <div className="revoke-did">
-        <div className="error-state">
-          <h3>Error Revoking DID</h3>
-          <p className="error-message">{state.error}</p>
-          <button onClick={handleReset} className="btn btn-primary">
-            Try Again
-          </button>
+      <div className="text-center py-4">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-error/15 mb-3 animate-scale-in">
+          <AlertCircle className="h-6 w-6 text-error" />
         </div>
+        <h3 className="text-lg font-semibold text-error mb-2">{t('errorTitle')}</h3>
+        <div role="alert" className="text-sm text-error bg-error/10 px-4 py-3 rounded-lg mb-4 max-w-md mx-auto">
+          {state.error}
+        </div>
+        <Button onClick={handleReset}>{t('tryAgain')}</Button>
       </div>
     );
   }
 
   if (state.step === 'complete') {
     return (
-      <div className="revoke-did">
-        <div className="success-state warning">
-          <h3>DID Revoked Successfully</h3>
-          <div className="result-details">
-            <div className="result-item">
-              <label>DID:</label>
-              <code>{did}</code>
-            </div>
-            <div className="result-item">
-              <label>Final Version:</label>
-              <code>{state.currentEvent ? state.currentEvent.event.v + 1 : 'N/A'}</code>
-            </div>
-            <div className="result-item">
-              <label>Revocation CID:</label>
-              <code>{state.revokedCid}</code>
+      <div className="text-center py-4">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-warning/15 mb-3 animate-scale-in">
+          <AlertTriangle className="h-6 w-6 text-warning" />
+        </div>
+        <h3 className="text-lg font-semibold text-warning mb-4">{t('successTitle')}</h3>
+
+        <div className="text-left space-y-3 max-w-lg mx-auto mb-6">
+          <Card className="p-3">
+            <label className="block text-xs text-text-secondary uppercase mb-1">DID</label>
+            <code className="text-sm break-all text-text-primary">{did}</code>
+          </Card>
+
+          <Card className="p-3 flex items-center justify-between">
+            <label className="text-xs text-text-secondary uppercase">{t('finalVersion')}</label>
+            <code className="text-sm text-text-primary">
+              {state.currentEvent ? state.currentEvent.event.v + 1 : 'N/A'}
+            </code>
+          </Card>
+
+          <Card className="p-3">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs text-text-secondary uppercase">{t('revocationCID')}</label>
               <a
                 href={`https://gateway.pinata.cloud/ipfs/${state.revokedCid}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="link"
+                className="text-primary text-xs hover:underline inline-flex items-center gap-1"
               >
-                View on IPFS
+                {t('viewIPFS')} <ExternalLink className="h-3 w-3" />
               </a>
             </div>
-            {state.txHash && (
-              <div className="result-item">
-                <label>Transaction:</label>
-                <code className="tx-hash">{state.txHash}</code>
+            <code className="text-sm break-all text-text-primary">{state.revokedCid}</code>
+          </Card>
+
+          {state.txHash && (
+            <Card className="p-3">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs text-text-secondary uppercase">{t('transaction')}</label>
                 <a
                   href={getExplorerUrl(state.txHash)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="link"
+                  className="text-primary text-xs hover:underline inline-flex items-center gap-1"
                 >
-                  View on Explorer
+                  {t('viewExplorer')} <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
-            )}
-          </div>
-          <p className="warning-text">
-            This DID can no longer be updated or used for authentication.
-          </p>
-          <button onClick={handleReset} className="btn btn-secondary">
-            Done
-          </button>
+              <code className="text-sm break-all text-text-primary">{state.txHash}</code>
+            </Card>
+          )}
         </div>
+
+        <p className="text-sm text-warning mb-4">{t('revokedWarning')}</p>
+        <Button variant="secondary" onClick={handleReset}>{t('done')}</Button>
       </div>
     );
   }
 
-  if (state.step === 'confirm') {
-    return (
-      <div className="revoke-did">
-        <div className="confirm-state">
-          <h3>Confirm Revocation</h3>
-          <p className="warning-text">
-            Are you sure you want to revoke this DID?
-          </p>
-          <p className="description">
-            <strong>DID:</strong> <code>{did}</code>
-          </p>
-          <p className="warning-text">
-            This action is permanent. The DID will no longer be valid for authentication
-            and cannot be updated after revocation.
-          </p>
-          <div className="button-group">
-            <button onClick={handleCancel} className="btn btn-secondary">
-              Cancel
-            </button>
-            <button onClick={handleRevoke} className="btn btn-danger">
-              Yes, Revoke DID
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // At this point, we've already returned early for 'error', 'complete', and 'confirm' states
-  // So state.step can only be 'idle', 'fetching-current', 'pinning-ipfs', 'building-payload', or 'signing'
-  const isProcessing = state.step !== 'idle';
+  const isProcessing = !['idle', 'confirm'].includes(state.step);
 
   return (
-    <div className="revoke-did">
-      <h3>Revoke DID</h3>
-      <p className="description warning-text">
-        Permanently revoke a DID. This cannot be undone.
-      </p>
+    <div className="text-center py-4">
+      <h3 className="text-xl font-semibold text-text-primary mb-2">{t('title')}</h3>
+      <p className="text-warning text-sm mb-6 max-w-md mx-auto">{t('description')}</p>
 
-      <div className="form-group">
-        <label htmlFor="did-input">DID to Revoke</label>
-        <input
-          id="did-input"
-          type="text"
+      <div className="text-left max-w-md mx-auto mb-6">
+        <label htmlFor="revoke-did-input" className="block text-sm text-text-secondary mb-1.5">
+          {t('didToRevoke')}
+        </label>
+        <Input
+          id="revoke-did-input"
           value={did}
           onChange={(e) => setDid(e.target.value)}
           placeholder="did:cardano:stake_test1..."
           disabled={isProcessing}
-          className="input"
         />
       </div>
 
-      {isProcessing && (
-        <div className="processing">
-          <div className="spinner" />
-          <p>{getStepMessage(state.step)}</p>
+      {isProcessing ? (
+        <div className="max-w-sm mx-auto">
+          <ProgressSteps steps={progressSteps} currentStep={state.step} />
         </div>
+      ) : (
+        <Button variant="danger" onClick={handleRevoke}>{t('revokeButton')}</Button>
       )}
 
-      {!isProcessing && (
-        <button onClick={handleRevoke} className="btn btn-danger">
-          Revoke DID
-        </button>
-      )}
+      {/* Confirmation Modal */}
+      <Modal
+        open={state.step === 'confirm'}
+        onClose={handleCancel}
+        title={t('confirmTitle')}
+        alert
+      >
+        <div className="text-center py-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-warning/15 mb-3">
+            <AlertTriangle className="h-6 w-6 text-warning" />
+          </div>
+          <p className="text-warning font-medium mb-2">{t('confirmQuestion')}</p>
+          <p className="text-sm text-text-secondary mb-1">
+            <strong>DID:</strong> <code className="text-xs break-all">{did}</code>
+          </p>
+          <p className="text-sm text-warning mb-4">{t('confirmWarning')}</p>
+          <div className="flex justify-center gap-3">
+            <Button variant="secondary" onClick={handleCancel}>{t('cancelButton')}</Button>
+            <Button variant="danger" onClick={handleRevoke}>{t('confirmRevoke')}</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -1,16 +1,11 @@
-import React, { useState } from 'react';
+'use client';
+
+import { useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import type { VCInterfaceConfig } from '@/config/org-config';
 import { defaultConfig } from '@/config/org-config';
-import {
-  getTheme,
-  cardStyles,
-  primaryButtonStyles,
-  secondaryButtonStyles,
-  inputStyles,
-  labelStyles,
-  truncateDid,
-  formatDate,
-} from '@/styles';
+import { Button, Card, cn, truncateDid, formatDate } from '@prisma-dids/ui';
+import { CheckCircle, XCircle, ShieldCheck, ShieldX, Search } from 'lucide-react';
 import { StatusBadge } from './shared/StatusBadge';
 
 export interface VerifierViewProps {
@@ -48,20 +43,11 @@ interface VerificationResult {
   }>;
 }
 
-/**
- * VerifierView Component
- *
- * Allows third parties to verify credentials presented to them.
- * Implements the Verifier Discovery Flow from spec §2.2:
- * 1. Receive credential from holder
- * 2. Extract issuerDid from credential
- * 3. Resolve issuer's DID Document (via global DID Indexer)
- * 4. Find service with type "VCIndexer"
- * 5. Query that indexer's /vc/:vcHash/status endpoint
- */
 export function VerifierView({ config }: VerifierViewProps) {
   const fullConfig = { ...defaultConfig, ...config };
-  const theme = getTheme(fullConfig.THEME);
+  const t = useTranslations('verifier');
+  const tc = useTranslations('common');
+  const locale = useLocale();
 
   const [credentialInput, setCredentialInput] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -74,15 +60,7 @@ export function VerifierView({ config }: VerifierViewProps) {
     setResult(null);
 
     try {
-      // Simulate verification delay
       await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Mock verification result - in real implementation this would:
-      // 1. Parse the credential/presentation
-      // 2. Call DID Indexer to resolve issuer DID
-      // 3. Find VCIndexer service endpoint
-      // 4. Query VC status
-      // 5. Verify signatures
 
       const mockResult: VerificationResult = {
         valid: true,
@@ -123,316 +101,200 @@ export function VerifierView({ config }: VerifierViewProps) {
 
       setResult(mockResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Verification failed');
+      setError(err instanceof Error ? err.message : t('verificationFailed'));
     } finally {
       setIsVerifying(false);
     }
   };
 
-  // Styles
-  const containerStyle: React.CSSProperties = {
-    maxWidth: '800px',
-    margin: '0 auto',
-    padding: '1rem',
-  };
-
-  const headerStyle: React.CSSProperties = {
-    marginBottom: '2rem',
-  };
-
-  const titleStyle: React.CSSProperties = {
-    fontSize: '1.75rem',
-    fontWeight: 600,
-    color: theme.text.primary,
-    marginBottom: '0.5rem',
-  };
-
-  const subtitleStyle: React.CSSProperties = {
-    color: theme.text.secondary,
-    fontSize: '0.95rem',
-  };
-
-  const inputSectionStyle: React.CSSProperties = {
-    ...cardStyles(theme),
-    marginBottom: '1.5rem',
-  };
-
-  const textareaStyle: React.CSSProperties = {
-    ...inputStyles(theme),
-    minHeight: '150px',
-    fontFamily: 'monospace',
-    fontSize: '0.85rem',
-    resize: 'vertical' as const,
-  };
-
-  const resultCardStyle: React.CSSProperties = {
-    ...cardStyles(theme),
-    marginBottom: '1rem',
-  };
-
-  const sectionTitleStyle: React.CSSProperties = {
-    fontSize: '1rem',
-    fontWeight: 600,
-    color: theme.text.primary,
-    marginBottom: '1rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-  };
-
-  const checkItemStyle = (passed: boolean): React.CSSProperties => ({
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '0.75rem',
-    padding: '0.75rem',
-    backgroundColor: passed ? `${theme.status.success}11` : `${theme.status.error}11`,
-    borderRadius: '6px',
-    marginBottom: '0.5rem',
-    borderLeft: `3px solid ${passed ? theme.status.success : theme.status.error}`,
-  });
-
-  const checkIconStyle = (passed: boolean): React.CSSProperties => ({
-    color: passed ? theme.status.success : theme.status.error,
-    fontWeight: 'bold',
-    fontSize: '1rem',
-  });
-
-  const detailRowStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '0.5rem 0',
-    borderBottom: `1px solid ${theme.text.muted}22`,
-    fontSize: '0.9rem',
-  };
-
-  const flowStepStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    padding: '0.75rem 1rem',
-    backgroundColor: theme.background,
-    borderRadius: '6px',
-    marginBottom: '0.5rem',
-  };
-
-  const stepNumberStyle: React.CSSProperties = {
-    width: '24px',
-    height: '24px',
-    borderRadius: '50%',
-    backgroundColor: theme.primary,
-    color: '#fff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '0.75rem',
-    fontWeight: 600,
-  };
+  const verificationSteps = [
+    t('step1'),
+    t('step2'),
+    t('step3'),
+    t('step4'),
+    t('step5'),
+  ];
 
   return (
-    <div style={containerStyle}>
-      <div style={headerStyle}>
-        <h1 style={titleStyle}>Verify Credential</h1>
-        <p style={subtitleStyle}>
-          Paste a credential or presentation to verify its authenticity and check revocation status
-        </p>
+    <div className="max-w-[800px] mx-auto p-4">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-text-primary mb-2">{t('title')}</h1>
+        <p className="text-text-secondary">{t('subtitle')}</p>
       </div>
 
       {/* Input Section */}
-      <div style={inputSectionStyle}>
-        <label style={labelStyles(theme)}>Credential / Presentation (SD-JWT or JSON)</label>
+      <Card className="p-6 mb-6">
+        <label className="block text-sm text-text-secondary mb-2 font-medium">
+          {t('inputLabel')}
+        </label>
         <textarea
           value={credentialInput}
           onChange={(e) => setCredentialInput(e.target.value)}
-          placeholder={`Paste the credential here...\n\nExample SD-JWT format:\neyJhbGciOiJFZERTQSJ9.eyJpc3MiOiJkaWQ6Y2FyZGFubzpzdGFrZTF1Li4uIn0.signature~disclosure1~disclosure2`}
-          style={textareaStyle}
+          placeholder={t('inputPlaceholder')}
+          className="w-full min-h-[150px] resize-y rounded-lg bg-background border border-border px-4 py-3 text-sm font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
         />
-        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem' }}>
-          <button
+        <div className="flex gap-3 mt-4">
+          <Button
             onClick={handleVerify}
             disabled={isVerifying || !credentialInput.trim()}
-            style={{
-              ...primaryButtonStyles(theme),
-              opacity: isVerifying || !credentialInput.trim() ? 0.5 : 1,
-            }}
+            loading={isVerifying}
           >
-            {isVerifying ? 'Verifying...' : 'Verify Credential'}
-          </button>
-          <button
+            {isVerifying ? t('verifying') : t('verifyButton')}
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => {
               setCredentialInput('');
               setResult(null);
               setError(null);
             }}
-            style={secondaryButtonStyles(theme)}
           >
-            Clear
-          </button>
+            {tc('clear')}
+          </Button>
         </div>
-      </div>
+      </Card>
 
       {/* Verification Flow Explanation */}
       {!result && !error && (
-        <div style={resultCardStyle}>
-          <h3 style={sectionTitleStyle}>Verification Flow (per spec §2.2)</h3>
-          <div style={flowStepStyle}>
-            <span style={stepNumberStyle}>1</span>
-            <span style={{ color: theme.text.secondary }}>Parse credential and extract issuer DID</span>
-          </div>
-          <div style={flowStepStyle}>
-            <span style={stepNumberStyle}>2</span>
-            <span style={{ color: theme.text.secondary }}>Resolve issuer DID via global DID Indexer</span>
-          </div>
-          <div style={flowStepStyle}>
-            <span style={stepNumberStyle}>3</span>
-            <span style={{ color: theme.text.secondary }}>Find VCIndexer service in DID Document</span>
-          </div>
-          <div style={flowStepStyle}>
-            <span style={stepNumberStyle}>4</span>
-            <span style={{ color: theme.text.secondary }}>Query VC status from org's VC Indexer</span>
-          </div>
-          <div style={flowStepStyle}>
-            <span style={stepNumberStyle}>5</span>
-            <span style={{ color: theme.text.secondary }}>Verify cryptographic signature</span>
-          </div>
-        </div>
+        <Card className="p-6 mb-6">
+          <h3 className="text-base font-semibold text-text-primary mb-4 flex items-center gap-2">
+            <Search className="h-4 w-4" />
+            {t('flowTitle')}
+          </h3>
+          {verificationSteps.map((step, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 p-3 bg-background rounded-md mb-2 last:mb-0"
+            >
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold">
+                {i + 1}
+              </span>
+              <span className="text-sm text-text-secondary">{step}</span>
+            </div>
+          ))}
+        </Card>
       )}
 
       {/* Error State */}
       {error && (
-        <div style={{
-          ...resultCardStyle,
-          backgroundColor: `${theme.status.error}11`,
-          borderColor: theme.status.error,
-        }}>
-          <h3 style={{ ...sectionTitleStyle, color: theme.status.error }}>
-            Verification Failed
-          </h3>
-          <p style={{ color: theme.text.secondary }}>{error}</p>
-        </div>
+        <Card className="p-6 mb-6 bg-error/10 border-error" role="alert">
+          <h3 className="text-base font-semibold text-error mb-2">{t('verificationFailed')}</h3>
+          <p className="text-text-secondary text-sm">{error}</p>
+        </Card>
       )}
 
       {/* Result */}
       {result && (
         <>
           {/* Overall Result */}
-          <div style={{
-            ...resultCardStyle,
-            backgroundColor: result.valid ? `${theme.status.success}11` : `${theme.status.error}11`,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <span style={{
-                fontSize: '2.5rem',
-              }}>
-                {result.valid ? '✓' : '✗'}
-              </span>
+          <Card className={cn(
+            'p-6 mb-6',
+            result.valid ? 'bg-success/10' : 'bg-error/10',
+          )}>
+            <div className="flex items-center gap-4">
+              {result.valid ? (
+                <ShieldCheck className="h-10 w-10 text-success flex-shrink-0" />
+              ) : (
+                <ShieldX className="h-10 w-10 text-error flex-shrink-0" />
+              )}
               <div>
-                <h2 style={{
-                  color: result.valid ? theme.status.success : theme.status.error,
-                  fontSize: '1.5rem',
-                  marginBottom: '0.25rem',
-                }}>
-                  {result.valid ? 'Credential Valid' : 'Credential Invalid'}
+                <h2 className={cn(
+                  'text-xl font-semibold mb-1',
+                  result.valid ? 'text-success' : 'text-error',
+                )}>
+                  {result.valid ? t('credentialValid') : t('credentialInvalid')}
                 </h2>
-                <p style={{ color: theme.text.secondary }}>
-                  {result.valid
-                    ? 'All verification checks passed'
-                    : 'One or more verification checks failed'}
+                <p className="text-text-secondary text-sm">
+                  {result.valid ? t('allChecksPassed') : t('someChecksFailed')}
                 </p>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Verification Checks */}
-          <div style={resultCardStyle}>
-            <h3 style={sectionTitleStyle}>Verification Checks</h3>
+          <Card className="p-6 mb-6">
+            <h3 className="text-base font-semibold text-text-primary mb-4">
+              {t('verificationChecks')}
+            </h3>
             {result.checks.map((check, i) => (
-              <div key={i} style={checkItemStyle(check.passed)}>
-                <span style={checkIconStyle(check.passed)}>
-                  {check.passed ? '✓' : '✗'}
-                </span>
+              <div
+                key={i}
+                className={cn(
+                  'flex items-start gap-3 p-3 rounded-md mb-2 last:mb-0 border-l-[3px]',
+                  check.passed
+                    ? 'bg-success/5 border-success'
+                    : 'bg-error/5 border-error',
+                )}
+              >
+                {check.passed ? (
+                  <CheckCircle className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-error flex-shrink-0 mt-0.5" />
+                )}
                 <div>
-                  <div style={{ color: theme.text.primary, fontWeight: 500 }}>
-                    {check.name}
-                  </div>
-                  <div style={{ color: theme.text.secondary, fontSize: '0.85rem' }}>
-                    {check.details}
-                  </div>
+                  <div className="text-sm text-text-primary font-medium">{check.name}</div>
+                  <div className="text-xs text-text-secondary mt-0.5">{check.details}</div>
                 </div>
               </div>
             ))}
-          </div>
+          </Card>
 
           {/* Credential Details */}
-          <div style={resultCardStyle}>
-            <h3 style={sectionTitleStyle}>
-              Credential Details
-              <StatusBadge status={result.vcStatus.status} theme={fullConfig.THEME} />
+          <Card className="p-6 mb-6">
+            <h3 className="text-base font-semibold text-text-primary mb-4 flex items-center gap-2">
+              {t('credentialDetails')}
+              <StatusBadge status={result.vcStatus.status} />
             </h3>
-            <div style={detailRowStyle}>
-              <span style={{ color: theme.text.muted }}>Type</span>
-              <span style={{ color: theme.text.primary, fontWeight: 500 }}>
-                {result.credential.type}
-              </span>
+            <div className="flex justify-between py-2 border-b border-border/30 text-sm">
+              <span className="text-text-muted">{tc('type')}</span>
+              <span className="text-text-primary font-medium">{result.credential.type}</span>
             </div>
-            <div style={detailRowStyle}>
-              <span style={{ color: theme.text.muted }}>Issuer DID</span>
-              <span style={{ color: theme.text.secondary, fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                {truncateDid(result.credential.issuerDid, 16)}
-              </span>
+            <div className="flex justify-between py-2 border-b border-border/30 text-sm">
+              <span className="text-text-muted">{t('issuerDid')}</span>
+              <span className="text-text-secondary font-mono text-xs">{truncateDid(result.credential.issuerDid, 16)}</span>
             </div>
-            <div style={detailRowStyle}>
-              <span style={{ color: theme.text.muted }}>Holder DID</span>
-              <span style={{ color: theme.text.secondary, fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                {truncateDid(result.credential.holderDid, 16)}
-              </span>
+            <div className="flex justify-between py-2 border-b border-border/30 text-sm">
+              <span className="text-text-muted">{t('holderDid')}</span>
+              <span className="text-text-secondary font-mono text-xs">{truncateDid(result.credential.holderDid, 16)}</span>
             </div>
-            <div style={detailRowStyle}>
-              <span style={{ color: theme.text.muted }}>Issued</span>
-              <span style={{ color: theme.text.secondary }}>
-                {formatDate(result.credential.issuedAt)}
-              </span>
+            <div className="flex justify-between py-2 border-b border-border/30 text-sm">
+              <span className="text-text-muted">{tc('issued')}</span>
+              <span className="text-text-secondary">{formatDate(result.credential.issuedAt, locale)}</span>
             </div>
 
-            <h4 style={{ ...sectionTitleStyle, marginTop: '1.5rem', fontSize: '0.9rem' }}>
-              Disclosed Claims
+            <h4 className="text-sm font-semibold text-text-primary mt-6 mb-3">
+              {t('disclosedClaims')}
             </h4>
             {result.credential.claims.map((claim, i) => (
-              <div key={i} style={detailRowStyle}>
-                <span style={{ color: theme.text.muted, textTransform: 'capitalize' }}>
+              <div key={i} className="flex justify-between py-2 border-b border-border/30 text-sm last:border-0">
+                <span className="text-text-muted capitalize">
                   {claim.key.replace(/([A-Z])/g, ' $1').trim()}
                 </span>
-                <span style={{ color: theme.text.primary }}>
-                  {String(claim.value)}
-                </span>
+                <span className="text-text-primary">{String(claim.value)}</span>
               </div>
             ))}
-          </div>
+          </Card>
 
           {/* Issuer DID Document */}
-          <div style={resultCardStyle}>
-            <h3 style={sectionTitleStyle}>
-              Issuer DID Document
-              <StatusBadge status={result.issuerDid.status} theme={fullConfig.THEME} />
+          <Card className="p-6 mb-6">
+            <h3 className="text-base font-semibold text-text-primary mb-4 flex items-center gap-2">
+              {t('issuerDidDocument')}
+              <StatusBadge status={result.issuerDid.status} />
             </h3>
-            <div style={detailRowStyle}>
-              <span style={{ color: theme.text.muted }}>DID</span>
-              <span style={{ color: theme.text.secondary, fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                {truncateDid(result.issuerDid.document?.id || '', 16)}
-              </span>
+            <div className="flex justify-between py-2 border-b border-border/30 text-sm">
+              <span className="text-text-muted">DID</span>
+              <span className="text-text-secondary font-mono text-xs">{truncateDid(result.issuerDid.document?.id || '', 16)}</span>
             </div>
-            <div style={detailRowStyle}>
-              <span style={{ color: theme.text.muted }}>Verification Method</span>
-              <span style={{ color: theme.text.secondary }}>
-                {result.issuerDid.document?.verificationMethod}
-              </span>
+            <div className="flex justify-between py-2 border-b border-border/30 text-sm">
+              <span className="text-text-muted">{t('verificationMethod')}</span>
+              <span className="text-text-secondary">{result.issuerDid.document?.verificationMethod}</span>
             </div>
-            <div style={detailRowStyle}>
-              <span style={{ color: theme.text.muted }}>VCIndexer Endpoint</span>
-              <span style={{ color: theme.primary, fontSize: '0.85rem' }}>
-                {result.issuerDid.document?.vcIndexerEndpoint}
-              </span>
+            <div className="flex justify-between py-2 text-sm">
+              <span className="text-text-muted">{t('vcIndexerEndpoint')}</span>
+              <span className="text-primary text-xs">{result.issuerDid.document?.vcIndexerEndpoint}</span>
             </div>
-          </div>
+          </Card>
         </>
       )}
     </div>

@@ -1,0 +1,159 @@
+{
+  "common": {
+    "loading": "Carregando...",
+    "error": "Erro",
+    "retry": "Tentar novamente",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "close": "Fechar",
+    "back": "Voltar",
+    "network": "Rede",
+    "preprod": "Preprod",
+    "mainnet": "Mainnet",
+    "mainnetWarning": "ADA real será utilizado",
+    "skipToContent": "Ir para o conteúdo"
+  },
+  "dashboard": {
+    "title": "Prisma DIDs",
+    "subtitle": "Identificadores Descentralizados W3C no Cardano",
+    "getStarted": "Comece Aqui",
+    "connectPrompt": "Conecte sua carteira Cardano para criar ou gerenciar seu DID.",
+    "features": {
+      "createDIDs": "Criar DIDs compatíveis com W3C",
+      "anchorStake": "Ancorar ao seu endereço de stake",
+      "storeIPFS": "Armazenar Documentos DID no IPFS",
+      "updateRevoke": "Atualizar e revogar conforme necessário"
+    }
+  },
+  "wallet": {
+    "connect": "Conectar Carteira",
+    "disconnect": "Desconectar",
+    "connected": "Conectado",
+    "noWallets": "Nenhuma carteira Cardano detectada.",
+    "installHint": "Por favor, instale uma carteira compatível com CIP-30 como"
+  },
+  "didManager": {
+    "checkingStatus": "Verificando status do DID...",
+    "yourStatus": "Status do Seu DID",
+    "tabs": {
+      "status": "Status",
+      "create": "Criar",
+      "update": "Atualizar",
+      "revoke": "Revogar"
+    },
+    "statusLabel": "Status",
+    "active": "Ativo",
+    "revoked": "Revogado",
+    "version": "Versão",
+    "lastAction": "Última Ação",
+    "lastTx": "Última Tx",
+    "view": "Ver",
+    "refresh": "Atualizar Status",
+    "noDIDTitle": "Nenhum DID Encontrado",
+    "noDIDDescription": "Nenhum DID encontrado para esta carteira. Crie um para começar.",
+    "createYourDID": "Criar Seu DID",
+    "revokedMessage": "Este DID foi revogado e não pode mais ser utilizado.",
+    "updateDIDButton": "Atualizar DID",
+    "revokeDIDButton": "Revogar DID",
+    "errors": {
+      "noStakeAddress": "Endereço de stake não encontrado na carteira.",
+      "checkFailed": "Falha ao verificar status do DID"
+    }
+  },
+  "createDID": {
+    "title": "Criar DID",
+    "description": "Crie um Identificador Descentralizado W3C ancorado ao seu endereço de stake Cardano.",
+    "createButton": "Criar DID",
+    "errorTitle": "Erro ao Criar DID",
+    "successTitle": "DID Criado com Sucesso!",
+    "tryAgain": "Tentar Novamente",
+    "createAnother": "Criar Outro DID",
+    "viewIPFS": "Ver no IPFS",
+    "viewExplorer": "Ver no Explorer",
+    "transaction": "Transação",
+    "errors": {
+      "noRewardAddresses": "Endereços de recompensa não encontrados. Certifique-se de que sua carteira possui uma chave de stake.",
+      "noUsedAddresses": "Nenhum endereço utilizado encontrado. Financie sua carteira primeiro.",
+      "unknown": "Ocorreu um erro desconhecido"
+    },
+    "steps": {
+      "gettingAddresses": "Obtendo endereços da carteira",
+      "derivingDID": "Derivando DID",
+      "generatingDoc": "Gerando Documento DID",
+      "pinningIPFS": "Fixando no IPFS",
+      "buildingPayload": "Construindo payload",
+      "signing": "Assinar na carteira",
+      "submittingTx": "Enviando transação"
+    }
+  },
+  "updateDID": {
+    "title": "Atualizar DID",
+    "description": "Atualize seu Documento DID com novas informações ou endpoints de serviço.",
+    "updateButton": "Atualizar DID",
+    "errorTitle": "Erro ao Atualizar DID",
+    "successTitle": "DID Atualizado com Sucesso!",
+    "tryAgain": "Tentar Novamente",
+    "done": "Concluído",
+    "didToUpdate": "DID para Atualizar",
+    "serviceEndpoint": "Endpoint de Serviço (opcional)",
+    "newVersion": "Nova Versão",
+    "newIPFS": "Novo CID IPFS",
+    "viewIPFS": "Ver no IPFS",
+    "viewExplorer": "Ver no Explorer",
+    "transaction": "Transação",
+    "errors": {
+      "noDID": "Por favor, insira um DID.",
+      "didNotFound": "DID não encontrado. Não é possível atualizar um DID que não existe.",
+      "didRevoked": "Não é possível atualizar um DID revogado.",
+      "walletMismatch": "O endereço de stake da carteira não corresponde ao DID.",
+      "noRewardAddresses": "Endereços de recompensa não encontrados.",
+      "noUsedAddresses": "Nenhum endereço utilizado encontrado.",
+      "unknown": "Ocorreu um erro desconhecido"
+    },
+    "steps": {
+      "fetchingCurrent": "Buscando estado atual",
+      "generatingDoc": "Gerando Documento DID",
+      "pinningIPFS": "Fixando no IPFS",
+      "buildingPayload": "Construindo payload",
+      "signing": "Assinar na carteira",
+      "submittingTx": "Enviando transação"
+    }
+  },
+  "revokeDID": {
+    "title": "Revogar DID",
+    "description": "Revogar permanentemente um DID. Esta ação não pode ser desfeita.",
+    "revokeButton": "Revogar DID",
+    "errorTitle": "Erro ao Revogar DID",
+    "successTitle": "DID Revogado com Sucesso",
+    "tryAgain": "Tentar Novamente",
+    "done": "Concluído",
+    "didToRevoke": "DID para Revogar",
+    "finalVersion": "Versão Final",
+    "revocationCID": "CID de Revogação",
+    "viewIPFS": "Ver no IPFS",
+    "viewExplorer": "Ver no Explorer",
+    "transaction": "Transação",
+    "errors": {
+      "noDID": "Por favor, insira um DID.",
+      "didNotFound": "DID não encontrado. Não é possível revogar um DID que não existe.",
+      "alreadyRevoked": "O DID já está revogado.",
+      "walletMismatch": "O endereço de stake da carteira não corresponde ao DID.",
+      "noRewardAddresses": "Endereços de recompensa não encontrados.",
+      "noUsedAddresses": "Nenhum endereço utilizado encontrado.",
+      "unknown": "Ocorreu um erro desconhecido"
+    },
+    "revokedWarning": "Este DID não pode mais ser atualizado ou usado para autenticação.",
+    "confirmTitle": "Confirmar Revogação",
+    "confirmQuestion": "Tem certeza que deseja revogar este DID?",
+    "confirmWarning": "Esta ação é permanente. O DID não será mais válido para autenticação e não poderá ser atualizado após a revogação.",
+    "cancelButton": "Cancelar",
+    "confirmRevoke": "Sim, Revogar DID",
+    "steps": {
+      "fetchingCurrent": "Buscando estado atual",
+      "pinningIPFS": "Fixando documento de revogação",
+      "buildingPayload": "Construindo payload",
+      "signing": "Assinar na carteira",
+      "submittingTx": "Enviando transação"
+    }
+  }
+}

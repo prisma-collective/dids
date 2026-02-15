@@ -1,53 +1,33 @@
-import React, { useState } from 'react';
+'use client';
+
+import { useState } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import type { VerifiableCredential, RevocationReason, RevocationRequest } from '@/types/vc';
 import type { VCInterfaceConfig } from '@/config/org-config';
 import { defaultConfig } from '@/config/org-config';
 import {
-  getTheme,
-  cardStyles,
-  primaryButtonStyles,
-  secondaryButtonStyles,
-  dangerButtonStyles,
-  inputStyles,
-  labelStyles,
+  Button,
+  Card,
+  Modal,
+  Input,
+  Select,
+  LoadingState,
+  EmptyState,
+  cn,
   truncateDid,
   formatDate,
-} from '@/styles';
+} from '@prisma-dids/ui';
+import { CheckCircle, AlertTriangle, ClipboardList, CheckCheck } from 'lucide-react';
 import { VCCard } from './shared/VCCard';
-import { StatusBadge } from './shared/StatusBadge';
 
 export interface RevocationUIProps {
-  /** Organization configuration */
   config?: Partial<VCInterfaceConfig>;
-  /** List of credentials issued by this issuer */
   issuedCredentials: VerifiableCredential[];
-  /** Called when revoking a credential */
   onRevoke: (request: RevocationRequest) => Promise<void>;
-  /** Issuer's DID */
   issuerDid?: string;
-  /** Whether credentials are loading */
   isLoading?: boolean;
 }
 
-/** Revocation reason labels */
-const reasonLabels: Record<RevocationReason, string> = {
-  issued_in_error: 'Issued in Error',
-  holder_request: 'Holder Request',
-  policy_violation: 'Policy Violation',
-  expired: 'Expired',
-  other: 'Other',
-};
-
-/**
- * RevocationUI Component (Issuer View)
- *
- * Allows issuers to view and revoke credentials they have issued.
- * Features:
- * - List of issued credentials (active only for revocation)
- * - Revoke button on each credential
- * - Revocation modal with reason selection
- * - Confirmation before revocation
- */
 export function RevocationUI({
   config,
   issuedCredentials,
@@ -56,9 +36,10 @@ export function RevocationUI({
   isLoading = false,
 }: RevocationUIProps) {
   const fullConfig = { ...defaultConfig, ...config };
-  const theme = getTheme(fullConfig.THEME);
+  const t = useTranslations('revocation');
+  const tc = useTranslations('common');
+  const locale = useLocale();
 
-  // Filter to only show active credentials (can't revoke already revoked)
   const activeCredentials = issuedCredentials.filter(c => c.status === 'active');
   const revokedCredentials = issuedCredentials.filter(c => c.status === 'revoked');
 
@@ -80,7 +61,6 @@ export function RevocationUI({
 
   const handleConfirmRevoke = async () => {
     if (!selectedCredential) return;
-
     setIsRevoking(true);
     try {
       await onRevoke({
@@ -89,8 +69,7 @@ export function RevocationUI({
         customReason: revocationReason === 'other' ? customReason : undefined,
       });
       setRevokeResult({ success: true, txHash: 'mock_revoke_tx_' + Date.now() });
-    } catch (err) {
-      console.error('Revocation failed:', err);
+    } catch {
       setRevokeResult({ success: false });
     } finally {
       setIsRevoking(false);
@@ -103,188 +82,18 @@ export function RevocationUI({
     setRevokeResult(null);
   };
 
-  // Styles
-  const containerStyle: React.CSSProperties = {
-    maxWidth: '900px',
-    margin: '0 auto',
-    padding: '1rem',
-  };
+  const reasonOptions: Array<{ value: string; label: string }> = [
+    { value: 'issued_in_error', label: t('reasons.issued_in_error') },
+    { value: 'holder_request', label: t('reasons.holder_request') },
+    { value: 'policy_violation', label: t('reasons.policy_violation') },
+    { value: 'expired', label: t('reasons.expired') },
+    { value: 'other', label: t('reasons.other') },
+  ];
 
-  const headerStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1.5rem',
-    flexWrap: 'wrap',
-    gap: '1rem',
-  };
-
-  const titleStyle: React.CSSProperties = {
-    fontSize: '1.75rem',
-    fontWeight: 600,
-    color: theme.text.primary,
-    margin: 0,
-  };
-
-  const statsStyle: React.CSSProperties = {
-    display: 'flex',
-    gap: '1.5rem',
-    marginBottom: '1.5rem',
-  };
-
-  const statCardStyle: React.CSSProperties = {
-    ...cardStyles(theme),
-    padding: '1rem 1.5rem',
-    flex: 1,
-    textAlign: 'center',
-  };
-
-  const statNumberStyle: React.CSSProperties = {
-    fontSize: '2rem',
-    fontWeight: 700,
-    color: theme.text.primary,
-  };
-
-  const statLabelStyle: React.CSSProperties = {
-    fontSize: '0.8rem',
-    color: theme.text.muted,
-    textTransform: 'uppercase',
-  };
-
-  const toggleStyle: React.CSSProperties = {
-    display: 'flex',
-    gap: '0.5rem',
-    marginBottom: '1rem',
-  };
-
-  const toggleBtnStyle = (active: boolean): React.CSSProperties => ({
-    padding: '0.5rem 1rem',
-    backgroundColor: active ? theme.primary : 'transparent',
-    color: active ? '#fff' : theme.text.secondary,
-    border: `1px solid ${active ? theme.primary : theme.text.muted}66`,
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '0.85rem',
-    fontWeight: 500,
-  });
-
-  const gridStyle: React.CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gap: '1rem',
-  };
-
-  const emptyStateStyle: React.CSSProperties = {
-    ...cardStyles(theme),
-    textAlign: 'center',
-    padding: '3rem 2rem',
-  };
-
-  const loadingStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '3rem',
-    gap: '1rem',
-  };
-
-  // Modal styles
-  const modalOverlayStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-    padding: '1rem',
-  };
-
-  const modalStyle: React.CSSProperties = {
-    ...cardStyles(theme),
-    maxWidth: '500px',
-    width: '100%',
-    maxHeight: '90vh',
-    overflow: 'auto',
-  };
-
-  const modalHeaderStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1.5rem',
-  };
-
-  const modalTitleStyle: React.CSSProperties = {
-    fontSize: '1.25rem',
-    fontWeight: 600,
-    color: theme.text.primary,
-    margin: 0,
-  };
-
-  const closeButtonStyle: React.CSSProperties = {
-    background: 'none',
-    border: 'none',
-    color: theme.text.muted,
-    fontSize: '1.5rem',
-    cursor: 'pointer',
-    padding: '0.25rem',
-  };
-
-  const credentialSummaryStyle: React.CSSProperties = {
-    backgroundColor: theme.background,
-    borderRadius: '8px',
-    padding: '1rem',
-    marginBottom: '1.5rem',
-  };
-
-  const formGroupStyle: React.CSSProperties = {
-    marginBottom: '1.25rem',
-  };
-
-  const selectStyle: React.CSSProperties = {
-    ...inputStyles(theme),
-    cursor: 'pointer',
-  };
-
-  const warningBoxStyle: React.CSSProperties = {
-    backgroundColor: `${theme.status.warning}22`,
-    border: `1px solid ${theme.status.warning}`,
-    borderRadius: '8px',
-    padding: '1rem',
-    marginBottom: '1.5rem',
-    color: theme.status.warning,
-    fontSize: '0.9rem',
-  };
-
-  const modalActionsStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    gap: '0.75rem',
-    marginTop: '1.5rem',
-    paddingTop: '1rem',
-    borderTop: `1px solid ${theme.text.muted}33`,
-  };
-
-  // Loading state
   if (isLoading) {
     return (
-      <div style={containerStyle}>
-        <div style={loadingStyle}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            border: `3px solid ${theme.text.muted}33`,
-            borderTopColor: theme.primary,
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-          }} />
-          <span style={{ color: theme.text.secondary }}>Loading issued credentials...</span>
-        </div>
+      <div className="max-w-[900px] mx-auto p-4">
+        <LoadingState label={t('loadingIssued')} />
       </div>
     );
   }
@@ -292,68 +101,55 @@ export function RevocationUI({
   const displayedCredentials = showHistory ? revokedCredentials : activeCredentials;
 
   return (
-    <div style={containerStyle}>
-      <style>
-        {`@keyframes spin { to { transform: rotate(360deg); } }`}
-      </style>
-
-      <div style={headerStyle}>
-        <h2 style={titleStyle}>Issued Credentials</h2>
-      </div>
+    <div className="max-w-[900px] mx-auto p-4">
+      <h2 className="text-2xl font-semibold text-text-primary mb-6">{t('title')}</h2>
 
       {/* Stats */}
-      <div style={statsStyle}>
-        <div style={statCardStyle}>
-          <div style={{ ...statNumberStyle, color: theme.status.success }}>
-            {activeCredentials.length}
-          </div>
-          <div style={statLabelStyle}>Active</div>
-        </div>
-        <div style={statCardStyle}>
-          <div style={{ ...statNumberStyle, color: theme.status.error }}>
-            {revokedCredentials.length}
-          </div>
-          <div style={statLabelStyle}>Revoked</div>
-        </div>
-        <div style={statCardStyle}>
-          <div style={statNumberStyle}>{issuedCredentials.length}</div>
-          <div style={statLabelStyle}>Total</div>
-        </div>
+      <div className="flex gap-4 mb-6">
+        <Card className="p-4 flex-1 text-center">
+          <div className="text-3xl font-bold text-success">{activeCredentials.length}</div>
+          <div className="text-xs text-text-muted uppercase">{tc('active')}</div>
+        </Card>
+        <Card className="p-4 flex-1 text-center">
+          <div className="text-3xl font-bold text-error">{revokedCredentials.length}</div>
+          <div className="text-xs text-text-muted uppercase">{tc('revoked')}</div>
+        </Card>
+        <Card className="p-4 flex-1 text-center">
+          <div className="text-3xl font-bold text-text-primary">{issuedCredentials.length}</div>
+          <div className="text-xs text-text-muted uppercase">{tc('total')}</div>
+        </Card>
       </div>
 
       {/* Toggle */}
-      <div style={toggleStyle}>
-        <button
+      <div className="flex gap-2 mb-4">
+        <Button
+          variant={!showHistory ? 'primary' : 'secondary'}
+          size="sm"
           onClick={() => setShowHistory(false)}
-          style={toggleBtnStyle(!showHistory)}
         >
-          Active ({activeCredentials.length})
-        </button>
-        <button
+          {t('activeCount', { count: activeCredentials.length })}
+        </Button>
+        <Button
+          variant={showHistory ? 'primary' : 'secondary'}
+          size="sm"
           onClick={() => setShowHistory(true)}
-          style={toggleBtnStyle(showHistory)}
         >
-          Revoked ({revokedCredentials.length})
-        </button>
+          {t('revokedCount', { count: revokedCredentials.length })}
+        </Button>
       </div>
 
-      {/* Credentials Grid */}
+      {/* Grid */}
       {displayedCredentials.length === 0 ? (
-        <div style={emptyStateStyle}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.5 }}>
-            {showHistory ? '📋' : '✅'}
-          </div>
-          <h3 style={{ color: theme.text.primary, marginBottom: '0.5rem' }}>
-            {showHistory ? 'No revoked credentials' : 'No active credentials'}
-          </h3>
-          <p style={{ color: theme.text.secondary }}>
-            {showHistory
-              ? 'Revoked credentials will appear here.'
-              : 'Issue credentials to see them here.'}
-          </p>
-        </div>
+        <EmptyState
+          icon={showHistory
+            ? <ClipboardList className="h-8 w-8 text-text-muted" />
+            : <CheckCheck className="h-8 w-8 text-text-muted" />
+          }
+          title={showHistory ? t('noRevoked') : t('noActive')}
+          description={showHistory ? t('noRevokedDesc') : t('noActiveDesc')}
+        />
       ) : (
-        <div style={gridStyle}>
+        <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
           {displayedCredentials.map(credential => (
             <VCCard
               key={credential.id}
@@ -361,7 +157,6 @@ export function RevocationUI({
               onView={() => {}}
               onRevoke={() => handleRevokeClick(credential)}
               isIssuerView={true}
-              theme={fullConfig.THEME}
             />
           ))}
         </div>
@@ -369,148 +164,117 @@ export function RevocationUI({
 
       {/* Revocation Modal */}
       {selectedCredential && (
-        <div style={modalOverlayStyle} onClick={handleCloseModal}>
-          <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
-            <div style={modalHeaderStyle}>
-              <h3 style={modalTitleStyle}>
-                {revokeResult ? (revokeResult.success ? 'Credential Revoked' : 'Revocation Failed') : 'Revoke Credential'}
-              </h3>
-              <button onClick={handleCloseModal} style={closeButtonStyle}>×</button>
-            </div>
-
-            {/* Success State */}
-            {revokeResult?.success ? (
-              <div style={{ textAlign: 'center', padding: '1rem' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✓</div>
-                <p style={{ color: theme.text.secondary, marginBottom: '1rem' }}>
-                  The credential has been successfully revoked.
-                </p>
-                {revokeResult.txHash && (
-                  <div style={{
-                    padding: '0.75rem',
-                    backgroundColor: theme.background,
-                    borderRadius: '6px',
-                    fontSize: '0.8rem',
-                    fontFamily: 'monospace',
-                    color: theme.text.muted,
-                  }}>
-                    Tx: {revokeResult.txHash}
-                  </div>
-                )}
-                <button
-                  onClick={handleCloseModal}
-                  style={{ ...primaryButtonStyles(theme), marginTop: '1.5rem' }}
-                >
-                  Done
-                </button>
+        <Modal
+          open
+          onClose={handleCloseModal}
+          title={revokeResult ? (revokeResult.success ? t('revokedTitle') : t('failedTitle')) : t('revokeTitle')}
+          alert={showConfirm}
+        >
+          {revokeResult?.success ? (
+            <div className="text-center py-4">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-success/15 mb-3 animate-scale-in">
+                <CheckCircle className="h-6 w-6 text-success" />
               </div>
-            ) : (
-              <>
-                {/* Credential Summary */}
-                <div style={credentialSummaryStyle}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span style={{ color: theme.text.muted, fontSize: '0.8rem' }}>Type</span>
-                    <span style={{ color: theme.text.primary, fontWeight: 500 }}>
-                      {selectedCredential.type}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span style={{ color: theme.text.muted, fontSize: '0.8rem' }}>Holder</span>
-                    <span style={{ color: theme.text.secondary, fontFamily: 'monospace', fontSize: '0.85rem' }}>
-                      {truncateDid(selectedCredential.holderDid)}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: theme.text.muted, fontSize: '0.8rem' }}>Issued</span>
-                    <span style={{ color: theme.text.secondary, fontSize: '0.85rem' }}>
-                      {formatDate(selectedCredential.issuedAt)}
-                    </span>
-                  </div>
+              <p className="text-text-secondary mb-4">{t('revokedSuccess')}</p>
+              {revokeResult.txHash && (
+                <div className="p-3 bg-background rounded-md text-xs font-mono text-text-muted mb-4">
+                  Tx: {revokeResult.txHash}
                 </div>
+              )}
+              <Button onClick={handleCloseModal}>{tc('done')}</Button>
+            </div>
+          ) : (
+            <>
+              {/* Credential Summary */}
+              <div className="p-4 bg-background rounded-lg mb-6">
+                <div className="flex justify-between mb-2">
+                  <span className="text-xs text-text-muted">{tc('type')}</span>
+                  <span className="text-sm text-text-primary font-medium">{selectedCredential.type}</span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-xs text-text-muted">{tc('holder')}</span>
+                  <span className="text-sm text-text-secondary font-mono">{truncateDid(selectedCredential.holderDid)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-xs text-text-muted">{tc('issued')}</span>
+                  <span className="text-sm text-text-secondary">{formatDate(selectedCredential.issuedAt, locale)}</span>
+                </div>
+              </div>
 
-                {!showConfirm ? (
-                  <>
-                    {/* Reason Selection */}
-                    <div style={formGroupStyle}>
-                      <label style={labelStyles(theme)}>Revocation Reason *</label>
-                      <select
-                        value={revocationReason}
-                        onChange={(e) => setRevocationReason(e.target.value as RevocationReason)}
-                        style={selectStyle}
-                      >
-                        {Object.entries(reasonLabels).map(([value, label]) => (
-                          <option key={value} value={value}>{label}</option>
-                        ))}
-                      </select>
-                    </div>
+              {!showConfirm ? (
+                <>
+                  <div className="mb-5">
+                    <label className="block text-sm text-text-secondary mb-2 font-medium">
+                      {t('reason')} *
+                    </label>
+                    <Select
+                      value={revocationReason}
+                      onChange={(e) => setRevocationReason(e.target.value as RevocationReason)}
+                    >
+                      {reasonOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </Select>
+                  </div>
 
-                    {revocationReason === 'other' && (
-                      <div style={formGroupStyle}>
-                        <label style={labelStyles(theme)}>Custom Reason *</label>
-                        <input
-                          type="text"
-                          value={customReason}
-                          onChange={(e) => setCustomReason(e.target.value)}
-                          placeholder="Enter reason for revocation..."
-                          style={inputStyles(theme)}
-                          required
-                        />
-                      </div>
-                    )}
+                  {revocationReason === 'other' && (
+                    <div className="mb-5">
+                      <label className="block text-sm text-text-secondary mb-2 font-medium">
+                        {t('customReason')} *
+                      </label>
+                      <Input
+                        value={customReason}
+                        onChange={(e) => setCustomReason(e.target.value)}
+                        placeholder={t('customPlaceholder')}
+                        required
+                      />
+                    </div>
+                  )}
 
-                    <div style={modalActionsStyle}>
-                      <button onClick={handleCloseModal} style={secondaryButtonStyles(theme)}>
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => setShowConfirm(true)}
-                        disabled={revocationReason === 'other' && !customReason.trim()}
-                        style={{
-                          ...dangerButtonStyles(theme),
-                          opacity: revocationReason === 'other' && !customReason.trim() ? 0.5 : 1,
-                        }}
-                      >
-                        Continue
-                      </button>
+                  <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                    <Button variant="secondary" onClick={handleCloseModal}>{tc('cancel')}</Button>
+                    <Button
+                      variant="danger"
+                      onClick={() => setShowConfirm(true)}
+                      disabled={revocationReason === 'other' && !customReason.trim()}
+                    >
+                      {t('continue')}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div role="alert" className="p-4 rounded-lg mb-4 bg-warning/15 border border-warning text-warning text-sm">
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertTriangle className="h-4 w-4" />
+                      <strong>{t('warningTitle')}</strong>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    {/* Confirmation */}
-                    <div style={warningBoxStyle}>
-                      <strong>⚠️ This action cannot be undone.</strong>
-                      <br />
-                      Once revoked, this credential will be permanently marked as invalid on the blockchain.
-                    </div>
+                    {t('warningDesc')}
+                  </div>
 
-                    <div style={{ marginBottom: '1rem' }}>
-                      <span style={{ color: theme.text.muted, fontSize: '0.8rem' }}>Reason:</span>
-                      <span style={{ color: theme.text.primary, marginLeft: '0.5rem' }}>
-                        {revocationReason === 'other' ? customReason : reasonLabels[revocationReason]}
-                      </span>
-                    </div>
+                  <div className="mb-4">
+                    <span className="text-xs text-text-muted">{t('reasonLabel')}</span>
+                    <span className="text-text-primary ml-2">
+                      {revocationReason === 'other' ? customReason : reasonOptions.find(r => r.value === revocationReason)?.label}
+                    </span>
+                  </div>
 
-                    <div style={modalActionsStyle}>
-                      <button onClick={() => setShowConfirm(false)} style={secondaryButtonStyles(theme)}>
-                        Back
-                      </button>
-                      <button
-                        onClick={handleConfirmRevoke}
-                        disabled={isRevoking}
-                        style={{
-                          ...dangerButtonStyles(theme),
-                          opacity: isRevoking ? 0.7 : 1,
-                        }}
-                      >
-                        {isRevoking ? 'Revoking...' : 'Confirm Revocation'}
-                      </button>
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        </div>
+                  <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                    <Button variant="secondary" onClick={() => setShowConfirm(false)}>{tc('back')}</Button>
+                    <Button
+                      variant="danger"
+                      onClick={handleConfirmRevoke}
+                      disabled={isRevoking}
+                      loading={isRevoking}
+                    >
+                      {isRevoking ? t('revoking') : t('confirmRevocation')}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </Modal>
       )}
     </div>
   );

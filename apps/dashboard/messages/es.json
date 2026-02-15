@@ -1,0 +1,159 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "retry": "Reintentar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "close": "Cerrar",
+    "back": "Volver",
+    "network": "Red",
+    "preprod": "Preprod",
+    "mainnet": "Mainnet",
+    "mainnetWarning": "Se utilizará ADA real",
+    "skipToContent": "Ir al contenido"
+  },
+  "dashboard": {
+    "title": "Prisma DIDs",
+    "subtitle": "Identificadores Descentralizados W3C en Cardano",
+    "getStarted": "Comenzar",
+    "connectPrompt": "Conecta tu billetera Cardano para crear o gestionar tu DID.",
+    "features": {
+      "createDIDs": "Crear DIDs compatibles con W3C",
+      "anchorStake": "Anclar a tu dirección de stake",
+      "storeIPFS": "Almacenar Documentos DID en IPFS",
+      "updateRevoke": "Actualizar y revocar según sea necesario"
+    }
+  },
+  "wallet": {
+    "connect": "Conectar Billetera",
+    "disconnect": "Desconectar",
+    "connected": "Conectado",
+    "noWallets": "No se detectaron billeteras Cardano.",
+    "installHint": "Por favor, instala una billetera compatible con CIP-30 como"
+  },
+  "didManager": {
+    "checkingStatus": "Verificando estado del DID...",
+    "yourStatus": "Estado de Tu DID",
+    "tabs": {
+      "status": "Estado",
+      "create": "Crear",
+      "update": "Actualizar",
+      "revoke": "Revocar"
+    },
+    "statusLabel": "Estado",
+    "active": "Activo",
+    "revoked": "Revocado",
+    "version": "Versión",
+    "lastAction": "Última Acción",
+    "lastTx": "Última Tx",
+    "view": "Ver",
+    "refresh": "Actualizar Estado",
+    "noDIDTitle": "No Se Encontró DID",
+    "noDIDDescription": "No se encontró DID para esta billetera. Crea uno para comenzar.",
+    "createYourDID": "Crear Tu DID",
+    "revokedMessage": "Este DID ha sido revocado y ya no puede ser utilizado.",
+    "updateDIDButton": "Actualizar DID",
+    "revokeDIDButton": "Revocar DID",
+    "errors": {
+      "noStakeAddress": "No se encontró dirección de stake en la billetera.",
+      "checkFailed": "Error al verificar el estado del DID"
+    }
+  },
+  "createDID": {
+    "title": "Crear DID",
+    "description": "Crea un Identificador Descentralizado W3C anclado a tu dirección de stake de Cardano.",
+    "createButton": "Crear DID",
+    "errorTitle": "Error al Crear DID",
+    "successTitle": "¡DID Creado Exitosamente!",
+    "tryAgain": "Intentar de Nuevo",
+    "createAnother": "Crear Otro DID",
+    "viewIPFS": "Ver en IPFS",
+    "viewExplorer": "Ver en Explorer",
+    "transaction": "Transacción",
+    "errors": {
+      "noRewardAddresses": "No se encontraron direcciones de recompensa. Asegúrate de que tu billetera tenga una clave de stake.",
+      "noUsedAddresses": "No se encontraron direcciones utilizadas. Primero financia tu billetera.",
+      "unknown": "Ocurrió un error desconocido"
+    },
+    "steps": {
+      "gettingAddresses": "Obteniendo direcciones de billetera",
+      "derivingDID": "Derivando DID",
+      "generatingDoc": "Generando Documento DID",
+      "pinningIPFS": "Fijando en IPFS",
+      "buildingPayload": "Construyendo payload",
+      "signing": "Firmar en billetera",
+      "submittingTx": "Enviando transacción"
+    }
+  },
+  "updateDID": {
+    "title": "Actualizar DID",
+    "description": "Actualiza tu Documento DID con nueva información o endpoints de servicio.",
+    "updateButton": "Actualizar DID",
+    "errorTitle": "Error al Actualizar DID",
+    "successTitle": "¡DID Actualizado Exitosamente!",
+    "tryAgain": "Intentar de Nuevo",
+    "done": "Hecho",
+    "didToUpdate": "DID a Actualizar",
+    "serviceEndpoint": "Endpoint de Servicio (opcional)",
+    "newVersion": "Nueva Versión",
+    "newIPFS": "Nuevo CID IPFS",
+    "viewIPFS": "Ver en IPFS",
+    "viewExplorer": "Ver en Explorer",
+    "transaction": "Transacción",
+    "errors": {
+      "noDID": "Por favor, ingresa un DID.",
+      "didNotFound": "DID no encontrado. No se puede actualizar un DID que no existe.",
+      "didRevoked": "No se puede actualizar un DID revocado.",
+      "walletMismatch": "La dirección de stake de la billetera no coincide con el DID.",
+      "noRewardAddresses": "No se encontraron direcciones de recompensa.",
+      "noUsedAddresses": "No se encontraron direcciones utilizadas.",
+      "unknown": "Ocurrió un error desconocido"
+    },
+    "steps": {
+      "fetchingCurrent": "Obteniendo estado actual",
+      "generatingDoc": "Generando Documento DID",
+      "pinningIPFS": "Fijando en IPFS",
+      "buildingPayload": "Construyendo payload",
+      "signing": "Firmar en billetera",
+      "submittingTx": "Enviando transacción"
+    }
+  },
+  "revokeDID": {
+    "title": "Revocar DID",
+    "description": "Revocar permanentemente un DID. Esta acción no se puede deshacer.",
+    "revokeButton": "Revocar DID",
+    "errorTitle": "Error al Revocar DID",
+    "successTitle": "DID Revocado Exitosamente",
+    "tryAgain": "Intentar de Nuevo",
+    "done": "Hecho",
+    "didToRevoke": "DID a Revocar",
+    "finalVersion": "Versión Final",
+    "revocationCID": "CID de Revocación",
+    "viewIPFS": "Ver en IPFS",
+    "viewExplorer": "Ver en Explorer",
+    "transaction": "Transacción",
+    "errors": {
+      "noDID": "Por favor, ingresa un DID.",
+      "didNotFound": "DID no encontrado. No se puede revocar un DID que no existe.",
+      "alreadyRevoked": "El DID ya está revocado.",
+      "walletMismatch": "La dirección de stake de la billetera no coincide con el DID.",
+      "noRewardAddresses": "No se encontraron direcciones de recompensa.",
+      "noUsedAddresses": "No se encontraron direcciones utilizadas.",
+      "unknown": "Ocurrió un error desconocido"
+    },
+    "revokedWarning": "Este DID ya no puede ser actualizado ni usado para autenticación.",
+    "confirmTitle": "Confirmar Revocación",
+    "confirmQuestion": "¿Estás seguro de que deseas revocar este DID?",
+    "confirmWarning": "Esta acción es permanente. El DID ya no será válido para autenticación y no podrá ser actualizado después de la revocación.",
+    "cancelButton": "Cancelar",
+    "confirmRevoke": "Sí, Revocar DID",
+    "steps": {
+      "fetchingCurrent": "Obteniendo estado actual",
+      "pinningIPFS": "Fijando documento de revocación",
+      "buildingPayload": "Construyendo payload",
+      "signing": "Firmar en billetera",
+      "submittingTx": "Enviando transacción"
+    }
+  }
+}
