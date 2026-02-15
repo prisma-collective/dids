@@ -21,16 +21,16 @@ export function LanguageSwitcher({ locale, className }: LanguageSwitcherProps) {
   }, []);
 
   return (
-    <div className={cn('flex items-center gap-0.5 text-xs', className)}>
+    <div className={cn('flex items-center text-xs', className)}>
       {locales.map(({ code, label }, i) => (
         <span key={code} className="flex items-center">
-          {i > 0 && <span className="text-text-muted mx-0.5">|</span>}
+          {i > 0 && <span className="text-text-muted mx-1">|</span>}
           <button
             type="button"
             onClick={() => switchLocale(code)}
             aria-label={`Switch to ${label}`}
             className={cn(
-              'min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded transition-colors',
+              'relative px-1.5 py-2 rounded transition-colors',
               'focus-visible:ring-2 focus-visible:ring-primary outline-none',
               locale === code
                 ? 'text-primary font-semibold'

@@ -3,7 +3,7 @@ FROM node:20-slim AS base
 RUN corepack enable && corepack prepare pnpm@10.6.1 --activate
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies (cached layer)
 FROM base AS deps
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/indexer/package.json ./apps/indexer/
@@ -11,13 +11,11 @@ COPY packages/types/package.json ./packages/types/
 COPY packages/sdk/package.json ./packages/sdk/
 RUN pnpm install --frozen-lockfile
 
-# Build
-FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/indexer/node_modules ./apps/indexer/node_modules
-COPY --from=deps /app/packages/types/node_modules ./packages/types/node_modules
-COPY --from=deps /app/packages/sdk/node_modules ./packages/sdk/node_modules
-COPY . .
+# Build — extends deps so pnpm workspace symlinks stay intact
+FROM deps AS builder
+COPY packages/types/ ./packages/types/
+COPY packages/sdk/ ./packages/sdk/
+COPY apps/indexer/ ./apps/indexer/
 RUN pnpm --filter @prisma-dids/types build && \
     pnpm --filter @prisma-dids/sdk build && \
     pnpm --filter @prisma-dids/indexer build
