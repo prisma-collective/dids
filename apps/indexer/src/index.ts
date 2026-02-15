@@ -1,4 +1,3 @@
-// Prisma DIDs Indexer — entrypoint
 import { loadConfig } from './config/load-config.js';
 import { getDb, closeDb } from './db/connection.js';
 import { runMigrations } from './db/migrate.js';
