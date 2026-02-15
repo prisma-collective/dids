@@ -212,11 +212,11 @@ interface VCInterfaceConfig {
 
 ---
 
-### P1: Configurable Indexer + DID Config (Week 3-4) - 0/8 Pending
+### P1: Configurable Indexer + DID Config (Week 3-4) - 7/8 Done
 > **Architecture:** Single indexer codebase with config-driven behavior. P1 builds the core + DID config.
 
 **Core Indexer (configurable):**
-- [ ] Indexer configuration system:
+- [x] Indexer configuration system:
   ```typescript
   interface IndexerConfig {
     name: string;                      // "DID Indexer" or "ALJ VC Indexer"
@@ -226,14 +226,14 @@ interface VCInterfaceConfig {
     endpoints: EndpointConfig[];       // Which API routes to enable
   }
   ```
-- [ ] PostgreSQL schema supporting both `did_events` and `vc_events` tables
-- [ ] Generic indexer worker (Blockfrost webhooks/polling for configured labels)
-- [ ] Configurable REST API (endpoints enabled per config)
-- [ ] Remove `apps/api` stub (merged into indexer)
+- [x] PostgreSQL schema supporting both `did_events` and `vc_events` tables
+- [x] Generic indexer worker (Blockfrost webhooks/polling for configured labels)
+- [x] Configurable REST API (endpoints enabled per config)
+- [x] Remove `apps/api` stub (merged into indexer)
 
 **DID Indexer Config (Prisma-operated):**
-- [ ] `configs/did-indexer.ts`: L_DID (199674), `did_events` table, DID endpoints
-- [ ] Wire DID Indexer to DID Dashboard
+- [x] `configs/did-indexer.ts`: L_DID (199674), `did_events` table, DID endpoints
+- [x] Wire DID Indexer to DID Dashboard
 - [ ] Deploy DID Indexer instance to Railway
 
 > **P2b adds:** VC Indexer config for the same codebase (L_VC, `vc_events`, VC endpoints).
@@ -298,15 +298,25 @@ interface VCInterfaceConfig {
 - [ ] **2D.5:** jti hash strategy test: verify revocation check works from any presentation
 - [ ] **2D.6:** Verifier discovery test: resolve issuer DID → find VCIndexer endpoint
 
-### P3: Polish, Deployments & Fork Documentation (Week 7-8) - 0/14 Pending
+### P3: Polish, Deployments & Fork Documentation (Week 7-8) - 15/22 In Progress
 > **Note:** Separate deployments for DID Dashboard (universal) and VC Interface (per-org).
 
 **UI/UX Polish:**
-- [ ] DID Dashboard UI/UX polish
-- [ ] VC Interface UI/UX polish
-- [ ] Wallet error handling refinements
-- [ ] Brazilian Portuguese (pt-BR) language support for DID Dashboard
-- [ ] Brazilian Portuguese (pt-BR) language support for VC Interface
+- [x] DID Dashboard UI/UX polish (Tailwind v4 + shared `packages/ui` components + accessibility)
+- [x] VC Interface UI/UX polish (Tailwind v4 migration, all inline styles → Tailwind, emoji icons → lucide-react SVGs)
+- [x] Wallet error handling refinements (ARIA alerts, i18n error messages)
+- [x] Brazilian Portuguese (pt-BR) language support for DID Dashboard
+- [x] Brazilian Portuguese (pt-BR) language support for VC Interface
+- [x] Spanish (es) language support for DID Dashboard (bonus)
+- [x] Spanish (es) language support for VC Interface
+- [x] Shared component library `packages/ui` (19 components: Button, Input, Badge, Card, Tabs, Modal, ProgressSteps, etc.)
+- [x] VC Interface ThemeProvider integration (org-config.ts themes → CSS variables → Tailwind)
+- [x] Skip-to-content accessibility links in both app layouts
+- [x] Skeleton loading composites (DIDManagerSkeleton, CredentialCardSkeleton, FormSkeleton)
+- [x] Animation polish (animate-scale-in on success/error, animate-fade-in-up on progress steps)
+- [x] Dark scrollbar styling (WebKit + Firefox) and selection color polish
+- [x] Touch target audit: all interactive elements ≥ 44px (Button, Tabs, Modal close, LanguageSwitcher, refresh)
+- [x] Translation completeness verified: 124 keys (Dashboard) + 160 keys (VC Interface) × 3 locales
 
 **Deployments:**
 - [ ] Deploy DID Dashboard to Vercel (prisma-dids.io)
@@ -352,11 +362,11 @@ interface VCInterfaceConfig {
 | P0 Phase 0-B | 13 | 13 | ✅ Done |
 | P0 Phase C-D | 7 | 2 | 🔄 In Progress |
 | **Phase E: VC Mockup** | 7 | 7 | ✅ Done |
-| P1 Configurable Indexer | 8 | 0 | ⏳ Pending |
+| P1 Configurable Indexer | 8 | 7 | 🔄 In Progress |
 | P2a SDK/Schemas/Anchoring | 14 | 0 | ⏳ Pending |
 | P2b VC Integration/Config | 18 | 0 | ⏳ Pending |
-| P3 Polish/Fork Docs | 14 | 0 | ⏳ Pending |
-| **Total** | **84** | **25** | **30%** |
+| P3 Polish/Fork Docs | 22 | 15 | 🔄 In Progress |
+| **Total** | **88** | **41** | **47%** |
 
 > **⚠️ v1.6.2 Architecture Notes:**
 > - **Phase E (DONE):** VC Interface mockup with all 7 components
