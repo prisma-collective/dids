@@ -76,7 +76,7 @@ export function CredentialInbox({
       <div className="max-w-[900px] mx-auto p-4" aria-busy="true" aria-label={t('loadingCredentials')}>
         <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <CredentialCardSkeleton key={i} />
+            <CredentialCardSkeleton key={i} baseDelay={i * 150} />
           ))}
         </div>
       </div>

@@ -19,6 +19,7 @@
   --animate-fade-in-up: fade-in-up 0.3s ease-out;
   --animate-scale-in: scale-in 0.2s ease-out;
   --animate-slide-in-right: slide-in-right 0.3s ease-out;
+  --animate-shimmer: shimmer 1.8s ease-in-out infinite;
 
   @keyframes fade-in {
     from { opacity: 0; }
@@ -35,6 +36,10 @@
   @keyframes slide-in-right {
     from { transform: translateX(100%); }
     to { transform: translateX(0); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
   }
 }
 

@@ -26,6 +26,7 @@ export function NetworkSelector({ network, onChange, disabled }: NetworkSelector
       >
         {networks.map((n) => {
           const isActive = network === n;
+          const isMainnet = n === 'mainnet';
           return (
             <button
               key={n}
@@ -33,7 +34,8 @@ export function NetworkSelector({ network, onChange, disabled }: NetworkSelector
               role="radio"
               aria-checked={isActive}
               onClick={() => onChange(n)}
-              disabled={disabled}
+              disabled={disabled || isMainnet}
+              title={isMainnet ? 'Coming soon' : undefined}
               className={cn(
                 'px-3 py-1.5 text-sm transition-colors',
                 'focus-visible:ring-2 focus-visible:ring-primary outline-none',

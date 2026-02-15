@@ -212,7 +212,7 @@ interface VCInterfaceConfig {
 
 ---
 
-### P1: Configurable Indexer + DID Config (Week 3-4) - 7/8 Done
+### P1: Configurable Indexer + DID Config (Week 3-4) - 8/8 Done ✅
 > **Architecture:** Single indexer codebase with config-driven behavior. P1 builds the core + DID config.
 
 **Core Indexer (configurable):**
@@ -234,7 +234,7 @@ interface VCInterfaceConfig {
 **DID Indexer Config (Prisma-operated):**
 - [x] `configs/did-indexer.ts`: L_DID (199674), `did_events` table, DID endpoints
 - [x] Wire DID Indexer to DID Dashboard
-- [ ] Deploy DID Indexer instance to Railway
+- [x] Deploy DID Indexer instance to Railway
 
 > **P2b adds:** VC Indexer config for the same codebase (L_VC, `vc_events`, VC endpoints).
 
@@ -362,7 +362,7 @@ interface VCInterfaceConfig {
 | P0 Phase 0-B | 13 | 13 | ✅ Done |
 | P0 Phase C-D | 7 | 2 | 🔄 In Progress |
 | **Phase E: VC Mockup** | 7 | 7 | ✅ Done |
-| P1 Configurable Indexer | 8 | 7 | 🔄 In Progress |
+| P1 Configurable Indexer | 8 | 8 | ✅ Done |
 | P2a SDK/Schemas/Anchoring | 14 | 0 | ⏳ Pending |
 | P2b VC Integration/Config | 18 | 0 | ⏳ Pending |
 | P3 Polish/Fork Docs | 22 | 15 | 🔄 In Progress |

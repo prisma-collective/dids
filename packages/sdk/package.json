@@ -27,6 +27,7 @@
     "@prisma-dids/types": "workspace:*",
     "axios": "^1.7.9",
     "bs58": "^6.0.0",
+    "cborg": "^4.5.8",
     "lucid-cardano": "^0.10.7"
   },
   "devDependencies": {
