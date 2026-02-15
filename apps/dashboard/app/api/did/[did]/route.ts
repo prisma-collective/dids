@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { L_DID } from '@prisma-dids/types';
 import type { DIDEvent } from '@prisma-dids/types';
 
 interface DIDEventRecord {
@@ -10,95 +9,15 @@ interface DIDEventRecord {
 }
 
 /**
- * Reconstructs a string that may have been chunked for Cardano metadata.
- * If the value is an array, joins it back into a string.
+ * Proxy to the P1 Indexer API.
+ * Normalizes indexer responses to match the existing contract that didService.ts expects:
+ * - GET /api/did/:did?network=preprod       → { latest: DIDEventRecord | null }
+ * - GET /api/did/:did?network=preprod&history=true → { events: DIDEventRecord[] }
  */
-function unchunkString(value: unknown): string {
-  if (Array.isArray(value)) {
-    return value.join('');
-  }
-  return String(value ?? '');
-}
 
-/**
- * Recursively reconstructs an object from Cardano metadata format,
- * joining any chunked string arrays back into full strings.
- */
-function reconstructFromMetadata(value: unknown): unknown {
-  if (value === '') {
-    return null; // Empty string was used for null in metadata
-  }
-  if (Array.isArray(value)) {
-    // Check if it's a chunked string (array of strings) or actual array
-    if (value.length > 0 && value.every(item => typeof item === 'string')) {
-      // Could be chunked string - join it
-      return value.join('');
-    }
-    return value.map(reconstructFromMetadata);
-  }
-  if (value !== null && typeof value === 'object') {
-    const result: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value)) {
-      result[k] = reconstructFromMetadata(v);
-    }
-    return result;
-  }
-  return value;
-}
-
-async function fetchDIDEventsFromBlockfrost(
-  did: string,
-  apiKey: string,
-  network: 'preprod' | 'mainnet'
-): Promise<DIDEventRecord[]> {
-  const baseUrl = `https://cardano-${network}.blockfrost.io/api/v0`;
-
-  const response = await fetch(
-    `${baseUrl}/metadata/txs/labels/${L_DID}?count=100&order=asc`,
-    {
-      headers: { project_id: apiKey },
-    }
-  );
-
-  if (!response.ok) {
-    if (response.status === 404) {
-      return [];
-    }
-    throw new Error(`Blockfrost API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-
-  // Warn if we hit the 100-event limit
-  if (data.length === 100) {
-    console.warn(`DID ${did} may have more than 100 events; results truncated.`);
-  }
-
-  // Filter for this DID and reconstruct chunked metadata
-  const events = data
-    .filter((tx: any) => {
-      const metadata = tx.json_metadata;
-      // Handle chunked DID strings (arrays need to be joined)
-      const metadataDid = unchunkString(metadata?.id);
-      return metadataDid === did;
-    })
-    .map((tx: any) => ({
-      txHash: tx.tx_hash,
-      // Reconstruct the full event from chunked metadata
-      event: reconstructFromMetadata(tx.json_metadata) as DIDEvent,
-      blockHeight: tx.block_height,
-      timestamp: tx.block_time,
-    }));
-
-  return events;
-}
-
-function getLatestEvent(events: DIDEventRecord[]): DIDEventRecord | null {
-  if (events.length === 0) return null;
-
-  return events.reduce((latest, current) =>
-    current.event.v > latest.event.v ? current : latest
-  );
+function getIndexerUrl(network: string): string | null {
+  const key = `INDEXER_URL_${network.toUpperCase()}`;
+  return process.env[key] ?? null;
 }
 
 export async function GET(
@@ -107,35 +26,86 @@ export async function GET(
 ) {
   const { did } = await params;
   const url = new URL(request.url);
-  const network = (url.searchParams.get('network') || 'preprod') as 'preprod' | 'mainnet';
+  const network = url.searchParams.get('network') || 'preprod';
+  const history = url.searchParams.get('history') === 'true';
 
-  // Get the appropriate Blockfrost key based on network
-  const blockfrostKey = network === 'mainnet'
-    ? process.env.BLOCKFROST_MAINNET_KEY
-    : process.env.BLOCKFROST_PREPROD_KEY;
-
-  if (!blockfrostKey) {
+  const indexerUrl = getIndexerUrl(network);
+  if (!indexerUrl) {
     return NextResponse.json(
-      { error: `Blockfrost API key not configured for ${network}` },
+      { error: `Indexer not configured for ${network}. Set INDEXER_URL_${network.toUpperCase()} env var.` },
       { status: 500 }
     );
   }
 
   try {
-    // Check if we want full history or just latest
-    const history = url.searchParams.get('history') === 'true';
-
-    const events = await fetchDIDEventsFromBlockfrost(did, blockfrostKey, network);
-
     if (history) {
+      // Fetch full history from indexer
+      const res = await fetch(
+        `${indexerUrl}/did/${encodeURIComponent(did)}/history?order=asc&limit=100&includeUnconfirmed=true`,
+        { next: { revalidate: 30 } }
+      );
+
+      if (res.status === 404) {
+        return NextResponse.json({ events: [] });
+      }
+      if (!res.ok) {
+        throw new Error(`Indexer error: ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // Normalize indexer response → { events: DIDEventRecord[] }
+      const events: DIDEventRecord[] = (data.events ?? []).map((e: any) => ({
+        txHash: e.txHash,
+        event: {
+          id: did,
+          ipfs: e.ipfsCid ?? '',
+          action: e.action,
+          v: e.version,
+          prev: e.prevTxHash ?? null,
+          payloadSig: '', // Not stored in indexer DB (only raw_event has it)
+          ts: e.timestamp,
+        } satisfies DIDEvent,
+        blockHeight: e.blockHeight,
+        timestamp: e.timestamp,
+      }));
+
       return NextResponse.json({ events });
     } else {
-      const latest = getLatestEvent(events);
+      // Fetch latest event via history (limit=1, desc) for full DIDEventRecord shape
+      const res = await fetch(
+        `${indexerUrl}/did/${encodeURIComponent(did)}/history?order=desc&limit=1&includeUnconfirmed=true`,
+        { next: { revalidate: 30 } }
+      );
+
+      if (res.status === 404) {
+        return NextResponse.json({ latest: null });
+      }
+      if (!res.ok) {
+        throw new Error(`Indexer error: ${res.status}`);
+      }
+
+      const data = await res.json();
+      const events: DIDEventRecord[] = (data.events ?? []).map((e: any) => ({
+        txHash: e.txHash,
+        event: {
+          id: did,
+          ipfs: e.ipfsCid ?? '',
+          action: e.action,
+          v: e.version,
+          prev: e.prevTxHash ?? null,
+          payloadSig: '',
+          ts: e.timestamp,
+        } satisfies DIDEvent,
+        blockHeight: e.blockHeight,
+        timestamp: e.timestamp,
+      }));
+
+      const latest = events[0] ?? null;
       return NextResponse.json({ latest });
     }
   } catch (error) {
-    console.error('Error fetching DID events:', error);
-
+    console.error('Error proxying to indexer:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to fetch DID events' },
       { status: 500 }
