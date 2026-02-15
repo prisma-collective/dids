@@ -12,7 +12,7 @@ export interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, actions, className }: PageHeaderProps) {
   return (
-    <div className={cn('text-center mb-8', className)}>
+    <div className={cn('text-center mb-6', className)}>
       <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-2">
         {title}
       </h1>

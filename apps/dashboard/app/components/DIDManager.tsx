@@ -155,44 +155,44 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
         </TabList>
 
         <TabPanel value="status">
-          <div className="text-center">
+          <div>
             <h3 className="text-lg font-semibold text-text-primary mb-4">
               {t('yourStatus')}
             </h3>
 
-            <div className="text-left space-y-3 mb-4">
+            <div className="space-y-3">
               {/* DID */}
-              <Card className="p-3">
-                <label className="block text-xs text-text-secondary uppercase mb-1">DID</label>
+              <Card className="p-4">
+                <label className="block text-xs text-text-secondary uppercase tracking-wide mb-1.5">DID</label>
                 <code className="text-sm break-all text-text-primary">{status.did}</code>
               </Card>
 
               {hasExistingDID ? (
                 <>
                   {/* Status */}
-                  <Card className="p-3 flex items-center justify-between">
-                    <label className="text-xs text-text-secondary uppercase">{t('statusLabel')}</label>
+                  <Card className="p-4 flex items-center justify-between">
+                    <label className="text-xs text-text-secondary uppercase tracking-wide">{t('statusLabel')}</label>
                     <Badge variant={isRevoked ? 'error' : 'success'} dot>
                       {isRevoked ? t('revoked') : t('active')}
                     </Badge>
                   </Card>
 
                   {/* Version */}
-                  <Card className="p-3 flex items-center justify-between">
-                    <label className="text-xs text-text-secondary uppercase">{t('version')}</label>
+                  <Card className="p-4 flex items-center justify-between">
+                    <label className="text-xs text-text-secondary uppercase tracking-wide">{t('version')}</label>
                     <code className="text-sm text-text-primary">{status.currentEvent!.event.v}</code>
                   </Card>
 
                   {/* Last Action */}
-                  <Card className="p-3 flex items-center justify-between">
-                    <label className="text-xs text-text-secondary uppercase">{t('lastAction')}</label>
+                  <Card className="p-4 flex items-center justify-between">
+                    <label className="text-xs text-text-secondary uppercase tracking-wide">{t('lastAction')}</label>
                     <code className="text-sm text-text-primary">{status.currentEvent!.event.action}</code>
                   </Card>
 
                   {/* IPFS CID */}
-                  <Card className="p-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs text-text-secondary uppercase">IPFS CID</label>
+                  <Card className="p-4">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs text-text-secondary uppercase tracking-wide">IPFS CID</label>
                       <a
                         href={`https://gateway.pinata.cloud/ipfs/${status.currentEvent!.event.ipfs}`}
                         target="_blank"
@@ -206,9 +206,9 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
                   </Card>
 
                   {/* Last Tx */}
-                  <Card className="p-3">
+                  <Card className="p-4">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs text-text-secondary uppercase">{t('lastTx')}</label>
+                      <label className="text-xs text-text-secondary uppercase tracking-wide">{t('lastTx')}</label>
                       <a
                         href={getExplorerUrl(status.currentEvent!.txHash)}
                         target="_blank"
@@ -235,7 +235,7 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
             </div>
 
             {hasExistingDID && !isRevoked && (
-              <div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
+              <div className="flex flex-col sm:flex-row justify-center gap-3 mt-6">
                 <Button variant="secondary" onClick={() => setActiveTab('update')}>
                   {t('updateDIDButton')}
                 </Button>
@@ -246,19 +246,21 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
             )}
 
             {isRevoked && (
-              <div role="alert" className="mt-4 p-3 bg-error/10 rounded-lg text-error text-sm text-center">
+              <div role="alert" className="mt-6 p-4 bg-error/10 rounded-lg text-error text-sm text-center">
                 {t('revokedMessage')}
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={checkDIDStatus}
-              className="mt-4 text-sm text-text-secondary hover:text-primary transition-colors inline-flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-primary outline-none rounded px-3 py-2.5 min-h-[44px]"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-              {t('refresh')}
-            </button>
+            <div className="flex justify-center mt-2">
+              <button
+                type="button"
+                onClick={checkDIDStatus}
+                className="text-sm text-text-secondary hover:text-primary transition-colors inline-flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-primary outline-none rounded px-3 py-2.5 min-h-[44px]"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                {t('refresh')}
+              </button>
+            </div>
           </div>
         </TabPanel>
 

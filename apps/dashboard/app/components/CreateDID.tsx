@@ -184,12 +184,14 @@ export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
 
   if (state.step === 'error') {
     return (
-      <div className="text-center py-4">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-error/15 mb-3 animate-scale-in">
-          <AlertCircle className="h-6 w-6 text-error" />
+      <div className="py-4">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-error/15 animate-scale-in flex-shrink-0">
+            <AlertCircle className="h-5 w-5 text-error" />
+          </div>
+          <h3 className="text-lg font-semibold text-error">{t('errorTitle')}</h3>
         </div>
-        <h3 className="text-lg font-semibold text-error mb-2">{t('errorTitle')}</h3>
-        <div role="alert" className="text-sm text-error bg-error/10 px-4 py-3 rounded-lg mb-4 max-w-md mx-auto">
+        <div role="alert" className="text-sm text-error bg-error/10 px-4 py-3 rounded-lg mb-4">
           {state.error}
         </div>
         <Button onClick={handleReset}>{t('tryAgain')}</Button>
@@ -199,19 +201,21 @@ export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
 
   if (state.step === 'complete') {
     return (
-      <div className="text-center py-4">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-success/15 mb-3 animate-scale-in">
-          <CheckCircle className="h-6 w-6 text-success" />
+      <div className="py-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-success/15 animate-scale-in flex-shrink-0">
+            <CheckCircle className="h-5 w-5 text-success" />
+          </div>
+          <h3 className="text-lg font-semibold text-success">{t('successTitle')}</h3>
         </div>
-        <h3 className="text-lg font-semibold text-success mb-4">{t('successTitle')}</h3>
 
-        <div className="text-left space-y-3 max-w-lg mx-auto mb-6">
-          <Card className="p-3">
+        <div className="space-y-3 mb-6">
+          <Card className="p-4">
             <label className="block text-xs text-text-secondary uppercase mb-1">DID</label>
             <code className="text-sm break-all text-text-primary">{state.did}</code>
           </Card>
 
-          <Card className="p-3">
+          <Card className="p-4">
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs text-text-secondary uppercase">IPFS CID</label>
               <a
@@ -227,7 +231,7 @@ export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
           </Card>
 
           {state.txHash && (
-            <Card className="p-3">
+            <Card className="p-4">
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs text-text-secondary uppercase">{t('transaction')}</label>
                 <a
@@ -252,20 +256,22 @@ export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
   const isProcessing = state.step !== 'idle';
 
   return (
-    <div className="text-center py-4">
-      <h3 className="text-xl font-semibold text-text-primary mb-2">{t('title')}</h3>
-      <p className="text-text-secondary mb-6 max-w-md mx-auto">{t('description')}</p>
+    <div className="py-4">
+      <Card className="p-5">
+        <h3 className="text-xl font-semibold text-text-primary mb-2">{t('title')}</h3>
+        <p className="text-text-secondary mb-6">{t('description')}</p>
 
-      {isProcessing ? (
-        <div className="max-w-sm mx-auto">
-          <ProgressSteps steps={progressSteps} currentStep={state.step} />
-          {state.did && (
-            <p className="mt-3 text-xs text-text-muted break-all">DID: {state.did}</p>
-          )}
-        </div>
-      ) : (
-        <Button size="lg" onClick={handleCreate}>{t('createButton')}</Button>
-      )}
+        {isProcessing ? (
+          <div>
+            <ProgressSteps steps={progressSteps} currentStep={state.step} />
+            {state.did && (
+              <p className="mt-3 text-xs text-text-muted break-all">DID: {state.did}</p>
+            )}
+          </div>
+        ) : (
+          <Button size="lg" onClick={handleCreate}>{t('createButton')}</Button>
+        )}
+      </Card>
     </div>
   );
 }

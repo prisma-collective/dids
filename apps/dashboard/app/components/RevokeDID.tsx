@@ -189,12 +189,14 @@ export function RevokeDID({ wallet, network, currentDID, onComplete }: RevokeDID
 
   if (state.step === 'error') {
     return (
-      <div className="text-center py-4">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-error/15 mb-3 animate-scale-in">
-          <AlertCircle className="h-6 w-6 text-error" />
+      <div className="py-4">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-error/15 animate-scale-in flex-shrink-0">
+            <AlertCircle className="h-5 w-5 text-error" />
+          </div>
+          <h3 className="text-lg font-semibold text-error">{t('errorTitle')}</h3>
         </div>
-        <h3 className="text-lg font-semibold text-error mb-2">{t('errorTitle')}</h3>
-        <div role="alert" className="text-sm text-error bg-error/10 px-4 py-3 rounded-lg mb-4 max-w-md mx-auto">
+        <div role="alert" className="text-sm text-error bg-error/10 px-4 py-3 rounded-lg mb-4">
           {state.error}
         </div>
         <Button onClick={handleReset}>{t('tryAgain')}</Button>
@@ -204,26 +206,28 @@ export function RevokeDID({ wallet, network, currentDID, onComplete }: RevokeDID
 
   if (state.step === 'complete') {
     return (
-      <div className="text-center py-4">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-warning/15 mb-3 animate-scale-in">
-          <AlertTriangle className="h-6 w-6 text-warning" />
+      <div className="py-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-warning/15 animate-scale-in flex-shrink-0">
+            <AlertTriangle className="h-5 w-5 text-warning" />
+          </div>
+          <h3 className="text-lg font-semibold text-warning">{t('successTitle')}</h3>
         </div>
-        <h3 className="text-lg font-semibold text-warning mb-4">{t('successTitle')}</h3>
 
-        <div className="text-left space-y-3 max-w-lg mx-auto mb-6">
-          <Card className="p-3">
+        <div className="space-y-3 mb-6">
+          <Card className="p-4">
             <label className="block text-xs text-text-secondary uppercase mb-1">DID</label>
             <code className="text-sm break-all text-text-primary">{did}</code>
           </Card>
 
-          <Card className="p-3 flex items-center justify-between">
+          <Card className="p-4 flex items-center justify-between">
             <label className="text-xs text-text-secondary uppercase">{t('finalVersion')}</label>
             <code className="text-sm text-text-primary">
               {state.currentEvent ? state.currentEvent.event.v + 1 : 'N/A'}
             </code>
           </Card>
 
-          <Card className="p-3">
+          <Card className="p-4">
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs text-text-secondary uppercase">{t('revocationCID')}</label>
               <a
@@ -239,7 +243,7 @@ export function RevokeDID({ wallet, network, currentDID, onComplete }: RevokeDID
           </Card>
 
           {state.txHash && (
-            <Card className="p-3">
+            <Card className="p-4">
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs text-text-secondary uppercase">{t('transaction')}</label>
                 <a
@@ -265,30 +269,30 @@ export function RevokeDID({ wallet, network, currentDID, onComplete }: RevokeDID
   const isProcessing = !['idle', 'confirm'].includes(state.step);
 
   return (
-    <div className="text-center py-4">
-      <h3 className="text-xl font-semibold text-text-primary mb-2">{t('title')}</h3>
-      <p className="text-warning text-sm mb-6 max-w-md mx-auto">{t('description')}</p>
+    <div className="py-4">
+      <Card className="p-5">
+        <h3 className="text-xl font-semibold text-text-primary mb-2">{t('title')}</h3>
+        <p className="text-warning text-sm mb-6">{t('description')}</p>
 
-      <div className="text-left max-w-md mx-auto mb-6">
-        <label htmlFor="revoke-did-input" className="block text-sm text-text-secondary mb-1.5">
-          {t('didToRevoke')}
-        </label>
-        <Input
-          id="revoke-did-input"
-          value={did}
-          onChange={(e) => setDid(e.target.value)}
-          placeholder="did:cardano:stake_test1..."
-          disabled={isProcessing}
-        />
-      </div>
-
-      {isProcessing ? (
-        <div className="max-w-sm mx-auto">
-          <ProgressSteps steps={progressSteps} currentStep={state.step} />
+        <div className="mb-6">
+          <label htmlFor="revoke-did-input" className="block text-sm text-text-secondary mb-1.5">
+            {t('didToRevoke')}
+          </label>
+          <Input
+            id="revoke-did-input"
+            value={did}
+            onChange={(e) => setDid(e.target.value)}
+            placeholder="did:cardano:stake_test1..."
+            disabled={isProcessing}
+          />
         </div>
-      ) : (
-        <Button variant="danger" onClick={handleRevoke}>{t('revokeButton')}</Button>
-      )}
+
+        {isProcessing ? (
+          <ProgressSteps steps={progressSteps} currentStep={state.step} />
+        ) : (
+          <Button variant="danger" onClick={handleRevoke}>{t('revokeButton')}</Button>
+        )}
+      </Card>
 
       {/* Confirmation Modal */}
       <Modal

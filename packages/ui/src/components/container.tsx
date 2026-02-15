@@ -18,7 +18,7 @@ const sizeStyles: Record<string, string> = {
 
 export function Container({ size = 'default', children, className }: ContainerProps) {
   return (
-    <div className={cn('mx-auto px-4 sm:px-6 lg:px-8', sizeStyles[size], className)}>
+    <div className={cn('w-full mx-auto px-4 sm:px-6 lg:px-8', sizeStyles[size], className)}>
       {children}
     </div>
   );

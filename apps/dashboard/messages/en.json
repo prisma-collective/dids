@@ -119,6 +119,33 @@
       "submittingTx": "Submitting transaction"
     }
   },
+  "help": {
+    "title": "How does this work?",
+    "whatIsDID": {
+      "q": "What is a DID?",
+      "a": "A DID (Decentralized Identifier) is a digital ID that you fully own and control — no company or government can take it away. Think of it like a username that lives on the blockchain."
+    },
+    "whyNeedOne": {
+      "q": "Why would I need one?",
+      "a": "A DID lets you prove your identity online without relying on centralized services. It can be used for signing documents, logging into apps, or proving ownership of credentials."
+    },
+    "howWallet": {
+      "q": "What's a wallet?",
+      "a": "A Cardano wallet (like Eternl, Nami, or Lace) is a browser extension that stores your blockchain keys. You'll need one to create and manage your DID. It's free to install."
+    },
+    "howCreate": {
+      "q": "How do I create a DID?",
+      "a": "Connect your wallet, go to the Create tab, and click \"Create DID\". The app will generate a DID document, store it on IPFS (decentralized storage), and record it on the Cardano blockchain. You'll be asked to sign a transaction."
+    },
+    "howUpdate": {
+      "q": "Can I update my DID?",
+      "a": "Yes. The Update tab lets you change your DID document — for example, adding a service endpoint (a URL where others can reach you). Each update creates a new version on-chain."
+    },
+    "howRevoke": {
+      "q": "What does revoking mean?",
+      "a": "Revoking permanently deactivates your DID. Do this only if your keys are compromised or you no longer need the identity. This action cannot be undone."
+    }
+  },
   "revokeDID": {
     "title": "Revoke DID",
     "description": "Permanently revoke a DID. This cannot be undone.",

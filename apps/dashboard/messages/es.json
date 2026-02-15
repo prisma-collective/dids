@@ -119,6 +119,33 @@
       "submittingTx": "Enviando transacción"
     }
   },
+  "help": {
+    "title": "¿Cómo funciona?",
+    "whatIsDID": {
+      "q": "¿Qué es un DID?",
+      "a": "Un DID (Identificador Descentralizado) es una identidad digital que tú controlas completamente — ninguna empresa o gobierno puede quitártela. Piensa en él como un nombre de usuario que vive en la blockchain."
+    },
+    "whyNeedOne": {
+      "q": "¿Por qué necesitaría uno?",
+      "a": "Un DID te permite demostrar tu identidad en línea sin depender de servicios centralizados. Puede usarse para firmar documentos, iniciar sesión en apps o comprobar la posesión de credenciales."
+    },
+    "howWallet": {
+      "q": "¿Qué es una billetera?",
+      "a": "Una billetera Cardano (como Eternl, Nami o Lace) es una extensión de navegador que almacena tus claves blockchain. Necesitarás una para crear y gestionar tu DID. Es gratis de instalar."
+    },
+    "howCreate": {
+      "q": "¿Cómo creo un DID?",
+      "a": "Conecta tu billetera, ve a la pestaña Crear y haz clic en \"Crear DID\". La app generará un documento DID, lo almacenará en IPFS (almacenamiento descentralizado) y lo registrará en la blockchain de Cardano. Se te pedirá firmar una transacción."
+    },
+    "howUpdate": {
+      "q": "¿Puedo actualizar mi DID?",
+      "a": "Sí. La pestaña Actualizar te permite cambiar tu documento DID — por ejemplo, agregar un endpoint de servicio (una URL donde otros pueden contactarte). Cada actualización crea una nueva versión on-chain."
+    },
+    "howRevoke": {
+      "q": "¿Qué significa revocar?",
+      "a": "Revocar desactiva permanentemente tu DID. Hazlo solo si tus claves fueron comprometidas o ya no necesitas la identidad. Esta acción no se puede deshacer."
+    }
+  },
   "revokeDID": {
     "title": "Revocar DID",
     "description": "Revocar permanentemente un DID. Esta acción no se puede deshacer.",

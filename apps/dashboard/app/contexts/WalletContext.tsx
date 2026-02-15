@@ -1,6 +1,8 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
+
+const STORAGE_KEY = 'prisma-dids:wallet';
 
 export interface WalletInfo {
   name: string;
@@ -59,6 +61,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [connectedWallet, setConnectedWallet] = useState<ConnectedWallet | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const autoReconnectAttempted = useRef(false);
 
   // Scan for available wallets
   useEffect(() => {
@@ -139,6 +142,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
       console.log('[WalletContext] Wallet connected:', walletKey);
 
+      // Persist wallet key for auto-reconnect
+      try { localStorage.setItem(STORAGE_KEY, walletKey); } catch {}
+
       setConnectedWallet({
         info: {
           name: wallet.name || walletKey,
@@ -151,13 +157,41 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const message = err instanceof Error ? err.message : 'Failed to connect wallet';
       setError(message);
       setConnectedWallet(null);
+      // Clear saved wallet if reconnect fails
+      try { localStorage.removeItem(STORAGE_KEY); } catch {}
     } finally {
       setIsConnecting(false);
     }
   }, []);
 
+  // Auto-reconnect from localStorage on mount
+  useEffect(() => {
+    if (autoReconnectAttempted.current) return;
+    autoReconnectAttempted.current = true;
+
+    let saved: string | null = null;
+    try { saved = localStorage.getItem(STORAGE_KEY); } catch {}
+    if (!saved) return;
+
+    // Wait for wallet extensions to inject (they load async)
+    // Re-read localStorage each attempt — if user disconnected it'll be cleared
+    const tryReconnect = () => {
+      const key = localStorage.getItem(STORAGE_KEY);
+      if (!key) return;
+      if (window.cardano?.[key]) {
+        connect(key);
+      }
+    };
+
+    // Try immediately, then retry after wallets inject
+    tryReconnect();
+    const timeout = setTimeout(tryReconnect, 1500);
+    return () => clearTimeout(timeout);
+  }, [connect]);
+
   const disconnect = useCallback(() => {
     console.log('[WalletContext] Wallet disconnected');
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
     setConnectedWallet(null);
     setError(null);
   }, []);

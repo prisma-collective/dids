@@ -298,7 +298,7 @@ interface VCInterfaceConfig {
 - [ ] **2D.5:** jti hash strategy test: verify revocation check works from any presentation
 - [ ] **2D.6:** Verifier discovery test: resolve issuer DID → find VCIndexer endpoint
 
-### P3: Polish, Deployments & Fork Documentation (Week 7-8) - 15/22 In Progress
+### P3: Polish, Deployments & Fork Documentation (Week 7-8) - 19/26 In Progress
 > **Note:** Separate deployments for DID Dashboard (universal) and VC Interface (per-org).
 
 **UI/UX Polish:**
@@ -317,6 +317,10 @@ interface VCInterfaceConfig {
 - [x] Dark scrollbar styling (WebKit + Firefox) and selection color polish
 - [x] Touch target audit: all interactive elements ≥ 44px (Button, Tabs, Modal close, LanguageSwitcher, refresh)
 - [x] Translation completeness verified: 124 keys (Dashboard) + 160 keys (VC Interface) × 3 locales
+- [x] Wallet connection persistence (localStorage auto-reconnect with race condition prevention)
+- [x] Consistent container width (Container `max-w-4xl` + `w-full`, Navbar matched)
+- [x] Tailwind v4 monorepo `@source` fix (both apps scan `packages/ui` for class generation)
+- [x] Help modal with beginner-friendly FAQ (6 Q&As, 3 locales, `?` button in navbar)
 
 **Deployments:**
 - [ ] Deploy DID Dashboard to Vercel (prisma-dids.io)
@@ -365,8 +369,8 @@ interface VCInterfaceConfig {
 | P1 Configurable Indexer | 8 | 8 | ✅ Done |
 | P2a SDK/Schemas/Anchoring | 14 | 0 | ⏳ Pending |
 | P2b VC Integration/Config | 18 | 0 | ⏳ Pending |
-| P3 Polish/Fork Docs | 22 | 15 | 🔄 In Progress |
-| **Total** | **88** | **41** | **47%** |
+| P3 Polish/Fork Docs | 26 | 19 | 🔄 In Progress |
+| **Total** | **92** | **45** | **49%** |
 
 > **⚠️ v1.6.2 Architecture Notes:**
 > - **Phase E (DONE):** VC Interface mockup with all 7 components

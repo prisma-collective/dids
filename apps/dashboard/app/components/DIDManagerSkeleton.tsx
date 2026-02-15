@@ -12,38 +12,38 @@ export function DIDManagerSkeleton() {
       </div>
 
       {/* Status heading */}
-      <div className="text-center mb-4">
-        <Skeleton className="h-5 w-36 mx-auto rounded" delay={150} />
+      <div className="mb-4">
+        <Skeleton className="h-5 w-36 rounded" delay={150} />
       </div>
 
       {/* Status cards — mimics the real Card stack */}
-      <div className="text-left space-y-3 max-w-lg mx-auto">
+      <div className="space-y-3">
         {/* DID card — label + long code */}
-        <Card className="p-3 space-y-2">
+        <Card className="p-4 space-y-2">
           <Skeleton className="h-3 w-6 rounded" delay={200} />
           <Skeleton className="h-4 w-full rounded" delay={250} />
         </Card>
 
         {/* Status row — label + badge pill */}
-        <Card className="p-3 flex items-center justify-between">
+        <Card className="p-4 flex items-center justify-between">
           <Skeleton className="h-3 w-12 rounded" delay={300} />
           <Skeleton className="h-5 w-16 rounded-full" delay={350} />
         </Card>
 
         {/* Version row */}
-        <Card className="p-3 flex items-center justify-between">
+        <Card className="p-4 flex items-center justify-between">
           <Skeleton className="h-3 w-14 rounded" delay={400} />
           <Skeleton className="h-4 w-6 rounded" delay={450} />
         </Card>
 
         {/* Last Action row */}
-        <Card className="p-3 flex items-center justify-between">
+        <Card className="p-4 flex items-center justify-between">
           <Skeleton className="h-3 w-20 rounded" delay={500} />
           <Skeleton className="h-4 w-14 rounded" delay={550} />
         </Card>
 
         {/* IPFS CID card — label + link + long code */}
-        <Card className="p-3 space-y-2">
+        <Card className="p-4 space-y-2">
           <div className="flex items-center justify-between">
             <Skeleton className="h-3 w-16 rounded" delay={600} />
             <Skeleton className="h-3 w-10 rounded" delay={650} />
@@ -52,7 +52,7 @@ export function DIDManagerSkeleton() {
         </Card>
 
         {/* Last Tx card */}
-        <Card className="p-3 flex items-center justify-between">
+        <Card className="p-4 flex items-center justify-between">
           <Skeleton className="h-3 w-14 rounded" delay={750} />
           <Skeleton className="h-4 w-44 rounded" delay={800} />
         </Card>

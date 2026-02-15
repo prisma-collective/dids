@@ -15,7 +15,8 @@ import {
   LanguageSwitcher,
   Button,
 } from '@prisma-dids/ui';
-import { Check } from 'lucide-react';
+import { Check, HelpCircle } from 'lucide-react';
+import { HelpModal } from './HelpModal';
 
 export function Dashboard() {
   const { connectedWallet } = useWallet();
@@ -24,6 +25,7 @@ export function Dashboard() {
   const [network, setNetwork] = useState<Network>(
     (process.env.NEXT_PUBLIC_DEFAULT_NETWORK as Network) || 'preprod'
   );
+  const [helpOpen, setHelpOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-text-primary">
@@ -36,20 +38,29 @@ export function Dashboard() {
         links={[]}
         actions={
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setHelpOpen(true)}
+              aria-label={t('help.title')}
+              className="p-2 rounded-lg text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors focus-visible:ring-2 focus-visible:ring-primary outline-none"
+            >
+              <HelpCircle className="h-5 w-5" />
+            </button>
             <NetworkBadge network={network} />
             <LanguageSwitcher locale={locale} />
           </div>
         }
       />
 
-      <Container size="wide" className="flex-1 py-6 sm:py-8">
+      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
+
+      <Container className="flex-1 py-6 sm:py-8">
         <PageHeader
           title={t('dashboard.title')}
           subtitle={t('dashboard.subtitle')}
         />
 
         {/* Controls bar */}
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 p-4 bg-surface rounded-xl border border-border">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 p-4 sm:p-5 bg-surface rounded-xl border border-border">
           <NetworkSelector
             network={network}
             onChange={setNetwork}
@@ -59,7 +70,7 @@ export function Dashboard() {
         </div>
 
         {/* Main content */}
-        <main id="main-content" className="p-4 sm:p-6 bg-surface rounded-xl border border-border">
+        <main id="main-content" className="min-h-[360px] p-4 sm:p-6 bg-surface rounded-xl border border-border">
           {connectedWallet ? (
             <DIDManager wallet={connectedWallet} network={network} />
           ) : (

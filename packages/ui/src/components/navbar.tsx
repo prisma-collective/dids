@@ -55,7 +55,7 @@ export function Navbar({ brand, links, actions, renderLink, className }: NavbarP
         className,
       )}
     >
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center gap-3 font-semibold text-text-primary">
           {brand}
