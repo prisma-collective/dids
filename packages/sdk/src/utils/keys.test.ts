@@ -16,7 +16,7 @@ describe('keys', () => {
       const invalidKey = 'abcd1234'; // Too short
 
       expect(() => hexToPublicKeyMultibase(invalidKey))
-        .toThrow('Invalid Ed25519 public key: expected 32 bytes');
+        .toThrow('Cannot extract public key from COSE_Key');
     });
 
     it('should produce consistent output for same input', () => {

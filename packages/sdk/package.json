@@ -22,6 +22,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "vitest src",
+    "test:coverage": "vitest run src --coverage",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
