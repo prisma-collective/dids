@@ -100,6 +100,7 @@ describe('vc-processor', () => {
       const reconstructed = makeVCEventPayload();
       const processedResult: ProcessedResult = {
         valid: true,
+        validationError: null,
         verifyResult: { valid: true, signerStakeAddress: ISSUER_STAKE },
       };
 
@@ -127,6 +128,7 @@ describe('vc-processor', () => {
       });
       const processedResult: ProcessedResult = {
         valid: true,
+        validationError: null,
         verifyResult: { valid: true, signerStakeAddress: 'stake_test1uzvalidator' },
       };
 
@@ -144,6 +146,7 @@ describe('vc-processor', () => {
       });
       const processedResult: ProcessedResult = {
         valid: true,
+        validationError: null,
         verifyResult: { valid: true, signerStakeAddress: ISSUER_STAKE },
       };
 
@@ -158,6 +161,7 @@ describe('vc-processor', () => {
       const reconstructed = makeVCEventPayload();
       const processedResult: ProcessedResult = {
         valid: true,
+        validationError: null,
         verifyResult: { valid: true, signerStakeAddress: ISSUER_STAKE },
       };
 
@@ -186,6 +190,7 @@ describe('vc-processor', () => {
       const reconstructed = makeVCEventPayload();
       const processedResult: ProcessedResult = {
         valid: true,
+        validationError: null,
         verifyResult: { valid: true, signerStakeAddress: ISSUER_STAKE },
       };
 
@@ -198,6 +203,7 @@ describe('vc-processor', () => {
       const reconstructed = makeVCEventPayload();
       const processedResult: ProcessedResult = {
         valid: true,
+        validationError: null,
         verifyResult: { valid: true, signerStakeAddress: ISSUER_STAKE },
       };
 
