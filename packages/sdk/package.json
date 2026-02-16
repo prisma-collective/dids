@@ -12,6 +12,10 @@
     "./browser": {
       "types": "./dist/browser.d.ts",
       "default": "./dist/browser.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
     }
   },
   "scripts": {
@@ -24,6 +28,7 @@
     "@emurgo/cardano-serialization-lib-browser": "^15.0.3",
     "@emurgo/cardano-serialization-lib-nodejs": "^15.0.3",
     "@noble/ed25519": "^3.0.0",
+    "@prisma-dids/schemas": "workspace:*",
     "@prisma-dids/types": "workspace:*",
     "axios": "^1.7.9",
     "bs58": "^6.0.0",

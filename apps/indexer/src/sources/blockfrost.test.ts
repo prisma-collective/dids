@@ -71,6 +71,7 @@ describe('BlockfrostSource', () => {
             block_height: 100,
             block: 'block_hash_1',
             block_time: 1700000000,
+            index: 3,
           }),
       });
 
@@ -78,6 +79,7 @@ describe('BlockfrostSource', () => {
       expect(events).toHaveLength(1);
       expect(events[0]).toEqual({
         txHash: 'tx_1',
+        txIndex: 3,
         blockHeight: 100,
         blockHash: 'block_hash_1',
         blockTime: 1700000000,

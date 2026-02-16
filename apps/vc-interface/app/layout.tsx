@@ -4,7 +4,9 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import { ThemeProvider, Footer } from '@prisma-dids/ui';
 import { Navigation } from '@/components/Navigation';
+import { WalletProvider } from '@/contexts/WalletContext';
 import { defaultConfig } from '@/config/org-config';
+import { config } from '@/config/resolve-config';
 
 export const metadata: Metadata = {
   title: `${defaultConfig.ORG_NAME} - VC Interface`,
@@ -31,18 +33,20 @@ export default async function RootLayout({
         </a>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ThemeProvider theme={defaultConfig.THEME}>
-            <Navigation config={defaultConfig} />
-            <main id="main-content" className="flex-1 py-8 px-4">
-              {children}
-            </main>
-            <Footer
-              network={defaultConfig.NETWORK}
-              extra={
-                <p className="mt-1">
-                  VC Indexer: <code className="text-xs">{defaultConfig.INDEXER_ENDPOINT}</code>
-                </p>
-              }
-            />
+            <WalletProvider>
+              <Navigation config={config} />
+              <main id="main-content" className="flex-1 py-8 px-4">
+                {children}
+              </main>
+              <Footer
+                network={config.NETWORK}
+                extra={
+                  <p className="mt-1">
+                    VC Indexer: <code className="text-xs">{config.INDEXER_ENDPOINT}</code>
+                  </p>
+                }
+              />
+            </WalletProvider>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

@@ -70,5 +70,60 @@ describe('did', () => {
 
       expect(doc.service).toEqual([]);
     });
+
+    it('should include VCIndexer service when vcIndexerEndpoint provided', () => {
+      const params = {
+        did: 'did:cardano:stake_test1test',
+        publicKeyHex: '4cb5abf6ad79fbf5abbccafcc269d85cd2651ed4b885b5869f241aedf0a5ba29',
+        vcIndexerEndpoint: 'https://vc-indexer.example.com',
+      };
+
+      const doc = generateDIDDocument(params);
+
+      expect(doc.service).toHaveLength(1);
+      const svc = doc.service?.[0];
+      expect(svc!.id).toBe('did:cardano:stake_test1test#vc-indexer');
+      expect(svc!.type).toBe('VCIndexer');
+      expect(svc!.serviceEndpoint).toBe('https://vc-indexer.example.com');
+    });
+
+    it('should include both services when serviceEndpoint and vcIndexerEndpoint provided', () => {
+      const params = {
+        did: 'did:cardano:stake_test1test',
+        publicKeyHex: '4cb5abf6ad79fbf5abbccafcc269d85cd2651ed4b885b5869f241aedf0a5ba29',
+        serviceEndpoint: 'https://example.com/api',
+        vcIndexerEndpoint: 'https://vc-indexer.example.com',
+      };
+
+      const doc = generateDIDDocument(params);
+
+      expect(doc.service).toHaveLength(2);
+      expect(doc.service?.[0]!.id).toBe('did:cardano:stake_test1test#prisma-api');
+      expect(doc.service?.[0]!.type).toBe('PrismaContributionService');
+      expect(doc.service?.[1]!.id).toBe('did:cardano:stake_test1test#vc-indexer');
+      expect(doc.service?.[1]!.type).toBe('VCIndexer');
+    });
+
+    it('should use explicit services array over shorthand params', () => {
+      const params = {
+        did: 'did:cardano:stake_test1test',
+        publicKeyHex: '4cb5abf6ad79fbf5abbccafcc269d85cd2651ed4b885b5869f241aedf0a5ba29',
+        serviceEndpoint: 'https://should-be-ignored.com',
+        vcIndexerEndpoint: 'https://also-ignored.com',
+        services: [
+          {
+            id: 'did:cardano:stake_test1test#custom',
+            type: 'CustomService',
+            serviceEndpoint: 'https://custom.example.com',
+          },
+        ],
+      };
+
+      const doc = generateDIDDocument(params);
+
+      expect(doc.service).toHaveLength(1);
+      expect(doc.service?.[0]!.type).toBe('CustomService');
+      expect(doc.service?.[0]!.serviceEndpoint).toBe('https://custom.example.com');
+    });
   });
 });

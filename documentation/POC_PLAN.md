@@ -238,65 +238,65 @@ interface VCInterfaceConfig {
 
 > **P2b adds:** VC Indexer config for the same codebase (L_VC, `vc_events`, VC endpoints).
 
-### P2a: SDK VC & Anchoring (Week 5) - 0/14 Pending
+### P2a: SDK VC & Anchoring (Week 5) - 14/14 Done
 
 **Credential Schemas Package (`packages/schemas`):**
 > **Purpose:** Extensible credential type definitions that both VC Interface and VC Indexer depend on.
 
-- [ ] **2A.0a:** Create `packages/schemas` package structure
-- [ ] **2A.0b:** Base credential schema types (Zod) - extensible by forkers
-- [ ] **2A.0c:** `ContributionCredential` schema (claims: projectId, contributionType, hours, etc.)
-- [ ] **2A.0d:** Schema registry pattern for custom credential types
+- [x] **2A.0a:** Create `packages/schemas` package structure
+- [x] **2A.0b:** Base credential schema types (Zod) - extensible by forkers
+- [x] **2A.0c:** `ContributionCredential` schema (claims: projectId, contributionType, hours, etc.)
+- [x] **2A.0d:** Schema registry pattern for custom credential types
 
 **SDK VC Functions:**
-- [ ] **2A.1:** `issueSDJwtVC()` - Issue SD-JWT VC with selective disclosure
-- [ ] **2A.2:** `createPresentation()` - Create verifiable presentation
-- [ ] **2A.3:** `verifyPresentation()` - Verify presentation signature + revocation
-- [ ] **2A.4:** `getDisclosableClaims()` - Get list of disclosable claims from VC
+- [x] **2A.1:** `issueSDJwtVC()` - Issue SD-JWT VC with selective disclosure
+- [x] **2A.2:** `createPresentation()` - Create verifiable presentation
+- [x] **2A.3:** `verifyPresentation()` - Verify presentation signature + revocation
+- [x] **2A.4:** `getDisclosableClaims()` - Get list of disclosable claims from VC
 
 **VC Revocation:**
-- [ ] **2A.5:** `revokeVC()` - Submit revocation event on-chain
-- [ ] **2A.6:** `checkRevocationStatus()` - Query indexer for VC status
+- [x] **2A.5:** `revokeVC()` - Submit revocation event on-chain
+- [x] **2A.6:** `checkRevocationStatus()` - Query indexer for VC status
 
 **VC Anchoring:**
-- [ ] **2B.1:** VC anchor schema (jti-based vcHash)
-- [ ] **2B.2:** VC issuance anchor builder
-- [ ] **2B.3:** VC anchor validation
-- [ ] **2B.4:** VC anchor provider interface
+- [x] **2B.1:** VC anchor schema (jti-based vcHash)
+- [x] **2B.2:** VC issuance anchor builder
+- [x] **2B.3:** VC anchor validation
+- [x] **2B.4:** VC anchor provider interface
 
-### P2b: VC Interface Integration & VC Indexer Config (Week 6) - 0/18 Pending
+### P2b: VC Interface Integration & VC Indexer Config (Week 6) - 17/18 In Progress
 > **Architecture:** VC Indexer = same indexer codebase from P1 + VC-specific config. Forkers deploy their own instance.
 
 **Wire VC Interface to SDK (mockup → functional):**
-- [ ] **2C.1:** Connect IssuanceForm to `issueSDJwtVC()` from SDK
-- [ ] **2C.2:** Connect CredentialInbox to holder's VC list (via VC Indexer)
-- [ ] **2C.3:** Connect SelectiveDisclosure to `createPresentation()`
-- [ ] **2C.4:** Connect RevocationUI to `revokeVC()`
-- [ ] **2C.5:** Add VCIndexer service endpoint to issuer DID Documents
+- [x] **2C.1:** Connect IssuanceForm to `issueSDJwtVC()` from SDK
+- [x] **2C.2:** Connect CredentialInbox to holder's VC list (via VC Indexer)
+- [x] **2C.3:** Connect SelectiveDisclosure to `createPresentation()`
+- [x] **2C.4:** Connect RevocationUI to `revokeVC()`
+- [x] **2C.5:** Add VCIndexer service endpoint to issuer DID Documents
 
 **VC Indexer Config (uses same indexer from P1):**
-- [ ] **2C.6:** `configs/vc-indexer.ts`: L_VC (199675), `vc_events` table, VC endpoints
-- [ ] **2C.7:** VC-specific endpoints (enabled via config):
+- [x] **2C.6:** `configs/vc-indexer.ts`: L_VC (199675), `vc_events` table, VC endpoints
+- [x] **2C.7:** VC-specific endpoints (enabled via config):
   - `GET /vc/:vcHash` → VC anchor events (issue, validate, revoke)
   - `GET /vc/:vcHash/status` → Current status (active/revoked)
   - `GET /issuer/:did/credentials` → All VCs issued by DID
   - `GET /holder/:did/credentials` → All VCs held by DID
   - `GET /schemas` → Supported credential schemas
-- [ ] **2C.8:** Schema validation using `packages/schemas` for VC events
+- [x] **2C.8:** Schema validation using `packages/schemas` for VC events
 
 **Forkability Infrastructure:**
-- [ ] **2C.9:** `.env.example` for vc-interface (ORG_NAME, INDEXER_ENDPOINT, etc.)
-- [ ] **2C.10:** `.env.example` for indexer (DATABASE_URL, BLOCKFROST_KEY, LABELS, etc.)
-- [ ] **2C.11:** Example fork config: `configs/alj-vc-indexer.ts` (ALJ pilot)
+- [x] **2C.9:** `.env.example` for vc-interface (ORG_NAME, INDEXER_ENDPOINT, etc.)
+- [x] **2C.10:** `.env.example` for indexer (DATABASE_URL, BLOCKFROST_KEY, LABELS, etc.)
+- [x] **2C.11:** Example fork config: `configs/alj-vc-indexer.ts` (ALJ pilot)
 - [ ] **2C.12:** Deploy ALJ VC Indexer instance (same codebase, ALJ config)
 
 **Testing:**
-- [ ] **2D.1:** Unit tests for SDK VC functions
-- [ ] **2D.2:** E2E test: issue → present → verify flow
-- [ ] **2D.3:** Revocation test suite
-- [ ] **2D.4:** Integration tests (SDK + Indexer)
-- [ ] **2D.5:** jti hash strategy test: verify revocation check works from any presentation
-- [ ] **2D.6:** Verifier discovery test: resolve issuer DID → find VCIndexer endpoint
+- [x] **2D.1:** Unit tests for SDK VC functions
+- [x] **2D.2:** E2E test: issue → present → verify flow
+- [x] **2D.3:** Revocation test suite
+- [x] **2D.4:** Integration tests (SDK + Indexer)
+- [x] **2D.5:** jti hash strategy test: verify revocation check works from any presentation
+- [x] **2D.6:** Verifier discovery test: resolve issuer DID → find VCIndexer endpoint
 
 ### P3: Polish, Deployments & Fork Documentation (Week 7-8) - 19/26 In Progress
 > **Note:** Separate deployments for DID Dashboard (universal) and VC Interface (per-org).
@@ -367,10 +367,10 @@ interface VCInterfaceConfig {
 | P0 Phase C-D | 7 | 2 | 🔄 In Progress |
 | **Phase E: VC Mockup** | 7 | 7 | ✅ Done |
 | P1 Configurable Indexer | 8 | 8 | ✅ Done |
-| P2a SDK/Schemas/Anchoring | 14 | 0 | ⏳ Pending |
-| P2b VC Integration/Config | 18 | 0 | ⏳ Pending |
+| P2a SDK/Schemas/Anchoring | 14 | 14 | ✅ Done |
+| P2b VC Integration/Config | 18 | 7 | 🔄 In Progress |
 | P3 Polish/Fork Docs | 26 | 19 | 🔄 In Progress |
-| **Total** | **92** | **45** | **49%** |
+| **Total** | **92** | **66** | **72%** |
 
 > **⚠️ v1.6.2 Architecture Notes:**
 > - **Phase E (DONE):** VC Interface mockup with all 7 components
@@ -383,7 +383,7 @@ interface VCInterfaceConfig {
 - **Create DID:** ✅ Tested & verified on Preprod
 - **Update DID:** 🔄 Code complete, awaiting test
 - **Revoke DID:** 🔄 Code complete, awaiting test
-- **SD-JWT VCs:** ⏳ Roadmap defined, implementation pending
+- **SD-JWT VCs:** 🔄 SDK functions complete (issue, present, verify); VC Indexer config + routes done
 
 **Note:** Phase 0 establishes the complete monorepo foundation before implementation begins.
 
@@ -2097,30 +2097,38 @@ pnpm add @sd-jwt/sd-jwt-vc@^0.17.0 @sd-jwt/crypto-nodejs@^0.17.0 jose@^5.0.0
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 2B.1 | VC anchor schema with `vcFormat` field (§6.1) | Pending |
-| 2B.2 | `anchorVCIssuance()` - Submit issuance event | Pending |
-| 2B.3 | `anchorVCValidation()` - Submit validation event | Pending |
-| 2B.4 | Blockfrost provider: `fetchVCEvents()` for L_VC label | Pending |
+| 2B.1 | VC anchor schema with `vcFormat` field (§6.1) | ✅ Done |
+| 2B.2 | `anchorVCIssuance()` - Submit issuance event | ✅ Done |
+| 2B.3 | `anchorVCValidation()` - Submit validation event | ✅ Done |
+| 2B.4 | Blockfrost provider: `fetchVCEvents()` for L_VC label | ✅ Done |
 
 #### Phase 2C: VC Interface UI
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 2C.1 | VC issuance form (issuer picks disclosable fields) | Pending |
-| 2C.2 | VC inbox (holder views received credentials) | Pending |
-| 2C.3 | Claim selector UI (checkboxes for selective disclosure) | Pending |
-| 2C.4 | Share/present VC flow (generate presentation) | Pending |
-| 2C.5 | VC revocation UI (issuer revokes with reason) | Pending |
+| 2C.1 | VC issuance form (issuer picks disclosable fields) | ✅ Done |
+| 2C.2 | VC inbox (holder views received credentials) | ✅ Done |
+| 2C.3 | Claim selector UI (checkboxes for selective disclosure) | ✅ Done |
+| 2C.4 | Share/present VC flow (generate presentation) | ✅ Done |
+| 2C.5 | VCIndexer service endpoint in DID Documents | ✅ Done |
+| 2C.6 | VC status routes + deterministic reducer | ✅ Done |
+| 2C.7 | VC-processor (ingest L_VC events) | ✅ Done |
+| 2C.8 | Schema validation for VC events | ✅ Done |
+| 2C.9 | `.env.example` for vc-interface | ✅ Done |
+| 2C.10 | `.env.example` for indexer | ✅ Done |
+| 2C.11 | ALJ fork config (`alj-vc-indexer.ts`) | ✅ Done |
+| 2C.12 | Deploy ALJ VC Indexer instance | Pending |
 
 #### Phase 2D: Testing
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 2D.1 | Unit tests for SD-JWT issue/present/verify | Pending |
-| 2D.2 | Unit tests for VC revocation flow | Pending |
-| 2D.3 | E2E test: issue → present (partial) → verify | Pending |
-| 2D.4 | E2E test: issue → revoke → verify (should fail) | Pending |
-| 2D.5 | **jti hash strategy test:** verify revocation check works from any presentation (partial or full) without disclosures | Pending |
+| 2D.1 | Unit tests for SDK VC functions (18 tests) | ✅ Done |
+| 2D.2 | E2E test: issue → present → verify (20 tests) | ✅ Done |
+| 2D.3 | Revocation test suite (mocked indexer) | ✅ Done |
+| 2D.4 | Integration tests: status reducer + vc-processor (29 tests) | ✅ Done |
+| 2D.5 | jti hash strategy: two presentations → same jti | ✅ Done |
+| 2D.6 | Verifier discovery: DID → VCIndexer endpoint (4 tests) | ✅ Done |
 
 **Acceptance Criteria (P2 Complete):**
 - [ ] Issuer can create SD-JWT VC with `jti` claim (required)

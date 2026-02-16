@@ -23,7 +23,7 @@ function chunkString(str: string): string | string[] {
  * Recursively converts an object for Cardano metadata, chunking long strings.
  * Null values are converted to empty string since Cardano metadata doesn't allow null.
  */
-function convertForMetadata(value: unknown): unknown {
+export function convertForMetadata(value: unknown): unknown {
   // Cardano metadata doesn't allow null - convert to empty string
   if (value === null) {
     return '';
@@ -45,20 +45,29 @@ function convertForMetadata(value: unknown): unknown {
 }
 
 /**
- * Serializes DIDEvent to Cardano metadata format.
+ * Serializes an event to Cardano metadata format under a given label.
  * Long strings are chunked into arrays per Cardano's 64-byte string limit.
+ * Reusable by both DID (L_DID=199674) and VC (L_VC=199675) events.
  */
-export function serializeDIDMetadata(event: DIDEvent): Record<string, unknown> {
+export function serializeEventMetadata(
+  label: number,
+  event: Record<string, unknown>
+): Record<string, unknown> {
   const chunkedEvent = convertForMetadata(event);
-  const metadata = {
-    [L_DID]: chunkedEvent
-  };
+  const metadata = { [label]: chunkedEvent };
 
-  // Size check
   const serialized = JSON.stringify(metadata);
   if (serialized.length > MAX_METADATA_SIZE) {
     throw new Error(`Metadata exceeds ${MAX_METADATA_SIZE} bytes: ${serialized.length}`);
   }
 
   return metadata;
+}
+
+/**
+ * Serializes DIDEvent to Cardano metadata format.
+ * Long strings are chunked into arrays per Cardano's 64-byte string limit.
+ */
+export function serializeDIDMetadata(event: DIDEvent): Record<string, unknown> {
+  return serializeEventMetadata(L_DID, event as unknown as Record<string, unknown>);
 }

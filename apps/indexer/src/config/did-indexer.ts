@@ -1,17 +1,17 @@
-import { DIDEventSchema, L_DID } from '@prisma-dids/types';
-import type { IndexerConfig } from './types.js';
+import { L_DID } from '@prisma-dids/types';
+import type { ResolvedIndexerConfig } from './types.js';
+import { didEventProcessor } from '../worker/did-processor.js';
 
 /**
  * DID Indexer configuration.
  * Scans Cardano metadata label 199674 (L_DID) for DID lifecycle events.
+ * Processor is the single source of truth for schema (Audit Fix #16).
  */
-export const didIndexerConfig: IndexerConfig = {
+export const didIndexerConfig: ResolvedIndexerConfig = {
   name: 'DID Indexer',
   labels: [L_DID],
   eventsTable: 'did_events',
-  schemas: {
-    [L_DID]: DIDEventSchema,
-  },
+  schemas: {}, // Derived from processors at startup by loadConfig()
   endpoints: [
     {
       method: 'GET',
@@ -35,4 +35,7 @@ export const didIndexerConfig: IndexerConfig = {
   network: (process.env.NETWORK as 'preprod' | 'mainnet') || 'preprod',
   pollIntervalMs: Number(process.env.POLL_INTERVAL_MS) || 30_000,
   confirmationDepth: Number(process.env.CONFIRMATION_DEPTH) || 10,
+  processors: {
+    [L_DID]: didEventProcessor,
+  },
 };

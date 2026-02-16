@@ -24,16 +24,6 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  apps/api:
-    dependencies:
-      '@prisma-dids/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-    devDependencies:
-      typescript:
-        specifier: ^5.3.0
-        version: 5.9.3
-
   apps/dashboard:
     dependencies:
       '@emurgo/cardano-serialization-lib-browser':
@@ -109,6 +99,9 @@ importers:
       '@fastify/cors':
         specifier: ^11.0.1
         version: 11.2.0
+      '@prisma-dids/schemas':
+        specifier: workspace:*
+        version: link:../../packages/schemas
       '@prisma-dids/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
@@ -155,12 +148,21 @@ importers:
 
   apps/vc-interface:
     dependencies:
+      '@prisma-dids/schemas':
+        specifier: workspace:*
+        version: link:../../packages/schemas
+      '@prisma-dids/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       '@prisma-dids/types':
         specifier: workspace:*
         version: link:../../packages/types
       '@prisma-dids/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      lucid-cardano:
+        specifier: ^0.10.7
+        version: 0.10.11
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.2.0)
@@ -212,6 +214,16 @@ importers:
         specifier: ^5.3.0
         version: 5.9.3
 
+  packages/schemas:
+    dependencies:
+      zod:
+        specifier: ^3.22.0
+        version: 3.25.76
+    devDependencies:
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+
   packages/sdk:
     dependencies:
       '@emurgo/cardano-serialization-lib-browser':
@@ -223,6 +235,9 @@ importers:
       '@noble/ed25519':
         specifier: ^3.0.0
         version: 3.0.0
+      '@prisma-dids/schemas':
+        specifier: workspace:*
+        version: link:../schemas
       '@prisma-dids/types':
         specifier: workspace:*
         version: link:../types
@@ -5398,7 +5413,7 @@ snapshots:
       eslint: 9.39.1(jiti@2.6.1)
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1))
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.1(jiti@2.6.1))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.1(jiti@2.6.1))
       eslint-plugin-react: 7.37.5(eslint@9.39.1(jiti@2.6.1))
       eslint-plugin-react-hooks: 7.0.1(eslint@9.39.1(jiti@2.6.1))
@@ -5451,7 +5466,7 @@ snapshots:
       tinyglobby: 0.2.15
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.1(jiti@2.6.1))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1))
     transitivePeerDependencies:
       - supports-color
 
@@ -5491,7 +5506,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.1(jiti@2.6.1)):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1)))(eslint@9.39.1(jiti@2.6.1)):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9

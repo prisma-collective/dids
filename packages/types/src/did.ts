@@ -13,7 +13,7 @@ export const DidEventPayloadSchema = z.object({
 export const PrismaPayloadSigSchema = z.object({
   sig: z.string().regex(/^[0-9a-f]+$/i),  // hex Ed25519 signature
   key: z.string().regex(/^[0-9a-f]+$/i),  // hex Ed25519 public key
-  address: z.string().regex(/^addr/),     // bech32 base address
+  address: z.string().regex(/^[0-9a-f]+$/i),  // hex-encoded address bytes (CIP-30 native)
 });
 
 // Full event (what goes in metadata)

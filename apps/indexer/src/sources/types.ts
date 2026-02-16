@@ -6,6 +6,7 @@
 
 export interface MetadataEvent {
   txHash: string;
+  txIndex?: number | null; // Blockfrost tx_index within block; null if unavailable
   blockHeight: number;
   blockHash: string;
   blockTime: number; // Unix epoch seconds

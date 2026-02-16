@@ -1,4 +1,4 @@
-import type { DIDDocument } from '@prisma-dids/types';
+import type { DIDDocument, Service } from '@prisma-dids/types';
 import { hexToPublicKeyMultibase } from '../utils/keys.js';
 
 /**
@@ -13,15 +13,42 @@ export function deriveDID(stakeAddress: string): string {
 
 /**
  * Generates W3C-compliant DID Document per §2.2
- * Converts hex public key from wallet to multibase format automatically
+ * Converts hex public key from wallet to multibase format automatically.
+ *
+ * @param params.services - Explicit service array (takes precedence over serviceEndpoint)
+ * @param params.serviceEndpoint - Legacy shorthand: adds a single PrismaContributionService
+ * @param params.vcIndexerEndpoint - If set, adds a VCIndexer service entry for verifier discovery
  */
 export function generateDIDDocument(params: {
   did: string;
-  publicKeyHex: string;  // Ed25519 hex key from CIP-30 wallet
+  publicKeyHex: string;
   serviceEndpoint?: string;
+  vcIndexerEndpoint?: string;
+  services?: Service[];
 }): DIDDocument {
-  // Convert hex key to multibase (z6Mk... format)
   const publicKeyMultibase = hexToPublicKeyMultibase(params.publicKeyHex);
+
+  // Build services: explicit array wins; otherwise build from shorthand params
+  let services: Service[];
+  if (params.services) {
+    services = params.services;
+  } else {
+    services = [];
+    if (params.serviceEndpoint) {
+      services.push({
+        id: `${params.did}#prisma-api`,
+        type: 'PrismaContributionService',
+        serviceEndpoint: params.serviceEndpoint,
+      });
+    }
+    if (params.vcIndexerEndpoint) {
+      services.push({
+        id: `${params.did}#vc-indexer`,
+        type: 'VCIndexer',
+        serviceEndpoint: params.vcIndexerEndpoint,
+      });
+    }
+  }
 
   return {
     '@context': [
@@ -38,12 +65,6 @@ export function generateDIDDocument(params: {
       }
     ],
     authentication: [`${params.did}#key-1`],
-    service: params.serviceEndpoint ? [
-      {
-        id: `${params.did}#prisma-api`,
-        type: 'PrismaContributionService',
-        serviceEndpoint: params.serviceEndpoint
-      }
-    ] : []
+    service: services,
   };
 }

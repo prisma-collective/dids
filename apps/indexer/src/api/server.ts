@@ -5,6 +5,12 @@ import type { Database } from '../db/connection.js';
 import { syncState } from '../db/schema.js';
 import { registerDIDRoutes } from './routes/did.js';
 import { registerUniversalResolverRoute } from './routes/universal.js';
+import {
+  registerVCResolveRoutes,
+  registerVCIssuerRoutes,
+  registerVCHolderRoutes,
+  registerVCSchemasRoute,
+} from './routes/vc.js';
 
 // Handler registry: maps handlerId → route registration function
 const handlerRegistry: Record<
@@ -14,6 +20,11 @@ const handlerRegistry: Record<
   'did:resolve': registerDIDRoutes,
   'did:history': () => {}, // Registered together with did:resolve
   'did:universal-resolver': registerUniversalResolverRoute,
+  'vc:resolve': registerVCResolveRoutes,
+  'vc:status': () => {}, // Registered together with vc:resolve
+  'vc:issuer-list': registerVCIssuerRoutes,
+  'vc:holder-list': registerVCHolderRoutes,
+  'vc:schemas': registerVCSchemasRoute,
 };
 
 export async function createServer(config: IndexerConfig, db: Database) {

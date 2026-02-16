@@ -18,5 +18,24 @@ export * from './utils/keys.js';
 export * from './utils/constants.js';
 export * from './utils/encoding.js';
 
-// Note: For verification, stake utilities, and providers, use the main SDK
-// import in Node.js environments (API routes, server components).
+// SD-JWT utilities (browser-compatible)
+export * from './core/sd-jwt.js';
+
+// VC issuance + presentation (browser-compatible — uses wallet.signData)
+// Note: verifyPresentation() is in vc-verify.ts (Node.js-only, NOT exported here)
+export * from './core/vc.js';
+
+// VC anchor types (browser-safe — no Lucid dependency)
+// Note: anchorVCIssuance/Validation/Revocation and CardanoVCAnchorProvider
+// use Lucid and are only available from the main SDK entrypoint.
+export type {
+  AnchorIssuanceParams,
+  AnchorValidationParams,
+  AnchorRevocationParams,
+  AnchorResult,
+  VCStatusResult,
+  VCAnchorProvider,
+} from './core/vc-anchor.js';
+
+// Note: For verification, stake utilities, providers, and VC anchoring
+// functions, use the main SDK import in Node.js environments.

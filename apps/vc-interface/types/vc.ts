@@ -38,6 +38,8 @@ export interface VerifiableCredential {
   txHash?: string;
   /** IPFS CID of the full credential */
   ipfsCid?: string;
+  /** Full COSE-SD wire format string (for selective disclosure) */
+  credentialString?: string;
 }
 
 /** Revocation reason options */
@@ -55,15 +57,9 @@ export interface RevocationRequest {
   customReason?: string;
 }
 
-/** Claim fields for ContributionCredential */
-export interface ContributionCredentialClaims {
-  projectId: string;
-  contributionType: 'code' | 'design' | 'documentation' | 'review' | 'mentorship' | 'other';
-  hours?: number;
-  organization: string;
-  description?: string;
-  evidenceUrl?: string;
-}
+/** Claim fields for ContributionCredential — re-exported from @prisma-dids/schemas (Audit Fix #6) */
+export type { ContributionCredential as ContributionCredentialClaims } from '@prisma-dids/schemas';
+export { ContributionTypeEnum } from '@prisma-dids/schemas';
 
 /** Issuance form data */
 export interface IssuanceFormData {

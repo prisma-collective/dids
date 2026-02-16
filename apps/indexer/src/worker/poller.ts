@@ -1,8 +1,9 @@
 import { eq, and, gte, sql } from 'drizzle-orm';
-import { didEvents, syncState } from '../db/schema.js';
+import { syncState } from '../db/schema.js';
 import type { Database } from '../db/connection.js';
 import type { MetadataSource } from '../sources/types.js';
-import type { IndexerConfig } from '../config/types.js';
+import type { ResolvedIndexerConfig } from '../config/types.js';
+import type { EventProcessor } from './types.js';
 import { processEvents } from './processor.js';
 
 const PAGE_SIZE = 100;
@@ -15,6 +16,9 @@ const PAGE_SIZE = 100;
  * - Initial sync: checkpoint=0, all events qualify. Page through with order=asc once.
  * - Rollback detection: compare stored block hash with chain state on each cycle.
  * - Confirmation pass: mark events confirmed when block_height + depth <= chain tip.
+ *
+ * Uses ResolvedIndexerConfig.processors to dispatch events to the correct
+ * EventProcessor per label. No hardcoded table references.
  */
 export class Poller {
   private running = false;
@@ -24,7 +28,7 @@ export class Poller {
   constructor(
     private db: Database,
     private source: MetadataSource,
-    private config: IndexerConfig
+    private config: ResolvedIndexerConfig
   ) {}
 
   start() {
@@ -69,9 +73,9 @@ export class Poller {
   }
 
   private async pollLabel(label: number) {
-    const schema = this.config.schemas[label];
-    if (!schema) {
-      console.warn(`No schema for label ${label}, skipping.`);
+    const processor = this.config.processors[label];
+    if (!processor) {
+      console.warn(`No processor for label ${label}, skipping.`);
       return;
     }
 
@@ -98,16 +102,16 @@ export class Poller {
     const isInitialSync = currentCheckpoint === 0;
 
     if (isInitialSync) {
-      await this.initialSync(label, schema);
+      await this.initialSync(label, processor);
     } else {
-      await this.incrementalPoll(label, schema, currentCheckpoint);
+      await this.incrementalPoll(label, processor, currentCheckpoint);
     }
   }
 
   /**
    * Initial sync: order=asc, page through all history chronologically.
    */
-  private async initialSync(label: number, schema: any) {
+  private async initialSync(label: number, processor: EventProcessor) {
     console.log(`Initial sync for label ${label}...`);
     let page = 1;
     let totalProcessed = 0;
@@ -118,7 +122,7 @@ export class Poller {
       const events = await this.source.listLabelEvents(label, 'asc', page, PAGE_SIZE);
       if (events.length === 0) break;
 
-      const result = await processEvents(this.db, events, schema);
+      const result = await processEvents(this.db, events, processor);
       totalProcessed += result.processed;
 
       // Track the highest block we've seen
@@ -141,7 +145,11 @@ export class Poller {
    * block_height > checkpoint. Re-insert at == checkpoint (idempotent).
    * Stop when block_height < checkpoint.
    */
-  private async incrementalPoll(label: number, schema: any, checkpointHeight: number) {
+  private async incrementalPoll(
+    label: number,
+    processor: EventProcessor,
+    checkpointHeight: number
+  ) {
     let page = 1;
     let totalProcessed = 0;
     let newHighestHeight = checkpointHeight;
@@ -172,7 +180,7 @@ export class Poller {
       }
 
       if (toProcess.length > 0) {
-        const result = await processEvents(this.db, toProcess, schema);
+        const result = await processEvents(this.db, toProcess, processor);
         totalProcessed += result.processed;
       }
 
@@ -193,6 +201,7 @@ export class Poller {
   /**
    * Confirmation pass: mark events as confirmed when
    * chain_tip - block_height >= confirmationDepth.
+   * Iterates all processor tables.
    */
   private async runConfirmationPass() {
     const depth = this.config.confirmationDepth ?? 112;
@@ -201,22 +210,25 @@ export class Poller {
 
     if (confirmBelow <= 0) return;
 
-    const result = await this.db
-      .update(didEvents)
-      .set({
-        confirmed: true,
-        confirmedAtHeight: chainTip,
-      })
-      .where(
-        and(
-          eq(didEvents.confirmed, false),
-          sql`${didEvents.blockHeight} <= ${confirmBelow}`
+    for (const [, processor] of Object.entries(this.config.processors)) {
+      const table = processor.table as any;
+      const result = await this.db
+        .update(table)
+        .set({
+          confirmed: true,
+          confirmedAtHeight: chainTip,
+        })
+        .where(
+          and(
+            eq(table.confirmed, false),
+            sql`${table.blockHeight} <= ${confirmBelow}`
+          )
         )
-      )
-      .returning({ txHash: didEvents.txHash });
+        .returning({ txHash: table.txHash });
 
-    if (result.length > 0) {
-      console.log(`Confirmation pass: ${result.length} events confirmed (tip=${chainTip}, depth=${depth}).`);
+      if (result.length > 0) {
+        console.log(`Confirmation pass: ${result.length} events confirmed (tip=${chainTip}, depth=${depth}).`);
+      }
     }
   }
 
@@ -225,41 +237,45 @@ export class Poller {
    * We delete rather than mark invalid so that re-included tx_hashes
    * (same tx reappearing after reorg) can be re-inserted cleanly
    * instead of being silently skipped by onConflictDoNothing.
+   * Iterates all processor tables.
    */
   private async handleReorg(reorgHeight: number) {
-    const deleted = await this.db
-      .delete(didEvents)
-      .where(gte(didEvents.blockHeight, reorgHeight))
-      .returning({ txHash: didEvents.txHash });
+    let totalDeleted = 0;
 
-    console.warn(`Reorg: deleted ${deleted.length} events at height >= ${reorgHeight}.`);
+    // Per-label reorg: each label's checkpoint is reset to its own table's
+    // last valid height, not a global max across all tables.
+    for (const [labelStr, processor] of Object.entries(this.config.processors)) {
+      const label = Number(labelStr);
+      const table = processor.table as any;
 
-    // Reset checkpoint to the block before the reorg
-    // Find the highest valid block below reorgHeight
-    const lastValid = await this.db
-      .select({
-        blockHeight: didEvents.blockHeight,
-      })
-      .from(didEvents)
-      .where(
-        and(
-          eq(didEvents.valid, true),
-          sql`${didEvents.blockHeight} < ${reorgHeight}`
+      const deleted = await this.db
+        .delete(table)
+        .where(gte(table.blockHeight, reorgHeight))
+        .returning({ txHash: table.txHash });
+
+      totalDeleted += deleted.length;
+
+      // Find this label's last valid block below reorgHeight
+      const lastValid = await this.db
+        .select({ blockHeight: table.blockHeight })
+        .from(table)
+        .where(
+          and(
+            eq(table.valid, true),
+            sql`${table.blockHeight} < ${reorgHeight}`
+          )
         )
-      )
-      .orderBy(sql`${didEvents.blockHeight} DESC`)
-      .limit(1);
+        .orderBy(sql`${table.blockHeight} DESC`)
+        .limit(1);
 
-    const newHeight = lastValid[0]?.blockHeight ?? 0;
+      const newHeight = lastValid[0]?.blockHeight ?? 0;
+      const block = newHeight > 0 ? await this.source.getBlockByHeight(newHeight) : null;
 
-    // Get block hash for new checkpoint
-    const block = newHeight > 0 ? await this.source.getBlockByHeight(newHeight) : null;
-
-    for (const label of this.config.labels) {
       await this.updateCheckpoint(label, newHeight, block?.hash ?? null);
+      console.warn(`Reorg: label ${label} checkpoint reset to height ${newHeight}.`);
     }
 
-    console.warn(`Reorg: checkpoint reset to height ${newHeight}.`);
+    console.warn(`Reorg: deleted ${totalDeleted} events at height >= ${reorgHeight}.`);
   }
 
   private async getCheckpoint(label: number) {

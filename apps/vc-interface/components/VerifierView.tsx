@@ -1,18 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import type { VCInterfaceConfig } from '@/config/org-config';
 import { defaultConfig } from '@/config/org-config';
 import { Button, Card, cn, truncateDid, formatDate } from '@prisma-dids/ui';
 import { CheckCircle, XCircle, ShieldCheck, ShieldX, Search } from 'lucide-react';
 import { StatusBadge } from './shared/StatusBadge';
+import { verifyPresentation, fetchCredentialStatus } from '@/services/vcService';
 
 export interface VerifierViewProps {
   config?: Partial<VCInterfaceConfig>;
+  initialPresentation?: string;
 }
 
-/** Mock verification result structure */
+/** Verification result structure from SDK + enrichment */
 interface VerificationResult {
   valid: boolean;
   credential: {
@@ -22,19 +24,9 @@ interface VerificationResult {
     issuedAt: string;
     claims: Array<{ key: string; value: string | number | boolean }>;
   };
-  issuerDid: {
-    resolved: boolean;
-    status: 'active' | 'revoked' | 'not_found';
-    document?: {
-      id: string;
-      verificationMethod: string;
-      vcIndexerEndpoint?: string;
-    };
-  };
   vcStatus: {
     checked: boolean;
-    status: 'active' | 'revoked' | 'not_found';
-    txHash?: string;
+    status: 'active' | 'revoked' | 'pending' | 'not_found';
   };
   checks: Array<{
     name: string;
@@ -43,63 +35,85 @@ interface VerificationResult {
   }>;
 }
 
-export function VerifierView({ config }: VerifierViewProps) {
+export function VerifierView({ config, initialPresentation }: VerifierViewProps) {
   const fullConfig = { ...defaultConfig, ...config };
   const t = useTranslations('verifier');
   const tc = useTranslations('common');
   const locale = useLocale();
 
-  const [credentialInput, setCredentialInput] = useState('');
+  const [credentialInput, setCredentialInput] = useState(initialPresentation || '');
   const [isVerifying, setIsVerifying] = useState(false);
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Auto-verify if an initial presentation was provided
+  useEffect(() => {
+    if (initialPresentation) handleVerify();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleVerify = async () => {
+    const input = credentialInput.trim();
+    if (!input) return;
+
     setIsVerifying(true);
     setError(null);
     setResult(null);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // 1. Verify via server-side API route (COSE_Sign1 verification)
+      const sdk = await verifyPresentation(input, fullConfig.INDEXER_ENDPOINT);
 
-      const mockResult: VerificationResult = {
-        valid: true,
-        credential: {
-          type: 'ContributionCredential',
-          issuerDid: 'did:cardano:stake1ux7l5d9y4q3z8k2j0n5m4p6w9v8c3b1a0t2s7r6e5d4f3g2h1',
-          holderDid: 'did:cardano:stake1uq9l3d7y2q1z6k0j8n3m2p4w7v6c1b9a8t0s5r4e3d2f1g0h9',
-          issuedAt: '2024-12-01T10:00:00Z',
-          claims: [
-            { key: 'projectId', value: 'catalyst-fund-14' },
-            { key: 'contributionType', value: 'code' },
-            { key: 'organization', value: 'Prisma' },
-          ],
-        },
-        issuerDid: {
-          resolved: true,
-          status: 'active',
-          document: {
-            id: 'did:cardano:stake1ux7l5d9y4q3z8k2j0n5m4p6w9v8c3b1a0t2s7r6e5d4f3g2h1',
-            verificationMethod: 'Ed25519VerificationKey2020',
-            vcIndexerEndpoint: fullConfig.INDEXER_ENDPOINT,
-          },
-        },
-        vcStatus: {
-          checked: true,
-          status: 'active',
-          txHash: 'abc123def456789...',
-        },
-        checks: [
-          { name: 'Credential Format', passed: true, details: 'Valid SD-JWT structure' },
-          { name: 'Issuer DID Resolution', passed: true, details: 'DID resolved via global DID Indexer' },
-          { name: 'Issuer DID Status', passed: true, details: 'Issuer DID is active (not revoked)' },
-          { name: 'Signature Verification', passed: true, details: 'Ed25519 signature valid' },
-          { name: 'VC Indexer Discovery', passed: true, details: `Found VCIndexer service at ${fullConfig.INDEXER_ENDPOINT}` },
-          { name: 'Credential Status', passed: true, details: 'Credential is active (not revoked)' },
-        ],
+      if (!sdk.valid) {
+        setError(sdk.error || t('verificationFailed'));
+        return;
+      }
+
+      // 2. Check credential status on indexer if we have a jti
+      let vcStatus: VerificationResult['vcStatus'] = {
+        checked: false,
+        status: 'not_found',
       };
+      if (sdk.jti && fullConfig.INDEXER_ENDPOINT) {
+        const status = await fetchCredentialStatus(sdk.jti, fullConfig.INDEXER_ENDPOINT);
+        vcStatus = { checked: true, status };
+      }
 
-      setResult(mockResult);
+      // 3. Build verification checks list
+      const checks: VerificationResult['checks'] = [
+        { name: 'Credential Format', passed: true, details: 'Valid COSE-SD presentation' },
+        { name: 'Signature Verification', passed: sdk.valid, details: sdk.valid ? 'COSE_Sign1 signature valid' : 'Signature invalid' },
+      ];
+      if (vcStatus.checked) {
+        checks.push({
+          name: 'Credential Status',
+          passed: vcStatus.status === 'active',
+          details: vcStatus.status === 'active'
+            ? 'Credential is active (not revoked)'
+            : vcStatus.status === 'revoked'
+              ? 'Credential has been revoked'
+              : 'Credential not found on-chain',
+        });
+      }
+
+      // 4. Build claims array from the disclosed claims record
+      const claims = Object.entries(sdk.claims).map(([key, value]) => ({
+        key,
+        value: value as string | number | boolean,
+      }));
+
+      setResult({
+        valid: sdk.valid && vcStatus.status !== 'revoked',
+        credential: {
+          type: sdk.vct || 'Unknown',
+          issuerDid: sdk.issuer,
+          holderDid: sdk.holder,
+          issuedAt: new Date().toISOString(),
+          claims,
+        },
+        vcStatus,
+        checks,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('verificationFailed'));
     } finally {
@@ -276,23 +290,18 @@ export function VerifierView({ config }: VerifierViewProps) {
             ))}
           </Card>
 
-          {/* Issuer DID Document */}
+          {/* Issuer Info */}
           <Card className="p-6 mb-6">
-            <h3 className="text-base font-semibold text-text-primary mb-4 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-text-primary mb-4">
               {t('issuerDidDocument')}
-              <StatusBadge status={result.issuerDid.status} />
             </h3>
             <div className="flex justify-between py-2 border-b border-border/30 text-sm">
               <span className="text-text-muted">DID</span>
-              <span className="text-text-secondary font-mono text-xs">{truncateDid(result.issuerDid.document?.id || '', 16)}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-border/30 text-sm">
-              <span className="text-text-muted">{t('verificationMethod')}</span>
-              <span className="text-text-secondary">{result.issuerDid.document?.verificationMethod}</span>
+              <span className="text-text-secondary font-mono text-xs">{truncateDid(result.credential.issuerDid, 16)}</span>
             </div>
             <div className="flex justify-between py-2 text-sm">
               <span className="text-text-muted">{t('vcIndexerEndpoint')}</span>
-              <span className="text-primary text-xs">{result.issuerDid.document?.vcIndexerEndpoint}</span>
+              <span className="text-primary text-xs">{fullConfig.INDEXER_ENDPOINT}</span>
             </div>
           </Card>
         </>

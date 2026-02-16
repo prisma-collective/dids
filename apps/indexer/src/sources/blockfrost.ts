@@ -36,6 +36,7 @@ export class BlockfrostSource implements MetadataSource {
       );
       events.push({
         txHash: item.tx_hash,
+        txIndex: typeof txInfo.index === 'number' ? txInfo.index : null,
         blockHeight: txInfo.block_height,
         blockHash: txInfo.block,
         blockTime: txInfo.block_time,

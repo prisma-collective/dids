@@ -20,7 +20,17 @@ export * from './utils/encoding.js';
 // ============================================================================
 
 // Verification (requires stake address derivation)
+export * from './core/cose-verify.js';
 export * from './core/verification.js';
+
+// VC issuance, presentation (browser-compatible)
+export * from './core/vc.js';
+
+// VC verification (Node.js only — imports cose-verify → CSL)
+export * from './core/vc-verify.js';
+
+// VC anchoring (on-chain event submission) + revocation status
+export * from './core/vc-anchor.js';
 
 // Stake utilities
 export * from './utils/stake.js';
