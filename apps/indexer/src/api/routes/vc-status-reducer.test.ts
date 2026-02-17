@@ -32,6 +32,7 @@ function makeRow(overrides: Partial<VCEventRow>): VCEventRow {
     vcType: 'ContributionCredential',
     vcFormat: 'cose-sd',
     reason: null,
+    ipfsCid: null,
     valid: true,
     validationError: null,
     confirmed: true,
