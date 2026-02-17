@@ -28,6 +28,8 @@ export interface StoredCredential {
   issuedAt: string;
   /** On-chain anchor tx hash (if anchored) */
   txHash?: string;
+  /** IPFS CID of the credential payload */
+  ipfsCid?: string;
 }
 
 function loadStore(): Record<string, StoredCredential> {
@@ -95,6 +97,7 @@ export function toVerifiableCredential(
     status,
     claims,
     txHash: stored.txHash,
+    ipfsCid: stored.ipfsCid,
     credentialString: stored.credentialString,
   };
 }

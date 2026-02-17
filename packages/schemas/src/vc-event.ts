@@ -25,11 +25,13 @@ export const VCEventPayloadSchema = z.object({
   validatorDid: z.string().startsWith('did:cardano:').optional(),
   /** Revocation reason (optional, for 'revoke' events) */
   reason: z.string().optional(),
+  /** IPFS CID of the credential payload (optional, for 'issue' events) */
+  ipfsCid: z.string().optional(),
   /** COSE_Sign1 signature wrapper: JSON.stringify({ sig: hex, key: hex, address: hex }) */
   payloadSig: z.string(),
   /** ISO 8601 timestamp */
   ts: z.string().datetime(),
-});
+}).passthrough();
 
 export type VCEventPayload = z.infer<typeof VCEventPayloadSchema>;
 

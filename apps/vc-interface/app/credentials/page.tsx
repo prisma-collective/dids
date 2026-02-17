@@ -10,8 +10,11 @@ import {
   createSelectivePresentation,
   extractDisclosableClaims,
   fetchCredentialStatus,
+  fetchHolderCredentials,
+  fetchCredentialFromIPFS,
 } from '@/services/vcService';
-import { getCredentialsForHolder, toVerifiableCredential } from '@/services/credentialStore';
+import { getCredentialsForHolder, getCredentialsForIssuer, storeCredential, toVerifiableCredential } from '@/services/credentialStore';
+import type { StoredCredential } from '@/services/credentialStore';
 import type { VerifiableCredential, VCClaim, PresentationData } from '@/types/vc';
 
 type ViewMode = 'inbox' | 'share' | 'detail';
@@ -23,16 +26,46 @@ export default function CredentialsPage() {
   const [credentials, setCredentials] = useState<VerifiableCredential[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load credentials from localStorage + enrich with indexer status
+  // Load credentials from localStorage + indexer + IPFS fallback
   const loadCredentials = useCallback(async () => {
     if (!did) return;
     setIsLoading(true);
     try {
-      const stored = getCredentialsForHolder(did);
+      // 1. Local credentials (localStorage)
+      const held = getCredentialsForHolder(did);
+      const issued = getCredentialsForIssuer(did);
+      const localByJti = new Map<string, StoredCredential>();
+      for (const c of [...held, ...issued]) {
+        if (!localByJti.has(c.jti)) localByJti.set(c.jti, c);
+      }
 
+      // 2. Query indexer for held credentials (catches ones not in localStorage)
+      const indexerCreds = await fetchHolderCredentials(did, config.INDEXER_ENDPOINT);
+      for (const ic of indexerCreds) {
+        if (localByJti.has(ic.vcHash)) continue; // Already have it locally
+        if (!ic.ipfsCid) continue; // No IPFS CID → can't retrieve credential
+
+        // Fetch from IPFS and cache locally
+        const ipfsData = await fetchCredentialFromIPFS(ic.ipfsCid);
+        if (ipfsData?.credentialString) {
+          const stored: StoredCredential = {
+            credentialString: ipfsData.credentialString,
+            jti: ipfsData.jti,
+            vct: ipfsData.vct,
+            issuerDid: ipfsData.issuerDid,
+            holderDid: ipfsData.holderDid,
+            issuedAt: ipfsData.issuedAt,
+            txHash: ic.txHash,
+            ipfsCid: ic.ipfsCid,
+          };
+          storeCredential(stored); // Cache in localStorage for next time
+          localByJti.set(stored.jti, stored);
+        }
+      }
+
+      // 3. Enrich all credentials with claims + status
       const enriched = await Promise.all(
-        stored.map(async (cred) => {
-          // Extract claims from the credential string
+        Array.from(localByJti.values()).map(async (cred) => {
           let claims: VCClaim[] = [];
           try {
             const disclosable = extractDisclosableClaims(cred.credentialString);
@@ -41,13 +74,11 @@ export default function CredentialsPage() {
               value: c.value as string | number | boolean,
               disclosable: true,
             }));
-          } catch {
-            // If credential string can't be parsed, show empty claims
-          }
+          } catch { /* credential string may not be parseable */ }
 
-          // Query indexer for status
-          const status = await fetchCredentialStatus(cred.jti, config.INDEXER_ENDPOINT);
-
+          let status = await fetchCredentialStatus(cred.jti, config.INDEXER_ENDPOINT);
+          // Anchored but not yet indexed → show as pending, not "not found"
+          if (status === 'not_found' && cred.txHash) status = 'pending';
           return toVerifiableCredential(cred, claims, status);
         })
       );

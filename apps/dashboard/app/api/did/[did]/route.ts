@@ -42,7 +42,7 @@ export async function GET(
       // Fetch full history from indexer
       const res = await fetch(
         `${indexerUrl}/did/${encodeURIComponent(did)}/history?order=asc&limit=100&includeUnconfirmed=true`,
-        { next: { revalidate: 30 } }
+        { cache: 'no-store' }
       );
 
       if (res.status === 404) {
@@ -75,7 +75,7 @@ export async function GET(
       // Fetch latest event via history (limit=1, desc) for full DIDEventRecord shape
       const res = await fetch(
         `${indexerUrl}/did/${encodeURIComponent(did)}/history?order=desc&limit=1&includeUnconfirmed=true`,
-        { next: { revalidate: 30 } }
+        { cache: 'no-store' }
       );
 
       if (res.status === 404) {
@@ -102,7 +102,30 @@ export async function GET(
       }));
 
       const latest = events[0] ?? null;
-      return NextResponse.json({ latest });
+
+      // Fetch DID document from IPFS server-side to extract services
+      let services: { id: string; type: string; serviceEndpoint: string }[] = [];
+      const ipfsCid = latest?.event.ipfs;
+      if (ipfsCid) {
+        try {
+          const ipfsRes = await fetch(
+            `https://gateway.pinata.cloud/ipfs/${ipfsCid}`,
+            { signal: AbortSignal.timeout(8000) }
+          );
+          if (ipfsRes.ok) {
+            const doc = await ipfsRes.json();
+            if (Array.isArray(doc.service)) {
+              services = doc.service.filter(
+                (s: any) => s && typeof s.serviceEndpoint === 'string'
+              );
+            }
+          }
+        } catch {
+          // IPFS fetch is best-effort
+        }
+      }
+
+      return NextResponse.json({ latest, services });
     }
   } catch (error) {
     console.error('Error proxying to indexer:', error);

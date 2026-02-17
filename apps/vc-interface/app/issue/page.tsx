@@ -3,7 +3,7 @@
 import { IssuanceForm } from '@/components/IssuanceForm';
 import { useWallet } from '@/contexts/WalletContext';
 import { config } from '@/config/resolve-config';
-import { issueAndAnchorCredential } from '@/services/vcService';
+import { issueAndAnchorCredential, type IssueStep } from '@/services/vcService';
 import { storeCredential } from '@/services/credentialStore';
 import type { IssuanceFormData } from '@/types/vc';
 import { Button, EmptyState } from '@prisma-dids/ui';
@@ -13,7 +13,7 @@ export default function IssuePage() {
 
   const blockfrostKey = process.env.NEXT_PUBLIC_BLOCKFROST_API_KEY;
 
-  const handleSubmit = async (data: IssuanceFormData) => {
+  const handleSubmit = async (data: IssuanceFormData, onProgress: (step: IssueStep) => void) => {
     if (!wallet || !signingAddress || !did) {
       throw new Error('Wallet not connected');
     }
@@ -22,14 +22,23 @@ export default function IssuePage() {
       throw new Error('NEXT_PUBLIC_BLOCKFROST_API_KEY not configured');
     }
 
-    const result = await issueAndAnchorCredential(
-      wallet,
-      signingAddress,
-      did,
-      data.holderDid,
-      data,
-      { network: config.NETWORK, blockfrostApiKey: blockfrostKey }
-    );
+    let result;
+    try {
+      result = await issueAndAnchorCredential(
+        wallet,
+        signingAddress,
+        did,
+        data.holderDid,
+        data,
+        { network: config.NETWORK, blockfrostApiKey: blockfrostKey },
+        onProgress,
+      );
+    } catch (err: unknown) {
+      const e = err as { code?: number; info?: string; message?: string };
+      const detail = e.info || e.message || String(err);
+      console.error('[VC Issue] Full error:', err);
+      throw new Error(`Issuance failed: ${detail}${e.code != null ? ` (code ${e.code})` : ''}`);
+    }
 
     // Store credential locally (holder can retrieve it from localStorage)
     storeCredential({
@@ -40,7 +49,10 @@ export default function IssuePage() {
       holderDid: data.holderDid,
       issuedAt: new Date().toISOString(),
       txHash: result.txHash,
+      ipfsCid: result.ipfsCid,
     });
+
+    return { txHash: result.txHash };
   };
 
   // Wallet not connected

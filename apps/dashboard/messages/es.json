@@ -47,8 +47,10 @@
     "version": "Versión",
     "lastAction": "Última Acción",
     "lastTx": "Última Tx",
+    "serviceEndpoint": "Endpoint de Servicio",
     "view": "Ver",
     "refresh": "Actualizar Estado",
+    "syncing": "Esperando que el indexador procese tu transacción...",
     "noDIDTitle": "No Se Encontró DID",
     "noDIDDescription": "No se encontró DID para esta billetera. Crea uno para comenzar.",
     "createYourDID": "Crear Tu DID",
@@ -67,7 +69,9 @@
     "errorTitle": "Error al Crear DID",
     "successTitle": "¡DID Creado Exitosamente!",
     "tryAgain": "Intentar de Nuevo",
-    "createAnother": "Crear Otro DID",
+    "done": "Hecho",
+    "version": "Versión",
+    "serviceEndpoint": "Endpoint de Servicio (opcional)",
     "viewIPFS": "Ver en IPFS",
     "viewExplorer": "Ver en Explorer",
     "transaction": "Transacción",
@@ -77,11 +81,9 @@
       "unknown": "Ocurrió un error desconocido"
     },
     "steps": {
-      "gettingAddresses": "Obteniendo direcciones de billetera",
-      "derivingDID": "Derivando DID",
+      "preparing": "Preparando billetera",
       "generatingDoc": "Generando Documento DID",
       "pinningIPFS": "Fijando en IPFS",
-      "buildingPayload": "Construyendo payload",
       "signing": "Firmar en billetera",
       "submittingTx": "Enviando transacción"
     }
@@ -114,7 +116,6 @@
       "fetchingCurrent": "Obteniendo estado actual",
       "generatingDoc": "Generando Documento DID",
       "pinningIPFS": "Fijando en IPFS",
-      "buildingPayload": "Construyendo payload",
       "signing": "Firmar en billetera",
       "submittingTx": "Enviando transacción"
     }
@@ -172,7 +173,7 @@
     "revokedWarning": "Este DID ya no puede ser actualizado ni usado para autenticación.",
     "confirmTitle": "Confirmar Revocación",
     "confirmQuestion": "¿Estás seguro de que deseas revocar este DID?",
-    "confirmWarning": "Esta acción es permanente. El DID ya no será válido para autenticación y no podrá ser actualizado después de la revocación.",
+    "confirmWarning": "Esta acción es permanente y no se puede deshacer. Tu DID será permanentemente desactivado. Como tu DID está vinculado a la dirección de stake de tu billetera, necesitarás una billetera completamente nueva para crear un nuevo DID.",
     "cancelButton": "Cancelar",
     "confirmRevoke": "Sí, Revocar DID",
     "steps": {

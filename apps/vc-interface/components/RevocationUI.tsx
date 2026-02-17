@@ -19,13 +19,15 @@ import {
 } from '@prisma-dids/ui';
 import { CheckCircle, AlertTriangle, ClipboardList, CheckCheck } from 'lucide-react';
 import { VCCard } from './shared/VCCard';
+import { CredentialDetailModal } from './shared/CredentialDetailModal';
 
 export interface RevocationUIProps {
   config?: Partial<VCInterfaceConfig>;
   issuedCredentials: VerifiableCredential[];
-  onRevoke: (request: RevocationRequest) => Promise<void>;
+  onRevoke: (request: RevocationRequest) => Promise<{ txHash?: string } | void>;
   issuerDid?: string;
   isLoading?: boolean;
+  network?: 'preprod' | 'mainnet';
 }
 
 export function RevocationUI({
@@ -34,6 +36,7 @@ export function RevocationUI({
   onRevoke,
   issuerDid,
   isLoading = false,
+  network = 'preprod',
 }: RevocationUIProps) {
   const fullConfig = { ...defaultConfig, ...config };
   const t = useTranslations('revocation');
@@ -44,6 +47,7 @@ export function RevocationUI({
   const revokedCredentials = issuedCredentials.filter(c => c.status === 'revoked');
 
   const [selectedCredential, setSelectedCredential] = useState<VerifiableCredential | null>(null);
+  const [detailCredential, setDetailCredential] = useState<VerifiableCredential | null>(null);
   const [revocationReason, setRevocationReason] = useState<RevocationReason>('issued_in_error');
   const [customReason, setCustomReason] = useState('');
   const [isRevoking, setIsRevoking] = useState(false);
@@ -63,12 +67,12 @@ export function RevocationUI({
     if (!selectedCredential) return;
     setIsRevoking(true);
     try {
-      await onRevoke({
+      const result = await onRevoke({
         credentialId: selectedCredential.id,
         reason: revocationReason,
         customReason: revocationReason === 'other' ? customReason : undefined,
       });
-      setRevokeResult({ success: true, txHash: 'mock_revoke_tx_' + Date.now() });
+      setRevokeResult({ success: true, txHash: (result as any)?.txHash });
     } catch {
       setRevokeResult({ success: false });
     } finally {
@@ -154,12 +158,21 @@ export function RevocationUI({
             <VCCard
               key={credential.id}
               credential={credential}
-              onView={() => {}}
+              onView={() => setDetailCredential(credential)}
               onRevoke={() => handleRevokeClick(credential)}
               isIssuerView={true}
             />
           ))}
         </div>
+      )}
+
+      {/* Detail Modal */}
+      {detailCredential && (
+        <CredentialDetailModal
+          credential={detailCredential}
+          onClose={() => setDetailCredential(null)}
+          network={network}
+        />
       )}
 
       {/* Revocation Modal */}

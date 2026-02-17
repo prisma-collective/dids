@@ -35,7 +35,7 @@ export default async function RootLayout({
           <ThemeProvider theme={defaultConfig.THEME}>
             <WalletProvider>
               <Navigation config={config} />
-              <main id="main-content" className="flex-1 py-8 px-4">
+              <main id="main-content" className="flex-1 pt-4 pb-6 px-4">
                 {children}
               </main>
               <Footer

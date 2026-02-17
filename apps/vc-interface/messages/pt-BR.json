@@ -81,13 +81,19 @@
     "credentialClaims": "Declarações da Credencial",
     "select": "Selecione...",
     "disclosable": "Titular pode ocultar esta declaração (divulgável)",
+    "alwaysIncluded": "Sempre incluído na credencial",
     "successTitle": "Credencial Emitida!",
     "successDesc": "A credencial foi emitida para o titular.",
     "transactionHash": "Hash da Transação",
     "issueAnother": "Emitir Outra",
     "issuing": "Emitindo...",
     "issueButton": "Emitir Credencial",
-    "failedToIssue": "Falha ao emitir credencial"
+    "failedToIssue": "Falha ao emitir credencial",
+    "steps": {
+      "signing-credential": "Assinando credencial",
+      "pinning-ipfs": "Salvando no IPFS",
+      "anchoring-tx": "Enviando transação"
+    }
   },
   "revocation": {
     "title": "Credenciais Emitidas",

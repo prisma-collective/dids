@@ -8,15 +8,18 @@ FROM base AS deps
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/indexer/package.json ./apps/indexer/
 COPY packages/types/package.json ./packages/types/
+COPY packages/schemas/package.json ./packages/schemas/
 COPY packages/sdk/package.json ./packages/sdk/
 RUN pnpm install --frozen-lockfile
 
 # Build — extends deps so pnpm workspace symlinks stay intact
 FROM deps AS builder
 COPY packages/types/ ./packages/types/
+COPY packages/schemas/ ./packages/schemas/
 COPY packages/sdk/ ./packages/sdk/
 COPY apps/indexer/ ./apps/indexer/
 RUN pnpm --filter @prisma-dids/types build && \
+    pnpm --filter @prisma-dids/schemas build && \
     pnpm --filter @prisma-dids/sdk build && \
     pnpm --filter @prisma-dids/indexer build
 
@@ -30,6 +33,8 @@ COPY --from=builder /app/apps/indexer/node_modules ./apps/indexer/node_modules
 COPY --from=builder /app/apps/indexer/package.json ./apps/indexer/
 COPY --from=builder /app/packages/types/dist ./packages/types/dist
 COPY --from=builder /app/packages/types/package.json ./packages/types/
+COPY --from=builder /app/packages/schemas/dist ./packages/schemas/dist
+COPY --from=builder /app/packages/schemas/package.json ./packages/schemas/
 COPY --from=builder /app/packages/sdk/dist ./packages/sdk/dist
 COPY --from=builder /app/packages/sdk/package.json ./packages/sdk/
 COPY --from=builder /app/package.json ./

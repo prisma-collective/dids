@@ -71,7 +71,7 @@ async function deriveDidFromRewardAddress(rewardHex: string): Promise<string> {
   const bytes = Uint8Array.from(rewardHex.match(/.{1,2}/g)!.map(b => parseInt(b, 16)));
   const addr = C.Address.from_bytes(bytes);
   // Header byte 0xe0 = mainnet reward, 0xe1 = testnet reward
-  const prefix = (bytes[0]! & 0x01) === 0x01 ? 'stake_test' : 'stake';
+  const prefix = (bytes[0]! & 0x0f) === 0x01 ? 'stake' : 'stake_test';
   const bech32 = addr.to_bech32(prefix);
   return `did:cardano:${bech32}`;
 }
@@ -115,7 +115,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
       const api = await window.cardano[name].enable();
 
-      // Get signing address (first used or change)
+      // Get signing address (base address) — same pattern as DID Dashboard
       const usedAddresses = await api.getUsedAddresses();
       const addr = usedAddresses[0] || (await api.getChangeAddress());
       if (!addr) throw new Error('No address found in wallet');

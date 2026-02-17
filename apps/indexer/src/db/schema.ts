@@ -65,6 +65,7 @@ export const vcEvents = pgTable(
     vcHash: text('vc_hash').notNull(),
     vcType: text('vc_type').notNull(),
     vcFormat: text('vc_format').notNull(),
+    ipfsCid: text('ipfs_cid'),
     reason: text('reason'),
     valid: boolean('valid').notNull().default(true),
     validationError: text('validation_error'),

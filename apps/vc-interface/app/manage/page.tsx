@@ -8,8 +8,11 @@ import {
   revokeCredential,
   fetchIssuerCredentials,
   fetchCredentialStatus,
+  extractDisclosableClaims,
+  fetchCredentialFromIPFS,
 } from '@/services/vcService';
-import type { VerifiableCredential, RevocationRequest } from '@/types/vc';
+import { getCredential, storeCredential } from '@/services/credentialStore';
+import type { VerifiableCredential, VCClaim, RevocationRequest } from '@/types/vc';
 import { Button, EmptyState } from '@prisma-dids/ui';
 
 export default function ManagePage() {
@@ -32,16 +35,54 @@ export default function ManagePage() {
       for (const cred of credentials) {
         if (byHash.has(cred.vcHash)) continue;
 
-        const status = await fetchCredentialStatus(cred.vcHash, config.INDEXER_ENDPOINT);
+        let status = await fetchCredentialStatus(cred.vcHash, config.INDEXER_ENDPOINT);
+        // Anchored but not yet indexed → show as pending, not "not found"
+        if (status === 'not_found' && cred.txHash) status = 'pending';
+
+        // Try localStorage first, then IPFS fallback
+        let credentialString: string | undefined;
+        let claims: VCClaim[] = [];
+        let stored = getCredential(cred.vcHash);
+
+        if (!stored && cred.ipfsCid) {
+          const ipfsData = await fetchCredentialFromIPFS(cred.ipfsCid);
+          if (ipfsData?.credentialString) {
+            stored = {
+              credentialString: ipfsData.credentialString,
+              jti: ipfsData.jti,
+              vct: ipfsData.vct,
+              issuerDid: ipfsData.issuerDid,
+              holderDid: ipfsData.holderDid,
+              issuedAt: ipfsData.issuedAt,
+              txHash: cred.txHash,
+              ipfsCid: cred.ipfsCid,
+            };
+            storeCredential(stored); // Cache locally
+          }
+        }
+
+        if (stored) {
+          credentialString = stored.credentialString;
+          try {
+            claims = extractDisclosableClaims(stored.credentialString).map(c => ({
+              key: c.key,
+              value: c.value as string | number | boolean,
+              disclosable: true,
+            }));
+          } catch { /* credential string may not be parseable */ }
+        }
+
         byHash.set(cred.vcHash, {
           id: cred.vcHash,
           type: cred.vcType as VerifiableCredential['type'],
-          issuerDid: did, // issuer is the current user
+          issuerDid: did,
           holderDid: cred.holderDid,
           issuedAt: cred.timestamp,
           status,
-          claims: [], // Claims not available from indexer (on-chain = metadata only)
+          claims,
           txHash: cred.txHash,
+          credentialString,
+          ipfsCid: cred.ipfsCid ?? undefined,
         });
       }
 
@@ -69,7 +110,7 @@ export default function ManagePage() {
 
     const reason = request.reason === 'other' ? request.customReason : request.reason;
 
-    await revokeCredential(
+    const result = await revokeCredential(
       wallet,
       signingAddress,
       {
@@ -84,6 +125,8 @@ export default function ManagePage() {
 
     // Refresh credentials list after revocation
     await loadCredentials();
+
+    return { txHash: result.txHash };
   };
 
   // Wallet not connected
@@ -120,6 +163,7 @@ export default function ManagePage() {
       onRevoke={handleRevoke}
       issuerDid={did}
       isLoading={isLoading}
+      network={config.NETWORK}
     />
   );
 }

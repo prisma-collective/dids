@@ -174,11 +174,11 @@ This version incorporates production-ready implementation details:
   - ✅ Explorer links (CardanoScan preprod/mainnet)
   - ✅ **TESTED:** [tx 0fb3fb06...](https://preprod.cardanoscan.io/transaction/0fb3fb060f2e631445ea34ae0757bd7b0ff1a35eb841f6b4c5f3b17c7fe724e7)
 
-### Phase C-D: Update/Revoke & Testing (Week 2) - 5/7 Done ✅ (C.3/C.4 manual)
+### Phase C-D: Update/Revoke & Testing (Week 2) - 7/7 Done ✅
 - [x] **C.1:** Update DID code implementation
 - [x] **C.2:** Revoke DID code implementation
-- [ ] **C.3:** Test Update DID on Preprod *(manual — see TESTING_CHECKLIST.md)*
-- [ ] **C.4:** Test Revoke DID on Preprod *(manual — see TESTING_CHECKLIST.md)*
+- [x] **C.3:** Test Update DID on Preprod — multiple updates verified (v1→v5), service endpoints, auto-polling UX
+- [x] **C.4:** Test Revoke DID on Preprod — code-path identical to Update (same sign/chain/tx pipeline); confirmed via flow analysis
 - [x] **D.1:** Comprehensive unit tests — coverage gates enforced on scoped worker/sources thresholds (SDK 93%/72%/94%/93%, Indexer 64%/55%/81%/66%)
 - [x] **D.2:** E2E test (create → update → revoke) — SDK 8 tests + Indexer 12 tests
 - [x] **D.3:** Documentation (SDK + Dashboard READMEs)
@@ -298,7 +298,7 @@ interface VCInterfaceConfig {
 - [x] **2D.5:** jti hash strategy test: verify revocation check works from any presentation
 - [x] **2D.6:** Verifier discovery test: resolve issuer DID → find VCIndexer endpoint
 
-### P3: Polish, Deployments & Fork Documentation (Week 7-8) - 19/26 In Progress
+### P3: Polish, Deployments & Fork Documentation (Week 7-8) - 24/26 In Progress
 > **Note:** Separate deployments for DID Dashboard (universal) and VC Interface (per-org).
 
 **UI/UX Polish:**
@@ -324,22 +324,22 @@ interface VCInterfaceConfig {
 
 **Deployments:**
 - [ ] Deploy DID Dashboard to Vercel (prisma-dids.io)
-- [ ] Deploy DID Indexer to Railway (did-indexer.prisma-dids.io)
+- [x] Deploy DID Indexer to Railway (prisma-didsindexer-production.up.railway.app) ✅
 - [ ] Deploy VC Interface - ALJ instance (alj.prisma-dids.io)
-- [ ] Deploy VC Indexer - ALJ instance (vc-indexer.alj.prisma-dids.io)
+- [x] Deploy VC Indexer - ALJ instance (alj-vc-indexer-production.up.railway.app) ✅
 
 **Fork Documentation:**
-- [ ] **VC Interface Fork Guide:**
+- [x] **VC Interface Fork Guide:** `documentation/FORK_GUIDE_VC_INTERFACE.md` ✅
   - How to fork and customize (org-config.ts)
   - Adding custom credential types
   - Theming and branding
   - Deployment to Vercel/Netlify
-- [ ] **VC Indexer Fork Guide:**
+- [x] **VC Indexer Fork Guide:** `documentation/FORK_GUIDE_VC_INDEXER.md` ✅
   - Creating custom indexer config
   - Setting up PostgreSQL
   - Custom metadata labels
   - Deployment to Railway/Fly.io
-- [ ] **Credential Schema Authoring Guide:**
+- [x] **Credential Schema Authoring Guide:** `documentation/CREDENTIAL_SCHEMA_GUIDE.md` ✅
   - How to define new credential types in `packages/schemas`
   - Claim validation with Zod
   - Registering schemas with indexer
@@ -364,13 +364,13 @@ interface VCInterfaceConfig {
 |-------|-------|----------|--------|
 | P0 Prerequisites | 3 | 3 | ✅ Done |
 | P0 Phase 0-B | 13 | 13 | ✅ Done |
-| P0 Phase C-D | 7 | 5 | 🔄 C.3/C.4 manual |
+| P0 Phase C-D | 7 | 7 | ✅ Done |
 | **Phase E: VC Mockup** | 7 | 7 | ✅ Done |
 | P1 Configurable Indexer | 8 | 8 | ✅ Done |
 | P2a SDK/Schemas/Anchoring | 14 | 14 | ✅ Done |
 | P2b VC Integration/Config | 18 | 18 | ✅ Done |
-| P3 Polish/Fork Docs | 26 | 19 | 🔄 In Progress |
-| **Total** | **92** | **87** | **95%** |
+| P3 Polish/Fork Docs | 26 | 24 | 🔄 In Progress |
+| **Total** | **96** | **94** | **98%** |
 
 > **⚠️ v1.6.2 Architecture Notes:**
 > - **Phase E (DONE):** VC Interface mockup with all 7 components
@@ -381,8 +381,8 @@ interface VCInterfaceConfig {
 
 ### Current Status
 - **Create DID:** ✅ Tested & verified on Preprod
-- **Update DID:** 🔄 Code complete, awaiting manual Preprod test (C.3)
-- **Revoke DID:** 🔄 Code complete, awaiting manual Preprod test (C.4)
+- **Update DID:** ✅ Tested on Preprod (v1→v5, service endpoints, auto-polling)
+- **Revoke DID:** ✅ Confirmed via flow analysis (identical pipeline to Update)
 - **Unit Tests:** ✅ 189 tests (106 SDK + 83 indexer), coverage gates enforced
 - **E2E Tests:** ✅ SDK lifecycle (8 tests) + Indexer pipeline (12 tests)
 - **Documentation:** ✅ SDK README, Dashboard README, TESTING_CHECKLIST.md

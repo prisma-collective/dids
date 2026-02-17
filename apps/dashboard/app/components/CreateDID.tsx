@@ -19,6 +19,7 @@ import { L_DID } from '@prisma-dids/types';
 import type { DIDEvent } from '@prisma-dids/types';
 import {
   Button,
+  Input,
   Card,
   ProgressSteps,
 } from '@prisma-dids/ui';
@@ -48,11 +49,9 @@ interface CreateDIDProps {
 
 type Step =
   | 'idle'
-  | 'getting-addresses'
-  | 'deriving-did'
+  | 'preparing'
   | 'generating-doc'
   | 'pinning-ipfs'
-  | 'building-payload'
   | 'signing'
   | 'submitting-tx'
   | 'complete'
@@ -67,17 +66,16 @@ interface CreateDIDState {
 }
 
 const stepOrder: Step[] = [
-  'getting-addresses',
-  'deriving-did',
+  'preparing',
   'generating-doc',
   'pinning-ipfs',
-  'building-payload',
   'signing',
   'submitting-tx',
 ];
 
 export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
   const [state, setState] = useState<CreateDIDState>({ step: 'idle' });
+  const [serviceEndpoint, setServiceEndpoint] = useState('');
   const t = useTranslations('createDID');
 
   const getExplorerUrl = (txHash: string) => {
@@ -88,9 +86,10 @@ export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
   };
 
   const handleCreate = async () => {
-    setState({ step: 'getting-addresses' });
+    setState({ step: 'preparing' });
 
     try {
+      // — preparing: get addresses, derive DID, preliminary sign to extract public key —
       const rewardAddresses = await wallet.api.getRewardAddresses();
       if (!rewardAddresses || rewardAddresses.length === 0) {
         throw new Error(t('errors.noRewardAddresses'));
@@ -103,21 +102,19 @@ export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
 
       const baseAddressHex = usedAddresses[0];
       const stakeAddressHex = rewardAddresses[0];
-
-      setState({ step: 'deriving-did' });
       const stakeAddressBech32 = await hexStakeAddressToBech32(stakeAddressHex);
       const did = deriveDID(stakeAddressBech32);
-      setState(prev => ({ ...prev, did, step: 'building-payload' }));
+      setState(prev => ({ ...prev, did }));
 
       const preliminaryPayload = buildCreatePayload({ did, ipfsCid: 'pending' });
-
-      setState(prev => ({ ...prev, step: 'signing' }));
       const preliminarySig = await signDIDPayload(wallet.api, preliminaryPayload, baseAddressHex);
       const publicKeyHex = preliminarySig.key;
 
+      // — generating-doc —
       setState(prev => ({ ...prev, step: 'generating-doc' }));
-      const didDocument = generateDIDDocument({ did, publicKeyHex });
+      const didDocument = generateDIDDocument({ did, publicKeyHex, serviceEndpoint: serviceEndpoint || undefined });
 
+      // — pinning-ipfs —
       setState(prev => ({ ...prev, step: 'pinning-ipfs' }));
       const pinataJwt = process.env.NEXT_PUBLIC_PINATA_JWT;
       if (!pinataJwt) {
@@ -127,13 +124,13 @@ export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
       const ipfsCid = await pinata.pinJSON(didDocument);
       setState(prev => ({ ...prev, ipfsCid }));
 
-      setState(prev => ({ ...prev, step: 'building-payload' }));
-      const createPayload = buildCreatePayload({ did, ipfsCid });
-
+      // — signing: build final payload + sign —
       setState(prev => ({ ...prev, step: 'signing' }));
+      const createPayload = buildCreatePayload({ did, ipfsCid });
       const payloadSig = await signDIDPayload(wallet.api, createPayload, baseAddressHex);
       const didEvent: DIDEvent = buildDIDEvent(createPayload, payloadSig);
 
+      // — submitting-tx —
       setState(prev => ({ ...prev, step: 'submitting-tx' }));
       const blockfrostKey = network === 'mainnet'
         ? process.env.NEXT_PUBLIC_BLOCKFROST_MAINNET_KEY
@@ -177,9 +174,17 @@ export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
     setState({ step: 'idle' });
   };
 
+  const stepLabels: Record<string, string> = {
+    'preparing': t('steps.preparing'),
+    'generating-doc': t('steps.generatingDoc'),
+    'pinning-ipfs': t('steps.pinningIPFS'),
+    'signing': t('steps.signing'),
+    'submitting-tx': t('steps.submittingTx'),
+  };
+
   const progressSteps = stepOrder.map((s) => ({
     id: s,
-    label: t(`steps.${s === 'getting-addresses' ? 'gettingAddresses' : s === 'deriving-did' ? 'derivingDID' : s === 'generating-doc' ? 'generatingDoc' : s === 'pinning-ipfs' ? 'pinningIPFS' : s === 'building-payload' ? 'buildingPayload' : s === 'submitting-tx' ? 'submittingTx' : 'signing'}`),
+    label: stepLabels[s] || s,
   }));
 
   if (state.step === 'error') {
@@ -215,6 +220,11 @@ export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
             <code className="text-sm break-all text-text-primary">{state.did}</code>
           </Card>
 
+          <Card className="p-4 flex items-center justify-between">
+            <label className="text-xs text-text-secondary uppercase">{t('version')}</label>
+            <code className="text-sm text-text-primary">1</code>
+          </Card>
+
           <Card className="p-4">
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs text-text-secondary uppercase">IPFS CID</label>
@@ -248,7 +258,7 @@ export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
           )}
         </div>
 
-        <Button variant="secondary" onClick={handleReset}>{t('createAnother')}</Button>
+        <Button variant="secondary" onClick={handleReset}>{t('done')}</Button>
       </div>
     );
   }
@@ -261,6 +271,21 @@ export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
         <h3 className="text-xl font-semibold text-text-primary mb-2">{t('title')}</h3>
         <p className="text-text-secondary mb-6">{t('description')}</p>
 
+        <div className="space-y-4 mb-6">
+          <div>
+            <label htmlFor="create-service-endpoint" className="block text-sm text-text-secondary mb-1.5">
+              {t('serviceEndpoint')}
+            </label>
+            <Input
+              id="create-service-endpoint"
+              value={serviceEndpoint}
+              onChange={(e) => setServiceEndpoint(e.target.value)}
+              placeholder="https://api.example.com"
+              disabled={isProcessing}
+            />
+          </div>
+        </div>
+
         {isProcessing ? (
           <div>
             <ProgressSteps steps={progressSteps} currentStep={state.step} />
@@ -269,7 +294,7 @@ export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
             )}
           </div>
         ) : (
-          <Button size="lg" onClick={handleCreate}>{t('createButton')}</Button>
+          <Button onClick={handleCreate}>{t('createButton')}</Button>
         )}
       </Card>
     </div>

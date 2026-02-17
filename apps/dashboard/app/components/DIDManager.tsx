@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import type { ConnectedWallet } from '../contexts/WalletContext';
 import type { Network } from './NetworkSelector';
-import { fetchLatestDIDEvent, DIDEventRecord } from '../services/didService';
+import { fetchLatestDIDEvent, DIDEventRecord, ServiceEntry } from '../services/didService';
 import { CreateDID } from './CreateDID';
 import { UpdateDID } from './UpdateDID';
 import { RevokeDID } from './RevokeDID';
@@ -48,6 +48,7 @@ interface DIDStatus {
   loading: boolean;
   did: string | null;
   currentEvent: DIDEventRecord | null;
+  services: ServiceEntry[];
   error: string | null;
 }
 
@@ -58,6 +59,7 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
     loading: true,
     did: null,
     currentEvent: null,
+    services: [],
     error: null,
   });
 
@@ -73,6 +75,7 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
           loading: false,
           did: null,
           currentEvent: null,
+          services: [],
           error: t('errors.noStakeAddress'),
         });
         return;
@@ -82,12 +85,13 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
       const stakeAddressBech32 = await hexStakeAddressToBech32(stakeAddressHex);
       const did = deriveDID(stakeAddressBech32);
 
-      const currentEvent = await fetchLatestDIDEvent(did, network);
+      const { event: currentEvent, services } = await fetchLatestDIDEvent(did, network);
 
       setStatus({
         loading: false,
         did,
         currentEvent,
+        services,
         error: null,
       });
 
@@ -103,6 +107,7 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
         loading: false,
         did: null,
         currentEvent: null,
+        services: [],
         error: err instanceof Error ? err.message : t('errors.checkFailed'),
       });
     }
@@ -112,9 +117,55 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
     checkDIDStatus();
   }, [checkDIDStatus]);
 
+  const [syncing, setSyncing] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
+
   const handleOperationComplete = () => {
-    checkDIDStatus();
+    // Clear any existing polling interval to prevent overlaps
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+
+    const prevVersion = status.currentEvent?.event.v ?? 0;
+    setSyncing(true);
     setActiveTab('status');
+
+    // Poll every 5s until version changes or 90s timeout
+    let elapsed = 0;
+    const poll = setInterval(async () => {
+      elapsed += 5000;
+      if (elapsed > 90_000) {
+        clearInterval(poll);
+        pollingRef.current = null;
+        setSyncing(false);
+        return;
+      }
+      try {
+        const rewardAddresses = await wallet.api.getRewardAddresses();
+        if (!rewardAddresses?.length) return;
+        const hex = rewardAddresses[0];
+        const bech32 = await hexStakeAddressToBech32(hex);
+        const did = deriveDID(bech32);
+        const { event } = await fetchLatestDIDEvent(did, network);
+        if (event && event.event.v > prevVersion) {
+          clearInterval(poll);
+          pollingRef.current = null;
+          setSyncing(false);
+          checkDIDStatus();
+        }
+      } catch {
+        // Keep polling on transient errors
+      }
+    }, 5000);
+    pollingRef.current = poll;
   };
 
   const getExplorerUrl = (txHash: string) => {
@@ -205,6 +256,30 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
                     <code className="text-sm break-all text-text-primary">{status.currentEvent!.event.ipfs}</code>
                   </Card>
 
+                  {/* Service Endpoints */}
+                  {status.services.length > 0 && (
+                    <Card className="p-4">
+                      <label className="block text-xs text-text-secondary uppercase tracking-wide mb-1.5">
+                        {t('serviceEndpoint')}
+                      </label>
+                      <div className="space-y-2">
+                        {status.services.map((svc) => (
+                          <div key={svc.id} className="flex items-center justify-between">
+                            <code className="text-sm text-text-primary break-all">{svc.serviceEndpoint}</code>
+                            <a
+                              href={svc.serviceEndpoint}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary text-xs hover:underline inline-flex items-center gap-1 ml-2 flex-shrink-0"
+                            >
+                              {t('view')} <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+
                   {/* Last Tx */}
                   <Card className="p-4">
                     <div className="flex items-center justify-between">
@@ -248,6 +323,13 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
             {isRevoked && (
               <div role="alert" className="mt-6 p-4 bg-error/10 rounded-lg text-error text-sm text-center">
                 {t('revokedMessage')}
+              </div>
+            )}
+
+            {syncing && (
+              <div className="mt-4 flex items-center justify-center gap-2 text-sm text-primary animate-pulse">
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                {t('syncing')}
               </div>
             )}
 

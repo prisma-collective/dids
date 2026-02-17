@@ -81,13 +81,19 @@
     "credentialClaims": "Credential Claims",
     "select": "Select...",
     "disclosable": "Holder can hide this claim (disclosable)",
+    "alwaysIncluded": "Always included in credential",
     "successTitle": "Credential Issued!",
     "successDesc": "The credential has been issued to the holder.",
     "transactionHash": "Transaction Hash",
     "issueAnother": "Issue Another",
     "issuing": "Issuing...",
     "issueButton": "Issue Credential",
-    "failedToIssue": "Failed to issue credential"
+    "failedToIssue": "Failed to issue credential",
+    "steps": {
+      "signing-credential": "Signing credential",
+      "pinning-ipfs": "Pinning to IPFS",
+      "anchoring-tx": "Submitting transaction"
+    }
   },
   "revocation": {
     "title": "Issued Credentials",

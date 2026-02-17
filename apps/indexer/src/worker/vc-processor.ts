@@ -34,31 +34,13 @@ export const vcEventProcessor: EventProcessor = {
         return { valid: false, error: coseResult.error ?? 'cose_verify_failed' };
       }
 
-      // Payload binding: signed bytes must match the event's content fields.
-      // VC events sign: { event, issuerDid, holderDid, vcHash, vcType, vcFormat, validatorDid?, reason?, ts }
-      const expectedPayload = JSON.stringify({
-        event: vcEvent.event,
-        issuerDid: vcEvent.issuerDid,
-        holderDid: vcEvent.holderDid,
-        vcHash: vcEvent.vcHash,
-        vcType: vcEvent.vcType,
-        vcFormat: vcEvent.vcFormat,
-        ...(vcEvent.validatorDid !== undefined && { validatorDid: vcEvent.validatorDid }),
-        ...(vcEvent.reason !== undefined && { reason: vcEvent.reason }),
-        ts: vcEvent.ts,
-      });
-      const expectedBytes = utf8ToBytes(expectedPayload);
-      if (!bytesEqual(coseResult.signedPayload, expectedBytes)) {
-        return {
-          valid: false,
-          signerStakeAddress: coseResult.signerStakeAddress,
-          error: 'payload_mismatch',
-        };
-      }
-
-      // Event-type-aware signer matching (Audit Fix #19)
+      // Event-type-aware verification (Audit Fix #19)
       switch (vcEvent.event) {
         case 'issue': {
+          // Issue events reuse the credential's payloadSig (signed credential payload,
+          // not anchor fields). Payload binding is skipped — COSE validity + signer
+          // matching is sufficient. The credential payload was signed by the issuer's
+          // wallet via signData, proving identity.
           const issuerStake = vcEvent.issuerDid.replace('did:cardano:', '');
           if (issuerStake !== coseResult.signerStakeAddress) {
             return {
@@ -71,6 +53,7 @@ export const vcEventProcessor: EventProcessor = {
         }
 
         case 'validate': {
+          // Validate events sign their own anchor payload — full payload binding required.
           if (!vcEvent.validatorDid) {
             return {
               valid: false,
@@ -78,6 +61,27 @@ export const vcEventProcessor: EventProcessor = {
               error: 'missing_validator_did',
             };
           }
+
+          const expectedPayload = JSON.stringify({
+            event: vcEvent.event,
+            issuerDid: vcEvent.issuerDid,
+            holderDid: vcEvent.holderDid,
+            vcHash: vcEvent.vcHash,
+            vcType: vcEvent.vcType,
+            vcFormat: vcEvent.vcFormat,
+            validatorDid: vcEvent.validatorDid,
+            ...(vcEvent.reason !== undefined && { reason: vcEvent.reason }),
+            ts: vcEvent.ts,
+          });
+          const expectedBytes = utf8ToBytes(expectedPayload);
+          if (!bytesEqual(coseResult.signedPayload, expectedBytes)) {
+            return {
+              valid: false,
+              signerStakeAddress: coseResult.signerStakeAddress,
+              error: 'payload_mismatch',
+            };
+          }
+
           const validatorStake = vcEvent.validatorDid.replace('did:cardano:', '');
           if (validatorStake !== coseResult.signerStakeAddress) {
             return {
@@ -90,7 +94,25 @@ export const vcEventProcessor: EventProcessor = {
         }
 
         case 'revoke': {
-          // COSE_Sign1 validity already checked above.
+          // Revoke events sign their own anchor payload — full payload binding required.
+          const expectedPayload = JSON.stringify({
+            event: vcEvent.event,
+            issuerDid: vcEvent.issuerDid,
+            holderDid: vcEvent.holderDid,
+            vcHash: vcEvent.vcHash,
+            vcType: vcEvent.vcType,
+            vcFormat: vcEvent.vcFormat,
+            ...(vcEvent.reason !== undefined && { reason: vcEvent.reason }),
+            ts: vcEvent.ts,
+          });
+          const expectedBytes = utf8ToBytes(expectedPayload);
+          if (!bytesEqual(coseResult.signedPayload, expectedBytes)) {
+            return {
+              valid: false,
+              signerStakeAddress: coseResult.signerStakeAddress,
+              error: 'payload_mismatch',
+            };
+          }
           // Authorization (signer = canonical issuer) deferred to query-time reducer (Audit Fix #20).
           return { valid: true, signerStakeAddress: coseResult.signerStakeAddress };
         }
@@ -119,6 +141,7 @@ export const vcEventProcessor: EventProcessor = {
       vcHash: String(event.vcHash ?? ''),
       vcType: String(event.vcType ?? ''),
       vcFormat: String(event.vcFormat ?? ''),
+      ipfsCid: event.ipfsCid ? String(event.ipfsCid) : null,
       reason: event.reason ? String(event.reason) : null,
       valid: processedResult.valid,
       validationError: processedResult.validationError,

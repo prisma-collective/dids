@@ -47,8 +47,10 @@
     "version": "Versão",
     "lastAction": "Última Ação",
     "lastTx": "Última Tx",
+    "serviceEndpoint": "Endpoint de Serviço",
     "view": "Ver",
     "refresh": "Atualizar Status",
+    "syncing": "Aguardando o indexador processar sua transação...",
     "noDIDTitle": "Nenhum DID Encontrado",
     "noDIDDescription": "Nenhum DID encontrado para esta carteira. Crie um para começar.",
     "createYourDID": "Criar Seu DID",
@@ -67,7 +69,9 @@
     "errorTitle": "Erro ao Criar DID",
     "successTitle": "DID Criado com Sucesso!",
     "tryAgain": "Tentar Novamente",
-    "createAnother": "Criar Outro DID",
+    "done": "Concluído",
+    "version": "Versão",
+    "serviceEndpoint": "Endpoint de Serviço (opcional)",
     "viewIPFS": "Ver no IPFS",
     "viewExplorer": "Ver no Explorer",
     "transaction": "Transação",
@@ -77,11 +81,9 @@
       "unknown": "Ocorreu um erro desconhecido"
     },
     "steps": {
-      "gettingAddresses": "Obtendo endereços da carteira",
-      "derivingDID": "Derivando DID",
+      "preparing": "Preparando carteira",
       "generatingDoc": "Gerando Documento DID",
       "pinningIPFS": "Fixando no IPFS",
-      "buildingPayload": "Construindo payload",
       "signing": "Assinar na carteira",
       "submittingTx": "Enviando transação"
     }
@@ -114,7 +116,6 @@
       "fetchingCurrent": "Buscando estado atual",
       "generatingDoc": "Gerando Documento DID",
       "pinningIPFS": "Fixando no IPFS",
-      "buildingPayload": "Construindo payload",
       "signing": "Assinar na carteira",
       "submittingTx": "Enviando transação"
     }
@@ -172,7 +173,7 @@
     "revokedWarning": "Este DID não pode mais ser atualizado ou usado para autenticação.",
     "confirmTitle": "Confirmar Revogação",
     "confirmQuestion": "Tem certeza que deseja revogar este DID?",
-    "confirmWarning": "Esta ação é permanente. O DID não será mais válido para autenticação e não poderá ser atualizado após a revogação.",
+    "confirmWarning": "Esta ação é permanente e não pode ser desfeita. Seu DID será permanentemente desativado. Como seu DID está vinculado ao endereço de stake da sua carteira, você precisará de uma carteira completamente nova para criar um novo DID.",
     "cancelButton": "Cancelar",
     "confirmRevoke": "Sim, Revogar DID",
     "steps": {

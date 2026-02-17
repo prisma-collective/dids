@@ -7,18 +7,30 @@ export interface DIDEventRecord {
   timestamp: string;
 }
 
+export interface ServiceEntry {
+  id: string;
+  type: string;
+  serviceEndpoint: string;
+}
+
 export interface LatestDIDResponse {
   latest: DIDEventRecord | null;
+  services?: ServiceEntry[];
 }
 
 export interface DIDHistoryResponse {
   events: DIDEventRecord[];
 }
 
+export interface LatestDIDResult {
+  event: DIDEventRecord | null;
+  services: ServiceEntry[];
+}
+
 export async function fetchLatestDIDEvent(
   did: string,
   network: 'preprod' | 'mainnet'
-): Promise<DIDEventRecord | null> {
+): Promise<LatestDIDResult> {
   const response = await fetch(`/api/did/${encodeURIComponent(did)}?network=${network}`);
 
   if (!response.ok) {
@@ -27,7 +39,10 @@ export async function fetchLatestDIDEvent(
   }
 
   const data: LatestDIDResponse = await response.json();
-  return data.latest;
+  return {
+    event: data.latest,
+    services: data.services ?? [],
+  };
 }
 
 export async function fetchDIDHistory(

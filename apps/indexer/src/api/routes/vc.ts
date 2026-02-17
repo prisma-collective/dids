@@ -18,6 +18,7 @@ export interface VCEventRow {
   vcHash: string;
   vcType: string;
   vcFormat: string;
+  ipfsCid: string | null;
   reason: string | null;
   valid: boolean;
   validationError: string | null;
@@ -157,6 +158,7 @@ export function registerVCResolveRoutes(app: FastifyInstance, db: Database) {
         validatorDid: e.validatorDid,
         vcType: e.vcType,
         vcFormat: e.vcFormat,
+        ipfsCid: e.ipfsCid,
         reason: e.reason,
         confirmed: e.confirmed,
         blockHeight: e.blockHeight,
@@ -242,6 +244,7 @@ export function registerVCIssuerRoutes(app: FastifyInstance, db: Database) {
         holderDid: e.holderDid,
         vcType: e.vcType,
         vcFormat: e.vcFormat,
+        ipfsCid: e.ipfsCid,
         txHash: e.txHash,
         confirmed: e.confirmed,
         blockHeight: e.blockHeight,
@@ -305,6 +308,7 @@ export function registerVCHolderRoutes(app: FastifyInstance, db: Database) {
         issuerDid: e.issuerDid,
         vcType: e.vcType,
         vcFormat: e.vcFormat,
+        ipfsCid: e.ipfsCid,
         txHash: e.txHash,
         confirmed: e.confirmed,
         blockHeight: e.blockHeight,

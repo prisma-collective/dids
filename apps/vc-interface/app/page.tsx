@@ -40,8 +40,8 @@ export default function Home() {
       role: 'verifier' as const,
       roleColor: 'warning' as const,
       icon: <ShieldCheck className="h-7 w-7 text-text-secondary" />,
-      title: t('verifierTitle'),
-      desc: t('verifierDesc'),
+      title: t('verifyTitle'),
+      desc: t('verifyDesc'),
     },
   ];
 

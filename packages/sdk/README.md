@@ -14,7 +14,7 @@ pnpm add @prisma-dids/sdk
 |-------------|--------|----------|
 | Full (Node.js) | `@prisma-dids/sdk` | Server-side: includes COSE verification, VC anchoring |
 | Browser | `@prisma-dids/sdk/browser` | Client-side: DID ops, signing, VC issuance (no CSL) |
-| Server | `@prisma-dids/sdk/server` | Server-only: Lucid tx builder |
+| Server | `@prisma-dids/sdk/server` | Server-only: VC verification (`verifyPresentation`) |
 
 ## Quick Start — Create a DID
 

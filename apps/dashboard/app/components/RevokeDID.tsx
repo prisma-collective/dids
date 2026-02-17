@@ -94,7 +94,7 @@ export function RevokeDID({ wallet, network, currentDID, onComplete }: RevokeDID
     setState({ step: 'fetching-current' });
 
     try {
-      const currentEvent = await fetchLatestDIDEvent(did, network);
+      const { event: currentEvent } = await fetchLatestDIDEvent(did, network);
       if (!currentEvent) throw new Error(t('errors.didNotFound'));
       if (currentEvent.event.action === 'revoke') throw new Error(t('errors.alreadyRevoked'));
 
@@ -162,7 +162,6 @@ export function RevokeDID({ wallet, network, currentDID, onComplete }: RevokeDID
 
   const handleReset = () => {
     setState({ step: 'idle' });
-    onComplete?.();
   };
 
   const handleCancel = () => {
@@ -281,7 +280,8 @@ export function RevokeDID({ wallet, network, currentDID, onComplete }: RevokeDID
           <Input
             id="revoke-did-input"
             value={did}
-            onChange={(e) => setDid(e.target.value)}
+            readOnly
+            className="opacity-70 cursor-not-allowed"
             placeholder="did:cardano:stake_test1..."
             disabled={isProcessing}
           />

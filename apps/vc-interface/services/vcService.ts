@@ -9,12 +9,21 @@
  * - Anchor (issue/revoke) → dynamic Lucid import (wallet.signTx)
  * - Status/credentials → indexer REST API (fetch)
  * - Verify → delegates to /api/verify (server-side, needs Node.js COSE verify)
+ *
+ * Signing optimization (issue flow):
+ *   issueSDJwtVC() already signs the credential payload via wallet.signData().
+ *   The returned payloadSig is reused for the anchor event — no second signData.
+ *   This reduces wallet popups from 3→2 (signData + signTx).
+ *   The indexer skips payload-binding for issue events since the signed content
+ *   is the credential payload, not the anchor fields. COSE validity + signer
+ *   matching is sufficient for issuance.
  */
 import {
   issueSDJwtVC,
   createPresentation,
   getDisclosableClaims,
   serializeEventMetadata,
+  PinataClient,
 } from '@prisma-dids/sdk/browser';
 import { L_VC } from '@prisma-dids/types';
 import type { CIP30API, PrismaPayloadSig } from '@prisma-dids/types';
@@ -30,7 +39,7 @@ function utf8ToHex(str: string): string {
 
 /**
  * Sign a VC event payload via CIP-30 wallet.signData().
- * Replicates SDK vc-anchor.ts signVCEventPayload logic (browser-safe).
+ * Used for revoke events (issue events reuse the credential's payloadSig).
  */
 async function signVCPayload(
   wallet: CIP30API,
@@ -44,7 +53,6 @@ async function signVCPayload(
 
 /**
  * Submit a VC event on-chain via Lucid (dynamic import for browser WASM).
- * Replicates SDK vc-anchor.ts submitVCEvent logic.
  */
 async function submitVCEvent(
   wallet: CIP30API,
@@ -70,18 +78,28 @@ async function submitVCEvent(
 
 // ─── Public API ───
 
+/** Steps reported via the onProgress callback during issuance. */
+export type IssueStep =
+  | 'signing-credential'
+  | 'pinning-ipfs'
+  | 'anchoring-tx';
+
 export interface IssueResult {
   credential: string;
   jti: string;
   txHash: string;
+  ipfsCid: string;
 }
 
 /**
- * Issue a COSE-SD Verifiable Credential and anchor it on-chain.
+ * Issue a COSE-SD Verifiable Credential, pin to IPFS, and anchor on-chain.
  *
- * 1. issueSDJwtVC() → credential string + jti
- * 2. Sign anchor event payload via wallet.signData()
- * 3. Submit anchor tx via Lucid
+ * 1. issueSDJwtVC() → credential string + jti + payloadSig (wallet.signData)
+ * 2. Pin credential to IPFS → ipfsCid (natural delay replaces 800ms sleep)
+ * 3. Build anchor event with ipfsCid + reused payloadSig (no second signData)
+ * 4. Submit anchor tx via Lucid (wallet.signTx)
+ *
+ * Only 2 wallet popups: signData (credential) + signTx (transaction).
  */
 export async function issueAndAnchorCredential(
   wallet: CIP30API,
@@ -89,10 +107,12 @@ export async function issueAndAnchorCredential(
   issuerDid: string,
   holderDid: string,
   formData: IssuanceFormData,
-  networkConfig: { network: string; blockfrostApiKey: string }
+  networkConfig: { network: string; blockfrostApiKey: string },
+  onProgress?: (step: IssueStep) => void
 ): Promise<IssueResult> {
-  // 1. Issue COSE-SD VC
-  const { credential, jti } = await issueSDJwtVC(
+  // 1. Issue COSE-SD VC (calls wallet.signData internally)
+  onProgress?.('signing-credential');
+  const issued = await issueSDJwtVC(
     wallet,
     signingAddress,
     issuerDid,
@@ -101,23 +121,59 @@ export async function issueAndAnchorCredential(
     formData.claims,
     { disclosable: formData.disclosableClaims }
   );
+  const { credential, jti, payloadSig } = issued;
 
-  // 2. Anchor on-chain
+  // 2. Pin credential to IPFS
+  onProgress?.('pinning-ipfs');
+  const pinataJwt = process.env.NEXT_PUBLIC_PINATA_JWT;
+  if (!pinataJwt) {
+    throw new Error('NEXT_PUBLIC_PINATA_JWT not configured');
+  }
+  const pinata = new PinataClient({ jwt: pinataJwt });
+  const ipfsCid = await pinata.pinJSON({
+    credentialString: credential,
+    jti,
+    vct: formData.credentialType,
+    issuerDid,
+    holderDid,
+    issuedAt: new Date().toISOString(),
+  });
+
+  // 3. Build anchor event with IPFS CID + reused payloadSig (no second signData).
   const ts = new Date().toISOString();
-  const fields: Record<string, unknown> = {
+  const event: Record<string, unknown> = {
     event: 'issue',
     issuerDid,
     holderDid,
     vcHash: jti,
     vcType: formData.credentialType,
     vcFormat: 'cose-sd',
+    ipfsCid,
     ts,
+    payloadSig: JSON.stringify(payloadSig),
   };
-  const payloadSig = await signVCPayload(wallet, signingAddress, fields);
-  const event = { ...fields, payloadSig: JSON.stringify(payloadSig) };
+
+  // 4. Submit tx via Lucid (calls wallet.signTx)
+  onProgress?.('anchoring-tx');
   const txHash = await submitVCEvent(wallet, event, networkConfig);
 
-  return { credential, jti, txHash };
+  return { credential, jti, txHash, ipfsCid };
+}
+
+/**
+ * Fetch a credential payload from IPFS via Pinata gateway.
+ * Returns the stored credential data or null on failure.
+ */
+export async function fetchCredentialFromIPFS(
+  ipfsCid: string
+): Promise<{ credentialString: string; jti: string; vct: string; issuerDid: string; holderDid: string; issuedAt: string } | null> {
+  try {
+    const res = await fetch(`https://gateway.pinata.cloud/ipfs/${ipfsCid}`, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -202,6 +258,7 @@ export interface IssuerCredentialDTO {
   holderDid: string;
   vcType: string;
   vcFormat: string;
+  ipfsCid: string | null;
   txHash: string;
   confirmed: boolean;
   blockHeight: number;
@@ -214,6 +271,7 @@ export interface HolderCredentialDTO {
   issuerDid: string;
   vcType: string;
   vcFormat: string;
+  ipfsCid: string | null;
   txHash: string;
   confirmed: boolean;
   blockHeight: number;

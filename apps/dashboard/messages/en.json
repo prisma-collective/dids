@@ -47,8 +47,10 @@
     "version": "Version",
     "lastAction": "Last Action",
     "lastTx": "Last Tx",
+    "serviceEndpoint": "Service Endpoint",
     "view": "View",
     "refresh": "Refresh Status",
+    "syncing": "Waiting for indexer to pick up your transaction...",
     "noDIDTitle": "No DID Found",
     "noDIDDescription": "No DID found for this wallet. Create one to get started.",
     "createYourDID": "Create Your DID",
@@ -67,7 +69,9 @@
     "errorTitle": "Error Creating DID",
     "successTitle": "DID Created Successfully!",
     "tryAgain": "Try Again",
-    "createAnother": "Create Another DID",
+    "done": "Done",
+    "version": "Version",
+    "serviceEndpoint": "Service Endpoint (optional)",
     "viewIPFS": "View on IPFS",
     "viewExplorer": "View on Explorer",
     "transaction": "Transaction",
@@ -77,11 +81,9 @@
       "unknown": "An unknown error occurred"
     },
     "steps": {
-      "gettingAddresses": "Getting wallet addresses",
-      "derivingDID": "Deriving DID",
+      "preparing": "Preparing wallet",
       "generatingDoc": "Generating DID Document",
       "pinningIPFS": "Pinning to IPFS",
-      "buildingPayload": "Building payload",
       "signing": "Sign in wallet",
       "submittingTx": "Submitting transaction"
     }
@@ -114,7 +116,6 @@
       "fetchingCurrent": "Fetching current state",
       "generatingDoc": "Generating DID Document",
       "pinningIPFS": "Pinning to IPFS",
-      "buildingPayload": "Building payload",
       "signing": "Sign in wallet",
       "submittingTx": "Submitting transaction"
     }
@@ -172,7 +173,7 @@
     "revokedWarning": "This DID can no longer be updated or used for authentication.",
     "confirmTitle": "Confirm Revocation",
     "confirmQuestion": "Are you sure you want to revoke this DID?",
-    "confirmWarning": "This action is permanent. The DID will no longer be valid for authentication and cannot be updated after revocation.",
+    "confirmWarning": "This action is permanent and cannot be undone. Your DID will be permanently deactivated. Since your DID is tied to your wallet's stake address, you will need a completely new wallet to create a new DID.",
     "cancelButton": "Cancel",
     "confirmRevoke": "Yes, Revoke DID",
     "steps": {

@@ -53,7 +53,6 @@ type Step =
   | 'fetching-current'
   | 'generating-doc'
   | 'pinning-ipfs'
-  | 'building-payload'
   | 'signing'
   | 'submitting-tx'
   | 'complete'
@@ -71,7 +70,6 @@ const stepOrder: Step[] = [
   'fetching-current',
   'generating-doc',
   'pinning-ipfs',
-  'building-payload',
   'signing',
   'submitting-tx',
 ];
@@ -91,7 +89,8 @@ export function UpdateDID({ wallet, network, currentDID, onComplete }: UpdateDID
     setState({ step: 'fetching-current' });
 
     try {
-      const currentEvent = await fetchLatestDIDEvent(did, network);
+      // — fetching-current: fetch state, get addresses, verify ownership, preliminary sign —
+      const { event: currentEvent } = await fetchLatestDIDEvent(did, network);
       if (!currentEvent) {
         throw new Error(t('errors.didNotFound'));
       }
@@ -99,7 +98,7 @@ export function UpdateDID({ wallet, network, currentDID, onComplete }: UpdateDID
         throw new Error(t('errors.didRevoked'));
       }
 
-      setState(prev => ({ ...prev, currentEvent, step: 'generating-doc' }));
+      setState(prev => ({ ...prev, currentEvent }));
 
       const rewardAddresses = await wallet.api.getRewardAddresses();
       if (!rewardAddresses || rewardAddresses.length === 0) throw new Error(t('errors.noRewardAddresses'));
@@ -114,18 +113,19 @@ export function UpdateDID({ wallet, network, currentDID, onComplete }: UpdateDID
         throw new Error(t('errors.walletMismatch'));
       }
 
-      setState(prev => ({ ...prev, step: 'signing' }));
       const preliminaryPayload = buildUpdatePayload({
         did, ipfsCid: 'pending', prevTxHash: currentEvent.txHash, version: currentEvent.event.v + 1,
       });
       const preliminarySig = await signDIDPayload(wallet.api, preliminaryPayload, baseAddressHex);
       const publicKeyHex = preliminarySig.key;
 
+      // — generating-doc —
       setState(prev => ({ ...prev, step: 'generating-doc' }));
       const didDocument = generateDIDDocument({
         did, publicKeyHex, serviceEndpoint: serviceEndpoint || undefined,
       });
 
+      // — pinning-ipfs —
       setState(prev => ({ ...prev, step: 'pinning-ipfs' }));
       const pinataJwt = process.env.NEXT_PUBLIC_PINATA_JWT;
       if (!pinataJwt) throw new Error('Pinata JWT not configured.');
@@ -133,15 +133,15 @@ export function UpdateDID({ wallet, network, currentDID, onComplete }: UpdateDID
       const ipfsCid = await pinata.pinJSON(didDocument);
       setState(prev => ({ ...prev, newIpfsCid: ipfsCid }));
 
-      setState(prev => ({ ...prev, step: 'building-payload' }));
+      // — signing: build final payload + sign —
+      setState(prev => ({ ...prev, step: 'signing' }));
       const updatePayload = buildUpdatePayload({
         did, ipfsCid, prevTxHash: currentEvent.txHash, version: currentEvent.event.v + 1,
       });
-
-      setState(prev => ({ ...prev, step: 'signing' }));
       const payloadSig = await signDIDPayload(wallet.api, updatePayload, baseAddressHex);
       const didEvent: DIDEvent = buildDIDEvent(updatePayload, payloadSig);
 
+      // — submitting-tx —
       setState(prev => ({ ...prev, step: 'submitting-tx' }));
       const blockfrostKey = network === 'mainnet'
         ? process.env.NEXT_PUBLIC_BLOCKFROST_MAINNET_KEY
@@ -170,14 +170,12 @@ export function UpdateDID({ wallet, network, currentDID, onComplete }: UpdateDID
 
   const handleReset = () => {
     setState({ step: 'idle' });
-    onComplete?.();
   };
 
   const stepLabels: Record<string, string> = {
     'fetching-current': t('steps.fetchingCurrent'),
     'generating-doc': t('steps.generatingDoc'),
     'pinning-ipfs': t('steps.pinningIPFS'),
-    'building-payload': t('steps.buildingPayload'),
     'signing': t('steps.signing'),
     'submitting-tx': t('steps.submittingTx'),
   };
@@ -286,7 +284,8 @@ export function UpdateDID({ wallet, network, currentDID, onComplete }: UpdateDID
             <Input
               id="did-input"
               value={did}
-              onChange={(e) => setDid(e.target.value)}
+              readOnly
+              className="opacity-70 cursor-not-allowed"
               placeholder="did:cardano:stake_test1..."
               disabled={isProcessing}
             />

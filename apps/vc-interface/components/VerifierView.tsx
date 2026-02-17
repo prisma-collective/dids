@@ -132,21 +132,21 @@ export function VerifierView({ config, initialPresentation }: VerifierViewProps)
   return (
     <div className="max-w-[800px] mx-auto p-4">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-text-primary mb-2">{t('title')}</h1>
-        <p className="text-text-secondary">{t('subtitle')}</p>
+      <div className="mb-4">
+        <h1 className="text-2xl font-semibold text-text-primary mb-1">{t('title')}</h1>
+        <p className="text-sm text-text-secondary">{t('subtitle')}</p>
       </div>
 
       {/* Input Section */}
-      <Card className="p-6 mb-6">
-        <label className="block text-sm text-text-secondary mb-2 font-medium">
+      <Card className="p-5 mb-5">
+        <label className="block text-sm text-text-secondary mb-1.5 font-medium">
           {t('inputLabel')}
         </label>
         <textarea
           value={credentialInput}
           onChange={(e) => setCredentialInput(e.target.value)}
           placeholder={t('inputPlaceholder')}
-          className="w-full min-h-[150px] resize-y rounded-lg bg-background border border-border px-4 py-3 text-sm font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+          className="w-full min-h-[100px] resize-y rounded-lg bg-background border border-border px-4 py-3 text-sm font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
         />
         <div className="flex gap-3 mt-4">
           <Button
@@ -171,17 +171,17 @@ export function VerifierView({ config, initialPresentation }: VerifierViewProps)
 
       {/* Verification Flow Explanation */}
       {!result && !error && (
-        <Card className="p-6 mb-6">
-          <h3 className="text-base font-semibold text-text-primary mb-4 flex items-center gap-2">
+        <Card className="p-5 mb-5">
+          <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
             <Search className="h-4 w-4" />
             {t('flowTitle')}
           </h3>
           {verificationSteps.map((step, i) => (
             <div
               key={i}
-              className="flex items-center gap-3 p-3 bg-background rounded-md mb-2 last:mb-0"
+              className="flex items-center gap-3 px-3 py-2 bg-background rounded-md mb-1.5 last:mb-0"
             >
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-semibold">
                 {i + 1}
               </span>
               <span className="text-sm text-text-secondary">{step}</span>

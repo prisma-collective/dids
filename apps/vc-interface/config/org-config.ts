@@ -102,7 +102,7 @@ export const defaultConfig: VCInterfaceConfig = {
   // Add DIDs that are authorized to issue credentials
   // These should be the DIDs of people/roles allowed to issue VCs
   ISSUER_DIDS: [
-    // Example: 'did:cardano:stake1u9abc123...'
+    'did:cardano:stake_test1uqpy925r2vmmfagf2de5xjqa360gaz5c7xlsl5a3zy7klscjvwfdp',
   ],
 
   // Your VC Indexer endpoint (deploy your own, or use hosted service)
