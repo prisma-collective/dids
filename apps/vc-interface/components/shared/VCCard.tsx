@@ -10,6 +10,7 @@ export interface VCCardProps {
   onView?: (credential: VerifiableCredential) => void;
   onShare?: (credential: VerifiableCredential) => void;
   onRevoke?: (credential: VerifiableCredential) => void;
+  onVerify?: (credential: VerifiableCredential) => void;
   isIssuerView?: boolean;
   compact?: boolean;
 }
@@ -19,6 +20,7 @@ export function VCCard({
   onView,
   onShare,
   onRevoke,
+  onVerify,
   isIssuerView = false,
   compact = false,
 }: VCCardProps) {
@@ -67,9 +69,14 @@ export function VCCard({
             {t('viewDetails')}
           </Button>
         )}
-        {!isIssuerView && onShare && !isRevoked && (
+        {!isIssuerView && onShare && !isRevoked && credential.credentialString && (
           <Button size="sm" onClick={() => onShare(credential)}>
             {t('share')}
+          </Button>
+        )}
+        {!isIssuerView && onVerify && credential.credentialString && (
+          <Button variant="secondary" size="sm" onClick={() => onVerify(credential)}>
+            {t('verify')}
           </Button>
         )}
         {isIssuerView && onRevoke && !isRevoked && (

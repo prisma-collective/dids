@@ -21,6 +21,7 @@ export interface CredentialInboxProps {
   credentials: VerifiableCredential[];
   onViewCredential?: (credential: VerifiableCredential) => void;
   onShareCredential?: (credential: VerifiableCredential) => void;
+  onVerifyCredential?: (credential: VerifiableCredential) => void;
   holderDid?: string;
   isLoading?: boolean;
   isWalletConnected?: boolean;
@@ -33,6 +34,7 @@ export function CredentialInbox({
   credentials,
   onViewCredential,
   onShareCredential,
+  onVerifyCredential,
   holderDid,
   isLoading = false,
   isWalletConnected = true,
@@ -150,6 +152,7 @@ export function CredentialInbox({
                     credential={credential}
                     onView={onViewCredential}
                     onShare={onShareCredential}
+                    onVerify={onVerifyCredential}
                     isIssuerView={false}
                   />
                 ))}

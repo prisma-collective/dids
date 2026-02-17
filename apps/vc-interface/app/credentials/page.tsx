@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { CredentialInbox } from '@/components/CredentialInbox';
 import { SelectiveDisclosure } from '@/components/SelectiveDisclosure';
 import { CredentialDetailModal } from '@/components/shared/CredentialDetailModal';
@@ -20,6 +21,7 @@ import type { VerifiableCredential, VCClaim, PresentationData } from '@/types/vc
 type ViewMode = 'inbox' | 'share' | 'detail';
 
 export default function CredentialsPage() {
+  const router = useRouter();
   const { wallet, did, connecting, connect, availableWallets } = useWallet();
   const [viewMode, setViewMode] = useState<ViewMode>('inbox');
   const [selectedCredential, setSelectedCredential] = useState<VerifiableCredential | null>(null);
@@ -41,25 +43,33 @@ export default function CredentialsPage() {
 
       // 2. Query indexer for held credentials (catches ones not in localStorage)
       const indexerCreds = await fetchHolderCredentials(did, config.INDEXER_ENDPOINT);
-      for (const ic of indexerCreds) {
-        if (localByJti.has(ic.vcHash)) continue; // Already have it locally
-        if (!ic.ipfsCid) continue; // No IPFS CID → can't retrieve credential
+      // Track which indexer credentials were resolved via localStorage/IPFS
+      const resolvedFromIndexer = new Set<string>();
 
-        // Fetch from IPFS and cache locally
-        const ipfsData = await fetchCredentialFromIPFS(ic.ipfsCid);
-        if (ipfsData?.credentialString) {
-          const stored: StoredCredential = {
-            credentialString: ipfsData.credentialString,
-            jti: ipfsData.jti,
-            vct: ipfsData.vct,
-            issuerDid: ipfsData.issuerDid,
-            holderDid: ipfsData.holderDid,
-            issuedAt: ipfsData.issuedAt,
-            txHash: ic.txHash,
-            ipfsCid: ic.ipfsCid,
-          };
-          storeCredential(stored); // Cache in localStorage for next time
-          localByJti.set(stored.jti, stored);
+      for (const ic of indexerCreds) {
+        if (localByJti.has(ic.vcHash)) {
+          resolvedFromIndexer.add(ic.vcHash);
+          continue; // Already have it locally
+        }
+
+        if (ic.ipfsCid) {
+          // Fetch from IPFS and cache locally
+          const ipfsData = await fetchCredentialFromIPFS(ic.ipfsCid);
+          if (ipfsData?.credentialString) {
+            const stored: StoredCredential = {
+              credentialString: ipfsData.credentialString,
+              jti: ipfsData.jti,
+              vct: ipfsData.vct,
+              issuerDid: ipfsData.issuerDid,
+              holderDid: ipfsData.holderDid,
+              issuedAt: ipfsData.issuedAt,
+              txHash: ic.txHash,
+              ipfsCid: ic.ipfsCid,
+            };
+            storeCredential(stored); // Cache in localStorage for next time
+            localByJti.set(stored.jti, stored);
+            resolvedFromIndexer.add(ic.vcHash);
+          }
         }
       }
 
@@ -82,6 +92,26 @@ export default function CredentialsPage() {
           return toVerifiableCredential(cred, claims, status);
         })
       );
+
+      // 4. Add indexer-only credentials (no IPFS, not in localStorage)
+      //    These show basic metadata (type, status, txHash) but can't do selective disclosure
+      for (const ic of indexerCreds) {
+        if (resolvedFromIndexer.has(ic.vcHash) || localByJti.has(ic.vcHash)) continue;
+
+        let status = await fetchCredentialStatus(ic.vcHash, config.INDEXER_ENDPOINT);
+        if (status === 'not_found' && ic.txHash) status = 'pending';
+
+        enriched.push({
+          id: ic.vcHash,
+          type: ic.vcType as VerifiableCredential['type'],
+          issuerDid: ic.issuerDid,
+          holderDid: did,
+          issuedAt: ic.timestamp,
+          status,
+          claims: [],
+          txHash: ic.txHash,
+        });
+      }
 
       setCredentials(enriched);
     } finally {
@@ -116,6 +146,18 @@ export default function CredentialsPage() {
     return `${window.location.origin}/verify?p=${encoded}`;
   };
 
+  const handleVerify = (credential: VerifiableCredential) => {
+    if (!credential.credentialString) return;
+    // Create a full presentation (all claims disclosed) and navigate to /verify
+    const allClaimKeys = credential.claims.map(c => c.key);
+    const { presentation } = createSelectivePresentation(
+      credential.credentialString,
+      allClaimKeys
+    );
+    const encoded = encodeURIComponent(presentation);
+    router.push(`/verify?p=${encoded}`);
+  };
+
   const handleBackToInbox = () => {
     setSelectedCredential(null);
     setViewMode('inbox');
@@ -140,6 +182,7 @@ export default function CredentialsPage() {
       <CredentialInbox
         credentials={credentials}
         onShareCredential={handleShare}
+        onVerifyCredential={handleVerify}
         onViewCredential={handleViewDetail}
         holderDid={did ?? undefined}
         isLoading={isLoading}

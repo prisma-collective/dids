@@ -31,6 +31,7 @@
     "viewDetails": "View Details",
     "share": "Share",
     "revoke": "Revoke",
+    "verify": "Verify",
     "alwaysVisible": "Always Visible",
     "poweredBy": "Powered by Prisma DIDs — Cardano-native DID infrastructure",
     "vcIndexer": "VC Indexer"
