@@ -99,8 +99,8 @@ export const defaultConfig: VCInterfaceConfig = {
   // Add your credential types here
   CREDENTIAL_TYPES: ['ContributionCredential'],
 
-  // Add DIDs that are authorized to issue credentials
-  // These should be the DIDs of people/roles allowed to issue VCs
+  // DIDs authorized to issue credentials (fork-time defaults)
+  // Can be overridden at deploy-time via NEXT_PUBLIC_ISSUER_DIDS (comma-separated)
   ISSUER_DIDS: [
     'did:cardano:stake_test1uqpy925r2vmmfagf2de5xjqa360gaz5c7xlsl5a3zy7klscjvwfdp',
   ],

@@ -31,7 +31,7 @@ export function Navigation({ config }: NavigationProps) {
       role="navigation"
     >
       {/* Fixed-height bar — always 56px, never shifts */}
-      <div className="h-14 flex items-center justify-between px-4 sm:px-8">
+      <div className="h-14 max-w-[900px] mx-auto w-full flex items-center justify-between px-4">
         <Link href="/" className="flex-shrink-0 text-lg font-semibold text-text-primary no-underline hover:no-underline">
           {config.ORG_NAME}
         </Link>
@@ -59,8 +59,8 @@ export function Navigation({ config }: NavigationProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <LanguageSwitcher locale={locale} />
           <NetworkBadge network={config.NETWORK} />
+          <LanguageSwitcher locale={locale} />
 
           {/* Mobile hamburger */}
           <button

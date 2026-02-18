@@ -5,7 +5,14 @@
  */
 import { defaultConfig, type VCInterfaceConfig } from './org-config';
 
+function parseIssuerDids(): string[] | undefined {
+  const raw = process.env.NEXT_PUBLIC_ISSUER_DIDS?.trim();
+  if (!raw) return undefined;
+  return raw.split(',').map(d => d.trim()).filter(Boolean);
+}
+
 export function resolveConfig(): VCInterfaceConfig {
+  const envIssuers = parseIssuerDids();
   return {
     ...defaultConfig,
     INDEXER_ENDPOINT:
@@ -14,6 +21,7 @@ export function resolveConfig(): VCInterfaceConfig {
       process.env.NEXT_PUBLIC_DID_INDEXER_ENDPOINT || defaultConfig.DID_INDEXER_ENDPOINT,
     NETWORK:
       (process.env.NEXT_PUBLIC_NETWORK as 'preprod' | 'mainnet') || defaultConfig.NETWORK,
+    ...(envIssuers !== undefined && { ISSUER_DIDS: envIssuers }),
   };
 }
 

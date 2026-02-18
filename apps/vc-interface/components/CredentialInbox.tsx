@@ -26,6 +26,10 @@ export interface CredentialInboxProps {
   isLoading?: boolean;
   isWalletConnected?: boolean;
   onConnectWallet?: () => void;
+  availableWallets?: Array<{ name: string }>;
+  onConnectSpecificWallet?: (name: string) => void;
+  isConnecting?: boolean;
+  onDisconnect?: () => void;
 }
 
 type FilterTab = 'all' | 'active' | 'revoked';
@@ -39,6 +43,10 @@ export function CredentialInbox({
   isLoading = false,
   isWalletConnected = true,
   onConnectWallet,
+  availableWallets = [],
+  onConnectSpecificWallet,
+  isConnecting = false,
+  onDisconnect,
 }: CredentialInboxProps) {
   const t = useTranslations('inbox');
   const tc = useTranslations('common');
@@ -64,7 +72,19 @@ export function CredentialInbox({
           title={t('connectWallet')}
           description={t('connectWalletDesc')}
           action={
-            onConnectWallet ? (
+            availableWallets.length > 0 && onConnectSpecificWallet ? (
+              <div className="flex gap-2 flex-wrap justify-center">
+                {availableWallets.map(w => (
+                  <Button
+                    key={w.name}
+                    onClick={() => onConnectSpecificWallet(w.name)}
+                    loading={isConnecting}
+                  >
+                    {w.name}
+                  </Button>
+                ))}
+              </div>
+            ) : onConnectWallet ? (
               <Button onClick={onConnectWallet}>{t('connectButton')}</Button>
             ) : undefined
           }
@@ -98,9 +118,16 @@ export function CredentialInbox({
       <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
         <h2 className="text-2xl font-semibold text-text-primary">{t('title')}</h2>
         {holderDid && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-surface rounded-lg text-sm">
-            <span className="w-2 h-2 rounded-full bg-success" />
-            <span className="text-text-secondary">{t('connected')}</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-4 py-2 bg-surface rounded-lg text-sm">
+              <span className="w-2 h-2 rounded-full bg-success" />
+              <span className="text-text-secondary">{t('connected')}</span>
+            </div>
+            {onDisconnect && (
+              <Button variant="secondary" size="sm" onClick={onDisconnect}>
+                {tc('disconnect')}
+              </Button>
+            )}
           </div>
         )}
       </div>

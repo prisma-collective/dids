@@ -22,7 +22,7 @@ type ViewMode = 'inbox' | 'share' | 'detail';
 
 export default function CredentialsPage() {
   const router = useRouter();
-  const { wallet, did, connecting, connect, availableWallets } = useWallet();
+  const { wallet, did, connecting, connect, disconnect, availableWallets } = useWallet();
   const [viewMode, setViewMode] = useState<ViewMode>('inbox');
   const [selectedCredential, setSelectedCredential] = useState<VerifiableCredential | null>(null);
   const [credentials, setCredentials] = useState<VerifiableCredential[]>([]);
@@ -187,11 +187,10 @@ export default function CredentialsPage() {
         holderDid={did ?? undefined}
         isLoading={isLoading}
         isWalletConnected={!!wallet}
-        onConnectWallet={
-          availableWallets.length > 0
-            ? () => connect(availableWallets[0]!.name)
-            : undefined
-        }
+        availableWallets={availableWallets}
+        onConnectSpecificWallet={connect}
+        isConnecting={connecting}
+        onDisconnect={disconnect}
       />
 
       {viewMode === 'detail' && selectedCredential && (

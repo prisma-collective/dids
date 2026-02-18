@@ -34,13 +34,15 @@
     "verify": "Verify",
     "alwaysVisible": "Always Visible",
     "poweredBy": "Powered by Prisma DIDs — Cardano-native DID infrastructure",
-    "vcIndexer": "VC Indexer"
+    "vcIndexer": "VC Indexer",
+    "disconnect": "Disconnect"
   },
   "nav": {
     "myCredentials": "My Credentials",
     "issue": "Issue",
     "manage": "Manage",
-    "verify": "Verify"
+    "verify": "Verify",
+    "disconnect": "Disconnect"
   },
   "home": {
     "subtitle": "Verifiable Credentials Interface",
