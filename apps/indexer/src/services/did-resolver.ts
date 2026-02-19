@@ -64,28 +64,26 @@ export async function resolveDID(
     return 'revoked';
   }
 
-  // Get the create event for "created" timestamp
-  const createEvent = await db
-    .select({ timestamp: didEvents.timestamp })
-    .from(didEvents)
-    .where(
-      and(
-        eq(didEvents.did, did),
-        eq(didEvents.action, 'create'),
-        eq(didEvents.valid, true)
+  // Run create-event query + IPFS fetch in parallel (independent of each other)
+  const [createEvent, document] = await Promise.all([
+    db
+      .select({ timestamp: didEvents.timestamp })
+      .from(didEvents)
+      .where(
+        and(
+          eq(didEvents.did, did),
+          eq(didEvents.action, 'create'),
+          eq(didEvents.valid, true)
+        )
       )
-    )
-    .limit(1);
-
-  // Fetch DID Document from IPFS if CID exists
-  let document: unknown = null;
-  if (event.ipfsCid) {
-    try {
-      document = await fetchFromIPFS(event.ipfsCid);
-    } catch (err) {
-      console.warn(`Failed to fetch DID Document from IPFS (${event.ipfsCid}):`, err);
-    }
-  }
+      .limit(1),
+    event.ipfsCid
+      ? fetchFromIPFS(event.ipfsCid).catch((err) => {
+          console.warn(`Failed to fetch DID Document from IPFS (${event.ipfsCid}):`, err);
+          return null;
+        })
+      : Promise.resolve(null),
+  ]);
 
   return {
     did,
@@ -124,37 +122,37 @@ export async function getDIDHistory(
     conditions.push(eq(didEvents.confirmed, true));
   }
 
-  // Get total count
-  const totalResult = await db
-    .select({ count: count() })
-    .from(didEvents)
-    .where(and(...conditions));
+  // Run count + data queries in parallel
+  const orderFn = order === 'asc' ? asc : desc;
+  const [totalResult, rows] = await Promise.all([
+    db
+      .select({ count: count() })
+      .from(didEvents)
+      .where(and(...conditions)),
+    db
+      .select({
+        txHash: didEvents.txHash,
+        action: didEvents.action,
+        version: didEvents.version,
+        prevTxHash: didEvents.prevTxHash,
+        ipfsCid: didEvents.ipfsCid,
+        blockHeight: didEvents.blockHeight,
+        timestamp: didEvents.timestamp,
+        valid: didEvents.valid,
+        confirmed: didEvents.confirmed,
+      })
+      .from(didEvents)
+      .where(and(...conditions))
+      .orderBy(orderFn(didEvents.version))
+      .limit(limit)
+      .offset(offset),
+  ]);
 
   const total = totalResult[0]?.count ?? 0;
 
   if (total === 0) {
     return 'not_found';
   }
-
-  // Get paginated events
-  const orderFn = order === 'asc' ? asc : desc;
-  const rows = await db
-    .select({
-      txHash: didEvents.txHash,
-      action: didEvents.action,
-      version: didEvents.version,
-      prevTxHash: didEvents.prevTxHash,
-      ipfsCid: didEvents.ipfsCid,
-      blockHeight: didEvents.blockHeight,
-      timestamp: didEvents.timestamp,
-      valid: didEvents.valid,
-      confirmed: didEvents.confirmed,
-    })
-    .from(didEvents)
-    .where(and(...conditions))
-    .orderBy(orderFn(didEvents.version))
-    .limit(limit)
-    .offset(offset);
 
   return {
     did,
@@ -172,10 +170,40 @@ export async function getDIDHistory(
 }
 
 /**
+ * Simple LRU cache for IPFS documents.
+ * IPFS CIDs are content-addressed (immutable) — once fetched, the content never changes.
+ */
+const IPFS_CACHE_MAX = 500;
+const ipfsCache = new Map<string, unknown>();
+
+function ipfsCacheGet(cid: string): unknown | undefined {
+  const val = ipfsCache.get(cid);
+  if (val !== undefined) {
+    // Move to end (most recently used)
+    ipfsCache.delete(cid);
+    ipfsCache.set(cid, val);
+  }
+  return val;
+}
+
+function ipfsCacheSet(cid: string, value: unknown): void {
+  if (ipfsCache.size >= IPFS_CACHE_MAX) {
+    // Evict oldest entry (first key)
+    const oldest = ipfsCache.keys().next().value;
+    if (oldest !== undefined) ipfsCache.delete(oldest);
+  }
+  ipfsCache.set(cid, value);
+}
+
+/**
  * Fetches a JSON document from IPFS via public gateway.
+ * Results are cached in-memory since CIDs are immutable.
  * 5-second timeout to avoid blocking resolution.
  */
 async function fetchFromIPFS(cid: string): Promise<unknown> {
+  const cached = ipfsCacheGet(cid);
+  if (cached !== undefined) return cached;
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
 
@@ -184,7 +212,9 @@ async function fetchFromIPFS(cid: string): Promise<unknown> {
       signal: controller.signal,
     });
     if (!res.ok) throw new Error(`IPFS fetch failed: ${res.status}`);
-    return await res.json();
+    const data = await res.json();
+    ipfsCacheSet(cid, data);
+    return data;
   } finally {
     clearTimeout(timeout);
   }
