@@ -10,7 +10,7 @@ export default defineConfig({
       include: ['src/worker/**/*.ts', 'src/sources/**/*.ts'],
       exclude: [
         'src/**/*.test.ts',
-        'src/worker/poller.ts',     // requires live DB + Blockfrost
+        'src/worker/poller.ts',     // partially tested via mocks; full coverage needs live DB
         'src/worker/types.ts',      // interfaces only, no executable code
         'src/sources/types.ts',     // interfaces only
       ],

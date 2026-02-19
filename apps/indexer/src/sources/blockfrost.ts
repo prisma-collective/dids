@@ -1,15 +1,19 @@
-import type { MetadataSource, MetadataEvent, BlockInfo } from './types.js';
+import type { MetadataSource, MetadataEvent, BlockInfo, RawLabelEvent, TxDetails } from './types.js';
 
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;
+const CIRCUIT_BREAKER_THRESHOLD = 5; // Consecutive 429s before tripping
+const CIRCUIT_BREAKER_COOLDOWN_MS = 30_000; // 30s cooldown when tripped
 
 /**
  * BlockfrostSource — implements MetadataSource using the Blockfrost API.
- * Includes HTTP keep-alive and retry/backoff for 429/5xx responses.
+ * Includes retry/backoff with Retry-After support and circuit breaker for 429s.
  */
 export class BlockfrostSource implements MetadataSource {
   private baseUrl: string;
   private headers: Record<string, string>;
+  private consecutive429s = 0;
+  private circuitOpenUntil = 0; // Timestamp when circuit breaker resets
 
   constructor(apiKey: string, network: 'preprod' | 'mainnet') {
     this.baseUrl = `https://cardano-${network}.blockfrost.io/api/v0`;
@@ -47,6 +51,32 @@ export class BlockfrostSource implements MetadataSource {
     return events;
   }
 
+  async listRawLabelEvents(
+    label: number,
+    order: 'asc' | 'desc',
+    page: number,
+    count: number
+  ): Promise<RawLabelEvent[]> {
+    const url = `${this.baseUrl}/metadata/txs/labels/${label}?order=${order}&page=${page}&count=${count}`;
+    const data = await this.fetchWithRetry(url);
+    if (!Array.isArray(data)) return [];
+    return data.map((item: any) => ({
+      txHash: item.tx_hash,
+      jsonMetadata: item.json_metadata,
+    }));
+  }
+
+  async getTxDetails(txHash: string): Promise<TxDetails> {
+    const txInfo = await this.fetchWithRetry(`${this.baseUrl}/txs/${txHash}`);
+    return {
+      txHash,
+      txIndex: typeof txInfo.index === 'number' ? txInfo.index : null,
+      blockHeight: txInfo.block_height,
+      blockHash: txInfo.block,
+      blockTime: txInfo.block_time,
+    };
+  }
+
   async getBlockByHeight(height: number): Promise<BlockInfo | null> {
     try {
       const data = await this.fetchWithRetry(
@@ -69,10 +99,18 @@ export class BlockfrostSource implements MetadataSource {
   }
 
   private async fetchWithRetry(url: string, retries = MAX_RETRIES): Promise<any> {
+    // Circuit breaker: if tripped, wait for cooldown before any request
+    if (Date.now() < this.circuitOpenUntil) {
+      const waitMs = this.circuitOpenUntil - Date.now();
+      console.warn(`Circuit breaker open, waiting ${waitMs}ms before ${url}`);
+      await sleep(waitMs);
+    }
+
     for (let attempt = 0; attempt <= retries; attempt++) {
       const res = await fetch(url, { headers: this.headers });
 
       if (res.ok) {
+        this.consecutive429s = 0; // Reset on success
         return res.json();
       }
 
@@ -85,8 +123,22 @@ export class BlockfrostSource implements MetadataSource {
 
       // 429 (rate limit) or 5xx — retryable
       if (res.status === 429 || res.status >= 500) {
+        if (res.status === 429) {
+          this.consecutive429s++;
+          if (this.consecutive429s >= CIRCUIT_BREAKER_THRESHOLD) {
+            this.circuitOpenUntil = Date.now() + CIRCUIT_BREAKER_COOLDOWN_MS;
+            console.warn(`Circuit breaker tripped after ${this.consecutive429s} consecutive 429s, cooling down ${CIRCUIT_BREAKER_COOLDOWN_MS}ms`);
+            throw new Error(`Blockfrost circuit breaker tripped: ${url}`);
+          }
+        }
+
         if (attempt < retries) {
-          const backoff = INITIAL_BACKOFF_MS * Math.pow(2, attempt);
+          // Honor Retry-After header if present, otherwise exponential backoff
+          const retryAfter = res.headers?.get?.('Retry-After') ?? null;
+          const retryMs = retryAfter ? Number(retryAfter) * 1000 : NaN;
+          const backoff = Number.isFinite(retryMs) && retryMs > 0
+            ? Math.min(retryMs, 30_000) // Cap at 30s
+            : INITIAL_BACKOFF_MS * Math.pow(2, attempt);
           console.warn(
             `Blockfrost ${res.status} on ${url}, retrying in ${backoff}ms (attempt ${attempt + 1}/${retries})`
           );

@@ -13,6 +13,21 @@ export interface MetadataEvent {
   jsonMetadata: unknown;
 }
 
+/** Raw label event before tx enrichment (no block info). */
+export interface RawLabelEvent {
+  txHash: string;
+  jsonMetadata: unknown;
+}
+
+/** Block-level details for a single transaction. */
+export interface TxDetails {
+  txHash: string;
+  txIndex: number | null;
+  blockHeight: number;
+  blockHash: string;
+  blockTime: number;
+}
+
 export interface BlockInfo {
   height: number;
   hash: string;
@@ -33,6 +48,23 @@ export interface MetadataSource {
     page: number,
     count: number
   ): Promise<MetadataEvent[]>;
+
+  /**
+   * List raw label events WITHOUT tx enrichment.
+   * Returns only tx_hash + json_metadata (1 API call, no N+1).
+   */
+  listRawLabelEvents(
+    label: number,
+    order: 'asc' | 'desc',
+    page: number,
+    count: number
+  ): Promise<RawLabelEvent[]>;
+
+  /**
+   * Get block-level details for a single transaction.
+   * Used to enrich raw events after dedup filtering.
+   */
+  getTxDetails(txHash: string): Promise<TxDetails>;
 
   /**
    * Get block info by height. Used for rollback detection.

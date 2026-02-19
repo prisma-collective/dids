@@ -1,7 +1,7 @@
-import { eq, and, gte, sql } from 'drizzle-orm';
+import { eq, and, gte, sql, inArray } from 'drizzle-orm';
 import { syncState } from '../db/schema.js';
 import type { Database } from '../db/connection.js';
-import type { MetadataSource } from '../sources/types.js';
+import type { MetadataSource, MetadataEvent } from '../sources/types.js';
 import type { ResolvedIndexerConfig } from '../config/types.js';
 import type { EventProcessor } from './types.js';
 import { processEvents } from './processor.js';
@@ -20,10 +20,17 @@ const PAGE_SIZE = 100;
  * Uses ResolvedIndexerConfig.processors to dispatch events to the correct
  * EventProcessor per label. No hardcoded table references.
  */
+const BACKOFF_MULTIPLIER = 1.5; // 30s → 45s → 67s → 101s → 151s → 180s (cap)
+const BACKOFF_CAP_MS = 180_000; // 3 min max
+
 export class Poller {
   private running = false;
   private polling = false; // Mutex to prevent overlapping polls
-  private timer: ReturnType<typeof setInterval> | null = null;
+  private pollTimeout: ReturnType<typeof setTimeout> | null = null;
+  private confirmTimer: ReturnType<typeof setInterval> | null = null;
+  private idleCycles = 0; // Consecutive cycles with no new events
+  private pollCycle = 0; // Total cycles, used for periodic rollback
+  private baseInterval: number = 30_000;
 
   constructor(
     private db: Database,
@@ -35,48 +42,82 @@ export class Poller {
     if (this.running) return;
     this.running = true;
 
-    const interval = this.config.pollIntervalMs ?? 30_000;
-    console.log(`Poller starting (interval: ${interval}ms, labels: ${this.config.labels.join(', ')})`);
+    this.baseInterval = this.config.pollIntervalMs ?? 30_000;
+    const confirmInterval = Math.max(this.baseInterval * 10, 5 * 60_000);
+    console.log(`Poller starting (base: ${this.baseInterval}ms, confirm: ${confirmInterval}ms, labels: ${this.config.labels.join(', ')})`);
 
-    // Immediate first poll
+    // Immediate first poll + confirmation
     this.poll();
+    this.runConfirmationPass().catch(err => console.error('Confirmation pass error:', err));
 
-    this.timer = setInterval(() => this.poll(), interval);
+    this.confirmTimer = setInterval(
+      () => this.runConfirmationPass().catch(err => console.error('Confirmation pass error:', err)),
+      confirmInterval
+    );
   }
 
   stop() {
     this.running = false;
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = null;
+    if (this.pollTimeout) {
+      clearTimeout(this.pollTimeout);
+      this.pollTimeout = null;
+    }
+    if (this.confirmTimer) {
+      clearInterval(this.confirmTimer);
+      this.confirmTimer = null;
     }
     console.log('Poller stopped.');
   }
 
+  /** Adaptive interval: base * 1.5^idleCycles, capped at max(3 min, baseInterval). */
+  private get currentInterval(): number {
+    const backoff = this.baseInterval * Math.pow(BACKOFF_MULTIPLIER, this.idleCycles);
+    const cap = Math.max(BACKOFF_CAP_MS, this.baseInterval); // Never poll faster than config
+    return Math.min(Math.round(backoff), cap);
+  }
+
+  private scheduleNext() {
+    if (!this.running) return;
+    this.pollTimeout = setTimeout(() => this.poll(), this.currentInterval);
+  }
+
   private async poll() {
     if (this.polling) {
-      console.log('Poll skipped — previous cycle still running.');
+      this.scheduleNext();
       return;
     }
     this.polling = true;
 
+    let foundNew = false;
+    this.pollCycle++;
     try {
       for (const label of this.config.labels) {
-        await this.pollLabel(label);
+        const processed = await this.pollLabel(label);
+        if (processed > 0) foundNew = true;
       }
-      await this.runConfirmationPass();
     } catch (err) {
       console.error('Poll cycle error:', err);
     } finally {
+      // Adaptive backoff: reset on new events, increase on idle
+      if (foundNew) {
+        if (this.idleCycles > 0) {
+          console.log(`Poller: new events found, resetting backoff (was ${this.currentInterval}ms).`);
+        }
+        this.idleCycles = 0;
+      } else {
+        this.idleCycles++;
+      }
       this.polling = false;
+      this.scheduleNext();
     }
   }
 
-  private async pollLabel(label: number) {
+  /** Returns count of processed events (0 = nothing new). */
+  private async pollLabel(label: number): Promise<number> {
     const processor = this.config.processors[label];
     if (!processor) {
       console.warn(`No processor for label ${label}, skipping.`);
-      return;
+      return 0;
     }
 
     // Get or create sync state for this label
@@ -84,8 +125,27 @@ export class Poller {
     const checkpointHeight = checkpoint?.lastBlockHeight ?? 0;
     const checkpointHash = checkpoint?.lastBlockHash ?? null;
 
-    // --- Rollback detection ---
-    if (checkpointHeight > 0 && checkpointHash) {
+    const currentCheckpoint = checkpoint?.lastBlockHeight ?? 0;
+    const isInitialSync = currentCheckpoint === 0;
+
+    if (isInitialSync) {
+      return this.initialSync(label, processor);
+    }
+
+    // --- Label-head heartbeat: skip full scan if nothing new ---
+    const headTxHash = checkpoint?.lastTxHash ?? null;
+    let labelChanged = !headTxHash; // If no stored hash, assume changed (first run after upgrade)
+    if (headTxHash) {
+      const head = await this.source.listRawLabelEvents(label, 'desc', 1, 1);
+      if (head.length > 0 && head[0]!.txHash === headTxHash) {
+        labelChanged = false;
+      } else {
+        labelChanged = true;
+      }
+    }
+
+    // --- Rollback detection: every 10th cycle OR when label-head changed ---
+    if (checkpointHeight > 0 && checkpointHash && (labelChanged || this.pollCycle % 10 === 0)) {
       const block = await this.source.getBlockByHeight(checkpointHeight);
       if (block && block.hash !== checkpointHash) {
         console.warn(
@@ -93,117 +153,210 @@ export class Poller {
           `expected ${checkpointHash}, got ${block.hash}. Invalidating events.`
         );
         await this.handleReorg(checkpointHeight);
-        // Re-fetch checkpoint after reorg handling
         checkpoint = await this.getCheckpoint(label);
       }
     }
 
-    const currentCheckpoint = checkpoint?.lastBlockHeight ?? 0;
-    const isInitialSync = currentCheckpoint === 0;
+    if (!labelChanged) return 0; // Nothing new — skip incremental scan
 
-    if (isInitialSync) {
-      await this.initialSync(label, processor);
-    } else {
-      await this.incrementalPoll(label, processor, currentCheckpoint);
-    }
+    return this.incrementalPoll(label, processor, checkpoint?.lastBlockHeight ?? 0, checkpoint?.lastBlockHash ?? null);
   }
 
   /**
    * Initial sync: order=asc, page through all history chronologically.
    */
-  private async initialSync(label: number, processor: EventProcessor) {
+  private async initialSync(label: number, processor: EventProcessor): Promise<number> {
     console.log(`Initial sync for label ${label}...`);
+    const ENRICH_CHUNK = 5;
     let page = 1;
     let totalProcessed = 0;
     let lastBlockHeight = 0;
     let lastBlockHash = '';
+    let lastTxHash: string | null = null;
 
     while (true) {
-      const events = await this.source.listLabelEvents(label, 'asc', page, PAGE_SIZE);
-      if (events.length === 0) break;
+      // Use raw list + chunked enrichment (same as incremental) to avoid N+1
+      const rawEvents = await this.source.listRawLabelEvents(label, 'asc', page, PAGE_SIZE);
+      if (rawEvents.length === 0) break;
 
-      const result = await processEvents(this.db, events, processor);
+      // Enrich all events in chunks (during initial sync, everything is new)
+      const enriched: MetadataEvent[] = [];
+      for (let i = 0; i < rawEvents.length; i += ENRICH_CHUNK) {
+        const chunk = rawEvents.slice(i, i + ENRICH_CHUNK);
+        const details = await Promise.all(
+          chunk.map(raw => this.source.getTxDetails(raw.txHash))
+        );
+        for (let j = 0; j < chunk.length; j++) {
+          const raw = chunk[j]!;
+          const detail = details[j]!;
+          enriched.push({
+            txHash: raw.txHash,
+            txIndex: detail.txIndex,
+            blockHeight: detail.blockHeight,
+            blockHash: detail.blockHash,
+            blockTime: detail.blockTime,
+            jsonMetadata: raw.jsonMetadata,
+          });
+        }
+      }
+
+      const result = await processEvents(this.db, enriched, processor);
       totalProcessed += result.processed;
 
       // Track the highest block we've seen
-      const lastEvent = events[events.length - 1]!;
+      const lastEvent = enriched[enriched.length - 1]!;
       lastBlockHeight = lastEvent.blockHeight;
       lastBlockHash = lastEvent.blockHash;
+      lastTxHash = enriched[0]!.txHash; // Will be overwritten; final value is from last page
 
       // Update checkpoint after each page
       await this.updateCheckpoint(label, lastBlockHeight, lastBlockHash);
 
-      if (events.length < PAGE_SIZE) break; // Last page
+      if (rawEvents.length < PAGE_SIZE) break; // Last page
       page++;
     }
 
+    // Seed lastTxHash so heartbeat works immediately after initial sync
+    if (totalProcessed > 0) {
+      const head = await this.source.listRawLabelEvents(label, 'desc', 1, 1);
+      lastTxHash = head.length > 0 ? head[0]!.txHash : lastTxHash;
+      await this.updateCheckpoint(label, lastBlockHeight, lastBlockHash, lastTxHash);
+    }
+
     console.log(`Initial sync complete for label ${label}: ${totalProcessed} events processed.`);
+    return totalProcessed;
   }
 
   /**
-   * Incremental poll: order=desc (newest first), process events where
-   * block_height > checkpoint. Re-insert at == checkpoint (idempotent).
-   * Stop when block_height < checkpoint.
+   * Incremental poll: order=desc (newest first).
+   * Uses raw label events (no enrichment) + DB dedup to avoid N+1 API calls.
+   * Only enriches genuinely new events in chunked Promise.all batches.
    */
   private async incrementalPoll(
     label: number,
     processor: EventProcessor,
-    checkpointHeight: number
-  ) {
+    checkpointHeight: number,
+    checkpointHash: string | null = null
+  ): Promise<number> {
+    const table = processor.table as any;
+    const ENRICH_CHUNK = 5;
     let page = 1;
     let totalProcessed = 0;
     let newHighestHeight = checkpointHeight;
     let newHighestHash = '';
-    let done = false;
+    let headTxHash: string | null = null; // Track newest tx for heartbeat
 
-    while (!done) {
-      const events = await this.source.listLabelEvents(label, 'desc', page, PAGE_SIZE);
-      if (events.length === 0) break;
+    while (true) {
+      // Step 1: Fetch raw events — 1 API call, no enrichment
+      const rawEvents = await this.source.listRawLabelEvents(label, 'desc', page, PAGE_SIZE);
+      if (rawEvents.length === 0) break;
 
-      // Filter: process events >= checkpoint height (idempotent at ==)
-      const toProcess = [];
-      for (const event of events) {
-        if (event.blockHeight > checkpointHeight) {
-          toProcess.push(event);
+      // Capture the newest tx_hash (first on page 1, desc order) for heartbeat
+      if (page === 1) headTxHash = rawEvents[0]!.txHash;
+
+      // Step 2: DB dedup — find which tx_hashes we already have
+      const txHashes = rawEvents.map(e => e.txHash);
+      const existing = await this.db
+        .select({ txHash: table.txHash })
+        .from(table)
+        .where(inArray(table.txHash, txHashes));
+      const knownSet = new Set(existing.map((r: any) => r.txHash));
+
+      // Step 3: Filter to new events only
+      const newRaw = rawEvents.filter(e => !knownSet.has(e.txHash));
+
+      // Step 4: Enrich + process new events (skip if all known)
+      if (newRaw.length > 0) {
+        const enriched: MetadataEvent[] = [];
+        for (let i = 0; i < newRaw.length; i += ENRICH_CHUNK) {
+          const chunk = newRaw.slice(i, i + ENRICH_CHUNK);
+          const details = await Promise.all(
+            chunk.map(raw => this.source.getTxDetails(raw.txHash))
+          );
+          for (let j = 0; j < chunk.length; j++) {
+            const raw = chunk[j]!;
+            const detail = details[j]!;
+            enriched.push({
+              txHash: raw.txHash,
+              txIndex: detail.txIndex,
+              blockHeight: detail.blockHeight,
+              blockHash: detail.blockHash,
+              blockTime: detail.blockTime,
+              jsonMetadata: raw.jsonMetadata,
+            });
+          }
+        }
+
+        const result = await processEvents(this.db, enriched, processor);
+        totalProcessed += result.processed;
+
+        // Track highest block for checkpoint
+        for (const event of enriched) {
           if (event.blockHeight > newHighestHeight) {
             newHighestHeight = event.blockHeight;
             newHighestHash = event.blockHash;
           }
-        } else if (event.blockHeight === checkpointHeight) {
-          // Re-insert idempotently (dedup via tx_hash UNIQUE)
-          toProcess.push(event);
-        } else {
-          // block_height < checkpoint → stop
-          done = true;
-          break;
         }
       }
 
-      if (toProcess.length > 0) {
-        const result = await processEvents(this.db, toProcess, processor);
-        totalProcessed += result.processed;
+      // Step 5: Checkpoint-aware pagination — use block height, not dedup, as stop condition.
+      // After a crash, events may be in the DB but the checkpoint wasn't updated.
+      // We must keep paging until we reach events at/below the checkpoint height.
+      if (rawEvents.length < PAGE_SIZE) break; // Last page from API
+
+      if (newRaw.length === rawEvents.length) {
+        // All events were new — definitely continue
+        page++;
+        continue;
       }
 
-      if (events.length < PAGE_SIZE) break; // Last page
+      // Partial or zero new events: check if oldest event on this page (last in desc order)
+      // has reached the checkpoint boundary. Avoids re-enriching if already known.
+      const oldestOnPage = rawEvents[rawEvents.length - 1]!;
+      const oldestDetail = await this.source.getTxDetails(oldestOnPage.txHash);
+      if (oldestDetail.blockHeight <= checkpointHeight) {
+        break; // Reached/passed checkpoint boundary — safe to stop
+      }
       page++;
     }
 
-    // Update checkpoint if we found new blocks
+    // Update checkpoint: always write headTxHash so heartbeat stays seeded
     if (newHighestHeight > checkpointHeight && newHighestHash) {
-      await this.updateCheckpoint(label, newHighestHeight, newHighestHash);
+      await this.updateCheckpoint(label, newHighestHeight, newHighestHash, headTxHash);
+    } else if (headTxHash) {
+      // No new blocks, but seed/update the heartbeat tx hash (preserve existing block hash)
+      await this.updateCheckpoint(label, checkpointHeight, checkpointHash, headTxHash);
     }
 
     if (totalProcessed > 0) {
       console.log(`Incremental poll for label ${label}: ${totalProcessed} events processed.`);
     }
+
+    return totalProcessed;
   }
 
   /**
    * Confirmation pass: mark events as confirmed when
    * chain_tip - block_height >= confirmationDepth.
-   * Iterates all processor tables.
+   * Decoupled from poll cycle — runs on its own cadence.
+   * Skips the chain tip API call if no unconfirmed rows exist.
    */
   private async runConfirmationPass() {
+    // Pre-check: any unconfirmed rows? If not, skip entirely (0 API calls)
+    let hasUnconfirmed = false;
+    for (const [, processor] of Object.entries(this.config.processors)) {
+      const table = processor.table as any;
+      const check = await this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(table)
+        .where(eq(table.confirmed, false));
+      if ((check[0]?.count ?? 0) > 0) {
+        hasUnconfirmed = true;
+        break;
+      }
+    }
+    if (!hasUnconfirmed) return;
+
     const depth = this.config.confirmationDepth ?? 112;
     const chainTip = await this.source.getChainTip();
     const confirmBelow = chainTip - depth;
@@ -291,7 +444,8 @@ export class Poller {
   private async updateCheckpoint(
     label: number,
     height: number,
-    hash: string | null
+    hash: string | null,
+    txHash?: string | null
   ) {
     await this.db
       .insert(syncState)
@@ -299,6 +453,7 @@ export class Poller {
         label,
         lastBlockHeight: height,
         lastBlockHash: hash,
+        ...(txHash !== undefined && { lastTxHash: txHash }),
         updatedAt: new Date(),
       })
       .onConflictDoUpdate({
@@ -306,6 +461,7 @@ export class Poller {
         set: {
           lastBlockHeight: height,
           lastBlockHash: hash,
+          ...(txHash !== undefined && { lastTxHash: txHash }),
           updatedAt: new Date(),
         },
       });
