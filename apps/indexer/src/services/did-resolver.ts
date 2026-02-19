@@ -48,7 +48,13 @@ export async function resolveDID(
 
   // Get the latest event (highest version)
   const latest = await db
-    .select()
+    .select({
+      action: didEvents.action,
+      ipfsCid: didEvents.ipfsCid,
+      timestamp: didEvents.timestamp,
+      version: didEvents.version,
+      blockHeight: didEvents.blockHeight,
+    })
     .from(didEvents)
     .where(and(...conditions))
     .orderBy(desc(didEvents.version))

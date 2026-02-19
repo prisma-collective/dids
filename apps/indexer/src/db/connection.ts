@@ -13,7 +13,12 @@ export function getDb(databaseUrl?: string) {
   }
 
   if (!pool) {
-    pool = new Pool({ connectionString: url });
+    pool = new Pool({
+      connectionString: url,
+      max: 10,
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: 5_000,
+    });
   }
 
   return drizzle(pool, { schema });

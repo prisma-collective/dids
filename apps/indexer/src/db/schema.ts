@@ -79,9 +79,16 @@ export const vcEvents = pgTable(
       .default(sql`now()`),
   },
   (table) => [
-    index('idx_vc_hash').on(table.vcHash),
-    index('idx_vc_issuer_did').on(table.issuerDid),
-    index('idx_vc_holder_did').on(table.holderDid),
+    // Composite: vcHash lookups — fully covers ORDER BY (blockHeight, txIndex, txHash)
+    index('idx_vc_hash_status').on(table.vcHash, table.blockHeight, table.txIndex, table.txHash)
+      .where(sql`${table.valid} = true`),
+    // Composite: issuer credential list — fully covers ORDER BY (blockHeight, txIndex, txHash)
+    index('idx_vc_issuer_creds').on(table.issuerDid, table.blockHeight, table.txIndex, table.txHash)
+      .where(sql`${table.event} = 'issue' AND ${table.valid} = true`),
+    // Composite: holder credential list — mirrors issuer index for holder queries
+    index('idx_vc_holder_creds').on(table.holderDid, table.blockHeight, table.txIndex, table.txHash)
+      .where(sql`${table.event} = 'issue' AND ${table.valid} = true`),
+    // Polling checkpoint + confirmation pass
     index('idx_vc_block_height').on(table.blockHeight),
     // Confirmation pass scan (only unconfirmed events)
     index('idx_vc_confirmed').on(table.confirmed)

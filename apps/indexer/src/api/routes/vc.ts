@@ -44,6 +44,14 @@ export interface VCStatus {
   reason?: string;
 }
 
+/** Narrow input type for reduceVCStatus — only the columns the reducer actually reads.
+ *  Keeps the route projection and reducer in sync via TS (Audit Fix: type-safety). */
+export type VCStatusInput = Pick<VCEventRow,
+  | 'txHash' | 'txIndex' | 'event' | 'issuerDid' | 'holderDid'
+  | 'signerStakeAddress' | 'vcHash' | 'vcType' | 'reason'
+  | 'confirmed' | 'blockHeight' | 'timestamp'
+>;
+
 // ─── Status Reducer (§4.3.1) ───
 
 /**
@@ -58,7 +66,7 @@ export interface VCStatus {
  * The events are pre-filtered by the caller (confirmed-only or all valid).
  * The reducer is mode-independent (Audit Fix #12).
  */
-export function reduceVCStatus(events: VCEventRow[]): VCStatus {
+export function reduceVCStatus(events: VCStatusInput[]): VCStatus {
   if (events.length === 0) {
     return { vcHash: '', status: 'unknown', confirmed: true };
   }
@@ -135,7 +143,20 @@ export function registerVCResolveRoutes(app: FastifyInstance, db: Database) {
       : and(eq(vcEvents.vcHash, vcHash), eq(vcEvents.valid, true), eq(vcEvents.confirmed, true));
 
     const events = await db
-      .select()
+      .select({
+        txHash: vcEvents.txHash,
+        event: vcEvents.event,
+        issuerDid: vcEvents.issuerDid,
+        holderDid: vcEvents.holderDid,
+        validatorDid: vcEvents.validatorDid,
+        vcType: vcEvents.vcType,
+        vcFormat: vcEvents.vcFormat,
+        ipfsCid: vcEvents.ipfsCid,
+        reason: vcEvents.reason,
+        confirmed: vcEvents.confirmed,
+        blockHeight: vcEvents.blockHeight,
+        timestamp: vcEvents.timestamp,
+      })
       .from(vcEvents)
       .where(conditions)
       .orderBy(
@@ -180,11 +201,29 @@ export function registerVCResolveRoutes(app: FastifyInstance, db: Database) {
       : and(eq(vcEvents.vcHash, vcHash), eq(vcEvents.valid, true), eq(vcEvents.confirmed, true));
 
     const events = await db
-      .select()
+      .select({
+        txHash: vcEvents.txHash,
+        txIndex: vcEvents.txIndex,
+        event: vcEvents.event,
+        issuerDid: vcEvents.issuerDid,
+        holderDid: vcEvents.holderDid,
+        signerStakeAddress: vcEvents.signerStakeAddress,
+        vcHash: vcEvents.vcHash,
+        vcType: vcEvents.vcType,
+        reason: vcEvents.reason,
+        confirmed: vcEvents.confirmed,
+        blockHeight: vcEvents.blockHeight,
+        timestamp: vcEvents.timestamp,
+      })
       .from(vcEvents)
-      .where(conditions);
+      .where(conditions)
+      .orderBy(
+        asc(vcEvents.blockHeight),
+        sql`${vcEvents.txIndex} ASC NULLS LAST`,
+        asc(vcEvents.txHash)
+      );
 
-    const status = reduceVCStatus(events as VCEventRow[]);
+    const status = reduceVCStatus(events);
 
     if (status.status === 'unknown' && events.length === 0) {
       return reply.code(404).send({ error: 'No events found for this vcHash', vcHash });
@@ -225,7 +264,17 @@ export function registerVCIssuerRoutes(app: FastifyInstance, db: Database) {
 
     const [events, countResult] = await Promise.all([
       db
-        .select()
+        .select({
+          vcHash: vcEvents.vcHash,
+          holderDid: vcEvents.holderDid,
+          vcType: vcEvents.vcType,
+          vcFormat: vcEvents.vcFormat,
+          ipfsCid: vcEvents.ipfsCid,
+          txHash: vcEvents.txHash,
+          confirmed: vcEvents.confirmed,
+          blockHeight: vcEvents.blockHeight,
+          timestamp: vcEvents.timestamp,
+        })
         .from(vcEvents)
         .where(conditions)
         .orderBy(...ordering)
@@ -289,7 +338,17 @@ export function registerVCHolderRoutes(app: FastifyInstance, db: Database) {
 
     const [events, countResult] = await Promise.all([
       db
-        .select()
+        .select({
+          vcHash: vcEvents.vcHash,
+          issuerDid: vcEvents.issuerDid,
+          vcType: vcEvents.vcType,
+          vcFormat: vcEvents.vcFormat,
+          ipfsCid: vcEvents.ipfsCid,
+          txHash: vcEvents.txHash,
+          confirmed: vcEvents.confirmed,
+          blockHeight: vcEvents.blockHeight,
+          timestamp: vcEvents.timestamp,
+        })
         .from(vcEvents)
         .where(conditions)
         .orderBy(...ordering)

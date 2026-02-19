@@ -34,7 +34,7 @@ export function registerDIDRoutes(app: FastifyInstance, db: Database) {
 
     // Cache resolved DIDs for 60s
     reply.header('Cache-Control', 'public, max-age=60');
-    reply.header('ETag', `"${did}"`);
+    reply.header('ETag', `"${did}-v${result.metadata.version}"`);
     return reply.send(result);
   });
 
