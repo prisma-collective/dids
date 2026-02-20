@@ -63,12 +63,18 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
     error: null,
   });
 
+  // Use refs for wallet/network to avoid re-creating the callback on every render
+  const walletRef = useRef(wallet);
+  const networkRef = useRef(network);
+  walletRef.current = wallet;
+  networkRef.current = network;
+
   const checkDIDStatus = useCallback(async () => {
-    console.log('[DIDManager] Starting checkDIDStatus...');
-    setStatus(prev => ({ ...prev, loading: true, error: null }));
+    // Only show skeleton on first load — subsequent fetches keep showing stale data
+    setStatus(prev => prev.did ? { ...prev, error: null } : { ...prev, loading: true, error: null });
 
     try {
-      const rewardAddresses = await wallet.api.getRewardAddresses();
+      const rewardAddresses = await walletRef.current.api.getRewardAddresses();
 
       if (!rewardAddresses || rewardAddresses.length === 0) {
         setStatus({
@@ -85,7 +91,7 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
       const stakeAddressBech32 = await hexStakeAddressToBech32(stakeAddressHex);
       const did = deriveDID(stakeAddressBech32);
 
-      const { event: currentEvent, services } = await fetchLatestDIDEvent(did, network);
+      const { event: currentEvent, services } = await fetchLatestDIDEvent(did, networkRef.current);
 
       setStatus({
         loading: false,
@@ -103,19 +109,26 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
 
     } catch (err) {
       console.error('[DIDManager] Error:', err);
-      setStatus({
+      setStatus(prev => ({
         loading: false,
-        did: null,
-        currentEvent: null,
-        services: [],
+        did: prev.did,
+        currentEvent: prev.currentEvent,
+        services: prev.services,
         error: err instanceof Error ? err.message : t('errors.checkFailed'),
-      });
+      }));
     }
-  }, [wallet, network]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // Fetch on mount and when network actually changes
+  const prevNetworkRef = useRef(network);
   useEffect(() => {
+    if (prevNetworkRef.current !== network) {
+      prevNetworkRef.current = network;
+      setStatus({ loading: true, did: null, currentEvent: null, services: [], error: null });
+    }
     checkDIDStatus();
-  }, [checkDIDStatus]);
+  }, [network, checkDIDStatus]);
 
   const [syncing, setSyncing] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
