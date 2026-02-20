@@ -98,6 +98,14 @@
     "done": "Hecho",
     "didToUpdate": "DID a Actualizar",
     "serviceEndpoint": "Endpoint de Servicio (opcional)",
+    "endpointHelp": {
+      "title": "Endpoints de Servicio",
+      "whatQ": "¿Qué es un endpoint de servicio?",
+      "whatA": "Es una URL que adjuntas a tu DID que apunta a tu servicio de indexador. Cualquiera que resuelva tu DID verá este enlace y podrá usarlo para consultar credenciales y eventos asociados a tu identidad.",
+      "whyQ": "¿Por qué actualizaría esto?",
+      "whyA": "Si haces un fork del indexador Prisma y corres el tuyo propio, puedes apuntar tu endpoint de servicio hacia él. Así, cualquiera que consulte tu DID sabrá que debe usar tu indexador personalizado en lugar del predeterminado. Útil para filtrar eventos, correr infraestructura privada o servir tus propios datos de credenciales.",
+      "advanced": "Avanzado"
+    },
     "newVersion": "Nueva Versión",
     "newIPFS": "Nuevo CID IPFS",
     "viewIPFS": "Ver en IPFS",
@@ -138,13 +146,9 @@
       "q": "¿Cómo creo un DID?",
       "a": "Conecta tu billetera, ve a la pestaña Crear y haz clic en \"Crear DID\". La app generará un documento DID, lo almacenará en IPFS (almacenamiento descentralizado) y lo registrará en la blockchain de Cardano. Se te pedirá firmar una transacción."
     },
-    "howUpdate": {
-      "q": "¿Puedo actualizar mi DID?",
-      "a": "Sí. La pestaña Actualizar te permite cambiar tu documento DID — por ejemplo, agregar un endpoint de servicio (una URL donde otros pueden contactarte). Cada actualización crea una nueva versión on-chain."
-    },
     "howRevoke": {
-      "q": "¿Qué significa revocar?",
-      "a": "Revocar desactiva permanentemente tu DID. Hazlo solo si tus claves fueron comprometidas o ya no necesitas la identidad. Esta acción no se puede deshacer."
+      "q": "¿Qué pasa si revoco mi DID?",
+      "a": "Tu DID se desactiva permanentemente. Solo harías esto si tus claves fueron comprometidas o ya no necesitas la identidad. Ten en cuenta que no se puede deshacer, y como tu DID está vinculado a la dirección de stake de tu billetera, necesitarías una billetera completamente nueva para crear otro."
     }
   },
   "revokeDID": {

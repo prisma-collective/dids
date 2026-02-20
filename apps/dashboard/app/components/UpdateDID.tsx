@@ -21,9 +21,10 @@ import {
   Button,
   Input,
   Card,
+  Modal,
   ProgressSteps,
 } from '@prisma-dids/ui';
-import { CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { CheckCircle, AlertCircle, ExternalLink, HelpCircle } from 'lucide-react';
 
 async function hexStakeAddressToBech32(hexAddress: string): Promise<string> {
   const CSL = await import('@emurgo/cardano-serialization-lib-browser');
@@ -78,6 +79,7 @@ export function UpdateDID({ wallet, network, currentDID, onComplete }: UpdateDID
   const [did, setDid] = useState(currentDID || '');
   const [state, setState] = useState<UpdateDIDState>({ step: 'idle' });
   const [serviceEndpoint, setServiceEndpoint] = useState('');
+  const [showEndpointHelp, setShowEndpointHelp] = useState(false);
   const t = useTranslations('updateDID');
 
   const handleUpdate = async () => {
@@ -292,9 +294,19 @@ export function UpdateDID({ wallet, network, currentDID, onComplete }: UpdateDID
           </div>
 
           <div>
-            <label htmlFor="service-endpoint" className="block text-sm text-text-secondary mb-1.5">
-              {t('serviceEndpoint')}
-            </label>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <label htmlFor="service-endpoint" className="text-sm text-text-secondary">
+                {t('serviceEndpoint')}
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowEndpointHelp(true)}
+                aria-label={t('endpointHelp.title')}
+                className="p-0.5 rounded text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"
+              >
+                <HelpCircle className="h-3.5 w-3.5" />
+              </button>
+            </div>
             <Input
               id="service-endpoint"
               value={serviceEndpoint}
@@ -302,6 +314,37 @@ export function UpdateDID({ wallet, network, currentDID, onComplete }: UpdateDID
               placeholder="https://api.example.com"
               disabled={isProcessing}
             />
+
+            <Modal
+              open={showEndpointHelp}
+              onClose={() => setShowEndpointHelp(false)}
+              title={t('endpointHelp.title')}
+              className="max-w-md"
+            >
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-text-primary mb-1">
+                    {t('endpointHelp.whatQ')}
+                  </h3>
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    {t('endpointHelp.whatA')}
+                  </p>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-sm font-semibold text-text-primary">
+                      {t('endpointHelp.whyQ')}
+                    </h3>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                      {t('endpointHelp.advanced')}
+                    </span>
+                  </div>
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    {t('endpointHelp.whyA')}
+                  </p>
+                </div>
+              </div>
+            </Modal>
           </div>
         </div>
 

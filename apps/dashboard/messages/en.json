@@ -98,6 +98,14 @@
     "done": "Done",
     "didToUpdate": "DID to Update",
     "serviceEndpoint": "Service Endpoint (optional)",
+    "endpointHelp": {
+      "title": "Service Endpoints",
+      "whatQ": "What's a service endpoint?",
+      "whatA": "It's a URL you attach to your DID that points to your indexer service. Anyone resolving your DID will see this link and can use it to query credentials and events associated with your identity.",
+      "whyQ": "Why would I update this?",
+      "whyA": "If you fork the Prisma indexer and run your own, you can point your service endpoint to it. That way, anyone looking up your DID knows to query your custom indexer instead of the default one. Useful for filtering events, running private infrastructure, or serving your own credential data.",
+      "advanced": "Advanced"
+    },
     "newVersion": "New Version",
     "newIPFS": "New IPFS CID",
     "viewIPFS": "View on IPFS",
@@ -138,13 +146,9 @@
       "q": "How do I create a DID?",
       "a": "Connect your wallet, go to the Create tab, and click \"Create DID\". The app will generate a DID document, store it on IPFS (decentralized storage), and record it on the Cardano blockchain. You'll be asked to sign a transaction."
     },
-    "howUpdate": {
-      "q": "Can I update my DID?",
-      "a": "Yes. The Update tab lets you change your DID document — for example, adding a service endpoint (a URL where others can reach you). Each update creates a new version on-chain."
-    },
     "howRevoke": {
-      "q": "What does revoking mean?",
-      "a": "Revoking permanently deactivates your DID. Do this only if your keys are compromised or you no longer need the identity. This action cannot be undone."
+      "q": "What happens if I revoke my DID?",
+      "a": "Your DID gets permanently deactivated. You would only do this if your keys were compromised or you no longer need the identity. Keep in mind this cannot be undone, and since your DID is tied to your wallet's stake address, you would need a completely new wallet to create another one."
     }
   },
   "revokeDID": {

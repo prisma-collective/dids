@@ -13,7 +13,6 @@ const sectionKeys = [
   'whyNeedOne',
   'howWallet',
   'howCreate',
-  'howUpdate',
   'howRevoke',
 ] as const;
 

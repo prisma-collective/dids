@@ -98,6 +98,14 @@
     "done": "Concluído",
     "didToUpdate": "DID para Atualizar",
     "serviceEndpoint": "Endpoint de Serviço (opcional)",
+    "endpointHelp": {
+      "title": "Endpoints de Serviço",
+      "whatQ": "O que é um endpoint de serviço?",
+      "whatA": "É uma URL que você anexa ao seu DID que aponta para o seu serviço de indexador. Qualquer pessoa que resolver seu DID verá esse link e poderá usá-lo para consultar credenciais e eventos associados à sua identidade.",
+      "whyQ": "Por que eu atualizaria isso?",
+      "whyA": "Se você fizer um fork do indexador Prisma e rodar o seu próprio, pode apontar seu endpoint de serviço para ele. Assim, qualquer pessoa que consultar seu DID saberá que deve usar seu indexador personalizado em vez do padrão. Útil para filtrar eventos, rodar infraestrutura privada ou servir seus próprios dados de credenciais.",
+      "advanced": "Avançado"
+    },
     "newVersion": "Nova Versão",
     "newIPFS": "Novo CID IPFS",
     "viewIPFS": "Ver no IPFS",
@@ -138,13 +146,9 @@
       "q": "Como criar um DID?",
       "a": "Conecte sua carteira, vá para a aba Criar e clique em \"Criar DID\". O app vai gerar um documento DID, armazená-lo no IPFS (armazenamento descentralizado) e registrá-lo na blockchain Cardano. Você precisará assinar uma transação."
     },
-    "howUpdate": {
-      "q": "Posso atualizar meu DID?",
-      "a": "Sim. A aba Atualizar permite alterar seu documento DID — por exemplo, adicionar um endpoint de serviço (uma URL onde outros podem encontrá-lo). Cada atualização cria uma nova versão on-chain."
-    },
     "howRevoke": {
-      "q": "O que significa revogar?",
-      "a": "Revogar desativa permanentemente seu DID. Faça isso apenas se suas chaves foram comprometidas ou se você não precisa mais da identidade. Esta ação não pode ser desfeita."
+      "q": "O que acontece se eu revogar meu DID?",
+      "a": "Seu DID é desativado permanentemente. Você só faria isso se suas chaves foram comprometidas ou se não precisa mais da identidade. Tenha em mente que isso não pode ser desfeito, e como seu DID está vinculado ao endereço de stake da sua carteira, você precisaria de uma carteira completamente nova para criar outro."
     }
   },
   "revokeDID": {
