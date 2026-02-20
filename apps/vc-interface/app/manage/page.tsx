@@ -7,7 +7,7 @@ import { config } from '@/config/resolve-config';
 import {
   revokeCredential,
   fetchIssuerCredentials,
-  fetchCredentialStatus,
+  fetchBatchCredentialStatuses,
   extractDisclosableClaims,
   fetchCredentialFromIPFS,
 } from '@/services/vcService';
@@ -30,37 +30,48 @@ export default function ManagePage() {
       // Indexer /issuer/:did/credentials already filters to issue events
       const credentials = await fetchIssuerCredentials(did, config.INDEXER_ENDPOINT);
 
-      // Deduplicate by vcHash + enrich with current status
-      const byHash = new Map<string, VerifiableCredential>();
+      // Deduplicate by vcHash
+      const unique = new Map<string, typeof credentials[0]>();
       for (const cred of credentials) {
-        if (byHash.has(cred.vcHash)) continue;
+        if (!unique.has(cred.vcHash)) unique.set(cred.vcHash, cred);
+      }
+      const dedupedCreds = Array.from(unique.values());
 
-        let status = await fetchCredentialStatus(cred.vcHash, config.INDEXER_ENDPOINT);
-        // Anchored but not yet indexed → show as pending, not "not found"
+      // 1. Batch-fetch all statuses in one request
+      const vcHashes = dedupedCreds.map(c => c.vcHash);
+      const statusMap = await fetchBatchCredentialStatuses(vcHashes, config.INDEXER_ENDPOINT);
+
+      // 2. Fetch IPFS credentials in parallel for those not in localStorage
+      const ipfsResults = await Promise.all(
+        dedupedCreds.map(async (cred) => {
+          let stored = getCredential(cred.vcHash);
+          if (!stored && cred.ipfsCid) {
+            const ipfsData = await fetchCredentialFromIPFS(cred.ipfsCid);
+            if (ipfsData?.credentialString) {
+              stored = {
+                credentialString: ipfsData.credentialString,
+                jti: ipfsData.jti,
+                vct: ipfsData.vct,
+                issuerDid: ipfsData.issuerDid,
+                holderDid: ipfsData.holderDid,
+                issuedAt: ipfsData.issuedAt,
+                txHash: cred.txHash,
+                ipfsCid: cred.ipfsCid,
+              };
+              storeCredential(stored);
+            }
+          }
+          return { cred, stored };
+        })
+      );
+
+      // 3. Build enriched list
+      const results: VerifiableCredential[] = ipfsResults.map(({ cred, stored }) => {
+        let status = statusMap.get(cred.vcHash) ?? 'not_found';
         if (status === 'not_found' && cred.txHash) status = 'pending';
 
-        // Try localStorage first, then IPFS fallback
         let credentialString: string | undefined;
         let claims: VCClaim[] = [];
-        let stored = getCredential(cred.vcHash);
-
-        if (!stored && cred.ipfsCid) {
-          const ipfsData = await fetchCredentialFromIPFS(cred.ipfsCid);
-          if (ipfsData?.credentialString) {
-            stored = {
-              credentialString: ipfsData.credentialString,
-              jti: ipfsData.jti,
-              vct: ipfsData.vct,
-              issuerDid: ipfsData.issuerDid,
-              holderDid: ipfsData.holderDid,
-              issuedAt: ipfsData.issuedAt,
-              txHash: cred.txHash,
-              ipfsCid: cred.ipfsCid,
-            };
-            storeCredential(stored); // Cache locally
-          }
-        }
-
         if (stored) {
           credentialString = stored.credentialString;
           try {
@@ -72,7 +83,7 @@ export default function ManagePage() {
           } catch { /* credential string may not be parseable */ }
         }
 
-        byHash.set(cred.vcHash, {
+        return {
           id: cred.vcHash,
           type: cred.vcType as VerifiableCredential['type'],
           issuerDid: did,
@@ -83,10 +94,10 @@ export default function ManagePage() {
           txHash: cred.txHash,
           credentialString,
           ipfsCid: cred.ipfsCid ?? undefined,
-        });
-      }
+        };
+      });
 
-      setIssuedCredentials(Array.from(byHash.values()));
+      setIssuedCredentials(results);
     } finally {
       setIsLoading(false);
     }

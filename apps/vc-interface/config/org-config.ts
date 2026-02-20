@@ -119,7 +119,7 @@ export const defaultConfig: VCInterfaceConfig = {
   // =========================================================================
 
   THEME: {
-    primary: '#7C3AED',      // PRISMA purple (darker)
+    primary: '#8B5CF6',      // PRISMA purple
     secondary: '#A855F7',    // PRISMA purple (lighter)
     background: '#000000',   // Pure black background
     surface: '#111111',      // Dark surface for cards

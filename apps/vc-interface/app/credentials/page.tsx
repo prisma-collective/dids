@@ -10,7 +10,7 @@ import { config } from '@/config/resolve-config';
 import {
   createSelectivePresentation,
   extractDisclosableClaims,
-  fetchCredentialStatus,
+  fetchBatchCredentialStatuses,
   fetchHolderCredentials,
   fetchCredentialFromIPFS,
 } from '@/services/vcService';
@@ -43,18 +43,13 @@ export default function CredentialsPage() {
 
       // 2. Query indexer for held credentials (catches ones not in localStorage)
       const indexerCreds = await fetchHolderCredentials(did, config.INDEXER_ENDPOINT);
-      // Track which indexer credentials were resolved via localStorage/IPFS
       const resolvedFromIndexer = new Set<string>();
 
-      for (const ic of indexerCreds) {
-        if (localByJti.has(ic.vcHash)) {
-          resolvedFromIndexer.add(ic.vcHash);
-          continue; // Already have it locally
-        }
-
-        if (ic.ipfsCid) {
-          // Fetch from IPFS and cache locally
-          const ipfsData = await fetchCredentialFromIPFS(ic.ipfsCid);
+      // 3. Fetch missing IPFS credentials in parallel (not sequentially)
+      const ipfsFetches = indexerCreds
+        .filter(ic => !localByJti.has(ic.vcHash) && ic.ipfsCid)
+        .map(async (ic) => {
+          const ipfsData = await fetchCredentialFromIPFS(ic.ipfsCid!);
           if (ipfsData?.credentialString) {
             const stored: StoredCredential = {
               credentialString: ipfsData.credentialString,
@@ -64,41 +59,49 @@ export default function CredentialsPage() {
               holderDid: ipfsData.holderDid,
               issuedAt: ipfsData.issuedAt,
               txHash: ic.txHash,
-              ipfsCid: ic.ipfsCid,
+              ipfsCid: ic.ipfsCid ?? undefined,
             };
-            storeCredential(stored); // Cache in localStorage for next time
+            storeCredential(stored);
             localByJti.set(stored.jti, stored);
             resolvedFromIndexer.add(ic.vcHash);
           }
-        }
+        });
+      await Promise.all(ipfsFetches);
+
+      // Mark indexer creds that were already in localStorage
+      for (const ic of indexerCreds) {
+        if (localByJti.has(ic.vcHash)) resolvedFromIndexer.add(ic.vcHash);
       }
 
-      // 3. Enrich all credentials with claims + status
-      const enriched = await Promise.all(
-        Array.from(localByJti.values()).map(async (cred) => {
-          let claims: VCClaim[] = [];
-          try {
-            const disclosable = extractDisclosableClaims(cred.credentialString);
-            claims = disclosable.map(c => ({
-              key: c.key,
-              value: c.value as string | number | boolean,
-              disclosable: true,
-            }));
-          } catch { /* credential string may not be parseable */ }
+      // 4. Batch-fetch all statuses in one request
+      const allHashes = [
+        ...Array.from(localByJti.values()).map(c => c.jti),
+        ...indexerCreds.filter(ic => !resolvedFromIndexer.has(ic.vcHash) && !localByJti.has(ic.vcHash)).map(ic => ic.vcHash),
+      ];
+      const statusMap = await fetchBatchCredentialStatuses(allHashes, config.INDEXER_ENDPOINT);
 
-          let status = await fetchCredentialStatus(cred.jti, config.INDEXER_ENDPOINT);
-          // Anchored but not yet indexed → show as pending, not "not found"
-          if (status === 'not_found' && cred.txHash) status = 'pending';
-          return toVerifiableCredential(cred, claims, status);
-        })
-      );
+      // 5. Enrich local credentials with claims + status
+      const enriched: VerifiableCredential[] = Array.from(localByJti.values()).map((cred) => {
+        let claims: VCClaim[] = [];
+        try {
+          const disclosable = extractDisclosableClaims(cred.credentialString);
+          claims = disclosable.map(c => ({
+            key: c.key,
+            value: c.value as string | number | boolean,
+            disclosable: true,
+          }));
+        } catch { /* credential string may not be parseable */ }
 
-      // 4. Add indexer-only credentials (no IPFS, not in localStorage)
-      //    These show basic metadata (type, status, txHash) but can't do selective disclosure
+        let status = statusMap.get(cred.jti) ?? 'not_found';
+        if (status === 'not_found' && cred.txHash) status = 'pending';
+        return toVerifiableCredential(cred, claims, status);
+      });
+
+      // 6. Add indexer-only credentials (no IPFS, not in localStorage)
       for (const ic of indexerCreds) {
         if (resolvedFromIndexer.has(ic.vcHash) || localByJti.has(ic.vcHash)) continue;
 
-        let status = await fetchCredentialStatus(ic.vcHash, config.INDEXER_ENDPOINT);
+        let status = statusMap.get(ic.vcHash) ?? 'not_found';
         if (status === 'not_found' && ic.txHash) status = 'pending';
 
         enriched.push({

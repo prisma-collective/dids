@@ -3,7 +3,7 @@
 
 @theme {
   /* Colors mapped to CSS custom properties — set by ThemeProvider at runtime */
-  --color-primary: var(--theme-primary, #7C3AED);
+  --color-primary: var(--theme-primary, #8B5CF6);
   --color-secondary: var(--theme-secondary, #A855F7);
   --color-background: var(--theme-background, #000000);
   --color-surface: var(--theme-surface, #111111);
@@ -67,7 +67,7 @@ code {
 
 /* Text selection */
 ::selection {
-  background: rgb(from var(--theme-primary, #7C3AED) r g b / 0.3);
+  background: rgb(from var(--theme-primary, #8B5CF6) r g b / 0.3);
 }
 
 /* Scrollbar styling */

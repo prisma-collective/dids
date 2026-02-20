@@ -24,21 +24,21 @@ export interface ThemeConfig {
   };
 }
 
-/** Default theme (Dashboard blue) */
+/** Default theme (PRISMA purple) */
 export const defaultTheme: ThemeConfig = {
-  primary: '#3b82f6',
-  secondary: '#2563eb',
-  background: '#0a0a0a',
-  surface: '#141414',
+  primary: '#8B5CF6',
+  secondary: '#A855F7',
+  background: '#000000',
+  surface: '#111111',
   text: {
-    primary: '#fafafa',
-    secondary: '#a0a0a0',
-    muted: '#666666',
+    primary: '#FFFFFF',
+    secondary: '#A1A1AA',
+    muted: '#71717A',
   },
   status: {
-    success: '#22c55e',
-    warning: '#f59e0b',
-    error: '#ef4444',
+    success: '#22C55E',
+    warning: '#F59E0B',
+    error: '#EF4444',
   },
 };
 

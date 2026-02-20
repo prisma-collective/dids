@@ -252,6 +252,58 @@ export async function fetchCredentialStatus(
   }
 }
 
+/** Batch-fetch credential statuses, chunking at the API limit of 100.
+ * Returns a Map of vcHash → VCStatus for all requested hashes. */
+export async function fetchBatchCredentialStatuses(
+  vcHashes: string[],
+  indexerEndpoint: string
+): Promise<Map<string, VCStatus>> {
+  const result = new Map<string, VCStatus>();
+  if (vcHashes.length === 0) return result;
+
+  // Chunk into groups of 100 (API max)
+  const BATCH_LIMIT = 100;
+  const chunks: string[][] = [];
+  for (let i = 0; i < vcHashes.length; i += BATCH_LIMIT) {
+    chunks.push(vcHashes.slice(i, i + BATCH_LIMIT));
+  }
+
+  const chunkResults = await Promise.all(
+    chunks.map(async (chunk) => {
+      try {
+        const res = await fetch(`${indexerEndpoint}/vc/status/batch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vcHashes: chunk, includeUnconfirmed: true }),
+        });
+        if (!res.ok) return { chunk, data: null };
+        const data = (await res.json()) as {
+          statuses: Record<string, { status?: string; confirmed?: boolean }>;
+        };
+        return { chunk, data };
+      } catch {
+        return { chunk, data: null };
+      }
+    })
+  );
+
+  for (const { chunk, data } of chunkResults) {
+    for (const hash of chunk) {
+      const s = data?.statuses[hash];
+      if (!s || s.status === 'unknown') {
+        result.set(hash, 'not_found');
+      } else if (s.status === 'revoked') {
+        result.set(hash, 'revoked');
+      } else if (s.status === 'active') {
+        result.set(hash, s.confirmed === false ? 'pending' : 'active');
+      } else {
+        result.set(hash, 'pending');
+      }
+    }
+  }
+  return result;
+}
+
 /** DTO for issuer credentials endpoint — matches indexer response shape */
 export interface IssuerCredentialDTO {
   vcHash: string;

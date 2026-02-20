@@ -3,17 +3,17 @@
 
 @theme {
   /* Colors mapped to CSS custom properties — set by ThemeProvider at runtime */
-  --color-primary: var(--theme-primary, #3b82f6);
-  --color-secondary: var(--theme-secondary, #2563eb);
-  --color-background: var(--theme-background, #0a0a0a);
-  --color-surface: var(--theme-surface, #141414);
-  --color-text-primary: var(--theme-text-primary, #fafafa);
-  --color-text-secondary: var(--theme-text-secondary, #a0a0a0);
-  --color-text-muted: var(--theme-text-muted, #666666);
-  --color-success: var(--theme-success, #22c55e);
-  --color-warning: var(--theme-warning, #f59e0b);
-  --color-error: var(--theme-error, #ef4444);
-  --color-border: var(--theme-border, #2a2a2a);
+  --color-primary: var(--theme-primary, #8B5CF6);
+  --color-secondary: var(--theme-secondary, #A855F7);
+  --color-background: var(--theme-background, #000000);
+  --color-surface: var(--theme-surface, #111111);
+  --color-text-primary: var(--theme-text-primary, #FFFFFF);
+  --color-text-secondary: var(--theme-text-secondary, #A1A1AA);
+  --color-text-muted: var(--theme-text-muted, #71717A);
+  --color-success: var(--theme-success, #22C55E);
+  --color-warning: var(--theme-warning, #F59E0B);
+  --color-error: var(--theme-error, #EF4444);
+  --color-border: var(--theme-border, #27272A);
 
   /* Custom animations */
   --animate-fade-in: fade-in 0.2s ease-out;
@@ -53,9 +53,6 @@ html {
 
 body {
   height: 100%;
-}
-
-body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background: var(--color-background);
   color: var(--color-text-primary);
@@ -70,7 +67,7 @@ code {
 
 /* Text selection */
 ::selection {
-  background: rgb(from var(--theme-primary, #3b82f6) r g b / 0.3);
+  background: rgb(from var(--theme-primary, #8B5CF6) r g b / 0.3);
 }
 
 /* Scrollbar styling */
