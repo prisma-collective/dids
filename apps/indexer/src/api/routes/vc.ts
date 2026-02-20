@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { eq, and, desc, asc, sql } from 'drizzle-orm';
+import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import type { Database } from '../../db/connection.js';
 import { vcEvents } from '../../db/schema.js';
 import { listSchemas } from '@prisma-dids/schemas';
@@ -231,6 +231,68 @@ export function registerVCResolveRoutes(app: FastifyInstance, db: Database) {
 
     reply.header('Cache-Control', 'public, max-age=30');
     return reply.send(status);
+  });
+
+  // POST /vc/status/batch — Batch status lookup for multiple vcHashes in one round trip.
+  app.post<{
+    Body: { vcHashes: string[]; includeUnconfirmed?: boolean };
+  }>('/vc/status/batch', async (request, reply) => {
+    const { vcHashes, includeUnconfirmed } = request.body ?? {};
+    if (!Array.isArray(vcHashes) || vcHashes.length === 0) {
+      return reply.code(400).send({ error: 'vcHashes must be a non-empty array' });
+    }
+    if (vcHashes.length > 100) {
+      return reply.code(400).send({ error: 'Maximum 100 vcHashes per batch' });
+    }
+    if (!vcHashes.every((h): h is string => typeof h === 'string' && h.length > 0)) {
+      return reply.code(400).send({ error: 'Each vcHash must be a non-empty string' });
+    }
+
+    const conditions = includeUnconfirmed
+      ? and(inArray(vcEvents.vcHash, vcHashes), eq(vcEvents.valid, true))
+      : and(inArray(vcEvents.vcHash, vcHashes), eq(vcEvents.valid, true), eq(vcEvents.confirmed, true));
+
+    const events = await db
+      .select({
+        txHash: vcEvents.txHash,
+        txIndex: vcEvents.txIndex,
+        event: vcEvents.event,
+        issuerDid: vcEvents.issuerDid,
+        holderDid: vcEvents.holderDid,
+        signerStakeAddress: vcEvents.signerStakeAddress,
+        vcHash: vcEvents.vcHash,
+        vcType: vcEvents.vcType,
+        reason: vcEvents.reason,
+        confirmed: vcEvents.confirmed,
+        blockHeight: vcEvents.blockHeight,
+        timestamp: vcEvents.timestamp,
+      })
+      .from(vcEvents)
+      .where(conditions)
+      .orderBy(
+        asc(vcEvents.blockHeight),
+        sql`${vcEvents.txIndex} ASC NULLS LAST`,
+        asc(vcEvents.txHash)
+      );
+
+    // Group events by vcHash, then reduce each group
+    const byHash = new Map<string, typeof events>();
+    for (const e of events) {
+      const arr = byHash.get(e.vcHash) ?? [];
+      arr.push(e);
+      byHash.set(e.vcHash, arr);
+    }
+
+    const statuses: Record<string, VCStatus> = {};
+    for (const hash of vcHashes) {
+      const group = byHash.get(hash);
+      statuses[hash] = group
+        ? reduceVCStatus(group)
+        : { vcHash: hash, status: 'unknown', confirmed: true };
+    }
+
+    reply.header('Cache-Control', 'public, max-age=30');
+    return reply.send({ statuses });
   });
 }
 

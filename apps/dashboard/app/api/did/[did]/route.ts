@@ -11,7 +11,7 @@ interface DIDEventRecord {
 /**
  * Proxy to the P1 Indexer API.
  * Normalizes indexer responses to match the existing contract that didService.ts expects:
- * - GET /api/did/:did?network=preprod       → { latest: DIDEventRecord | null }
+ * - GET /api/did/:did?network=preprod       → { latest: DIDEventRecord | null, services: [] }
  * - GET /api/did/:did?network=preprod&history=true → { events: DIDEventRecord[] }
  */
 
@@ -39,10 +39,10 @@ export async function GET(
 
   try {
     if (history) {
-      // Fetch full history from indexer
+      // Fetch full history from indexer — revalidate every 30s
       const res = await fetch(
         `${indexerUrl}/did/${encodeURIComponent(did)}/history?order=asc&limit=100&includeUnconfirmed=true`,
-        { cache: 'no-store' }
+        { next: { revalidate: 30 } }
       );
 
       if (res.status === 404) {
@@ -72,56 +72,68 @@ export async function GET(
 
       return NextResponse.json({ events });
     } else {
-      // Fetch latest event via history (limit=1, desc) for full DIDEventRecord shape
-      const res = await fetch(
-        `${indexerUrl}/did/${encodeURIComponent(did)}/history?order=desc&limit=1&includeUnconfirmed=true`,
-        { cache: 'no-store' }
-      );
+      // Use the indexer's /did/:did resolve endpoint — it fetches IPFS internally
+      // with an in-memory LRU cache, much faster than a separate Pinata gateway call.
+      // Also returns the full DID document with services.
+      const [resolveRes, historyRes] = await Promise.all([
+        fetch(
+          `${indexerUrl}/did/${encodeURIComponent(did)}?includeUnconfirmed=true`,
+          { next: { revalidate: 30 } }
+        ),
+        fetch(
+          `${indexerUrl}/did/${encodeURIComponent(did)}/history?order=desc&limit=1&includeUnconfirmed=true`,
+          { next: { revalidate: 30 } }
+        ),
+      ]);
 
-      if (res.status === 404) {
-        return NextResponse.json({ latest: null });
+      // If DID doesn't exist yet (both return 404)
+      if (resolveRes.status === 404 && historyRes.status === 404) {
+        return NextResponse.json({ latest: null, services: [] });
       }
-      if (!res.ok) {
-        throw new Error(`Indexer error: ${res.status}`);
+
+      // DID is revoked (410) — still get the last event for display
+      const isRevoked = resolveRes.status === 410;
+
+      // Fail on unexpected upstream errors (not 200/404/410)
+      if (!resolveRes.ok && !isRevoked && resolveRes.status !== 404) {
+        throw new Error(`Indexer resolve error: ${resolveRes.status}`);
+      }
+      if (!historyRes.ok && historyRes.status !== 404) {
+        throw new Error(`Indexer history error: ${historyRes.status}`);
       }
 
-      const data = await res.json();
-      const events: DIDEventRecord[] = (data.events ?? []).map((e: any) => ({
-        txHash: e.txHash,
-        event: {
-          id: did,
-          ipfs: e.ipfsCid ?? '',
-          action: e.action,
-          v: e.version,
-          prev: e.prevTxHash ?? null,
-          payloadSig: '',
-          ts: e.timestamp,
-        } satisfies DIDEvent,
-        blockHeight: e.blockHeight,
-        timestamp: e.timestamp,
-      }));
+      // Build latest event from history response
+      let latest: DIDEventRecord | null = null;
+      if (historyRes.ok) {
+        const histData = await historyRes.json();
+        const e = histData.events?.[0];
+        if (e) {
+          latest = {
+            txHash: e.txHash,
+            event: {
+              id: did,
+              ipfs: e.ipfsCid ?? '',
+              action: e.action,
+              v: e.version,
+              prev: e.prevTxHash ?? null,
+              payloadSig: '',
+              ts: e.timestamp,
+            } satisfies DIDEvent,
+            blockHeight: e.blockHeight,
+            timestamp: e.timestamp,
+          };
+        }
+      }
 
-      const latest = events[0] ?? null;
-
-      // Fetch DID document from IPFS server-side to extract services
+      // Extract services from the resolved DID document
       let services: { id: string; type: string; serviceEndpoint: string }[] = [];
-      const ipfsCid = latest?.event.ipfs;
-      if (ipfsCid) {
-        try {
-          const ipfsRes = await fetch(
-            `https://gateway.pinata.cloud/ipfs/${ipfsCid}`,
-            { signal: AbortSignal.timeout(8000) }
+      if (resolveRes.ok && !isRevoked) {
+        const resolved = await resolveRes.json();
+        const doc = resolved.document;
+        if (doc && Array.isArray(doc.service)) {
+          services = doc.service.filter(
+            (s: any) => s && typeof s.serviceEndpoint === 'string'
           );
-          if (ipfsRes.ok) {
-            const doc = await ipfsRes.json();
-            if (Array.isArray(doc.service)) {
-              services = doc.service.filter(
-                (s: any) => s && typeof s.serviceEndpoint === 'string'
-              );
-            }
-          }
-        } catch {
-          // IPFS fetch is best-effort
         }
       }
 

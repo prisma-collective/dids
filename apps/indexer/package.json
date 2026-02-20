@@ -14,23 +14,24 @@
     "db:migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
-    "@prisma-dids/types": "workspace:*",
+    "@fastify/compress": "^8.3.1",
+    "@fastify/cors": "^11.0.1",
     "@prisma-dids/schemas": "workspace:*",
     "@prisma-dids/sdk": "workspace:*",
-    "fastify": "^5.3.3",
-    "@fastify/cors": "^11.0.1",
+    "@prisma-dids/types": "workspace:*",
     "drizzle-orm": "^0.44.2",
+    "fastify": "^5.3.3",
     "pg": "^8.16.0",
-    "zod": "^3.25.67",
     "pino": "^9.7.0",
-    "pino-pretty": "^13.0.0"
+    "pino-pretty": "^13.0.0",
+    "zod": "^3.25.67"
   },
   "devDependencies": {
-    "typescript": "^5.7.2",
-    "tsx": "^4.20.3",
-    "drizzle-kit": "^0.31.4",
     "@types/pg": "^8.15.4",
-    "vitest": "^4.0.13",
-    "@vitest/coverage-v8": "^4.0.13"
+    "@vitest/coverage-v8": "^4.0.13",
+    "drizzle-kit": "^0.31.4",
+    "tsx": "^4.20.3",
+    "typescript": "^5.7.2",
+    "vitest": "^4.0.13"
   }
 }

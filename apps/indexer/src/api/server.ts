@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import compress from '@fastify/compress';
 import type { IndexerConfig } from '../config/types.js';
 import type { Database } from '../db/connection.js';
 import { syncState } from '../db/schema.js';
@@ -38,8 +39,9 @@ export async function createServer(config: IndexerConfig, db: Database) {
     },
   });
 
-  // CORS
+  // CORS + compression
   await app.register(cors, { origin: true });
+  await app.register(compress);
 
   // Health endpoint
   app.get('/health', async () => {
