@@ -172,6 +172,75 @@ The credential schema is defined entirely in `packages/schemas/src/credentials/c
 
 The same pattern applies when removing or renaming fields. Delete or update the entry in both files.
 
+## Deployment (Railway)
+
+All services deploy to [Railway](https://railway.com) from the same GitHub repo. Each service has its own `railway.toml` config file.
+
+### Deployed Services
+
+| Service | Config File | Description |
+|---------|------------|-------------|
+| DIDs Indexer | `railway.toml` (root) | Indexes DID events from Cardano |
+| ALJ VC Indexer | `railway.toml` (root) | Indexes Verifiable Credential events |
+| Dids Dashboard | `apps/dashboard/railway.toml` | DID management interface |
+| VCs Dashboard | `apps/vc-interface/railway.toml` | VC issuance & verification interface |
+| DIDs - Postgres | — | Database for DIDs Indexer |
+| ALJ VC - Postgres | — | Database for ALJ VC Indexer |
+
+### Deploying a New Interface Service
+
+1. In the Railway dashboard, click **New Service** → **GitHub Repo** → select this repo
+2. Go to the service **Settings**:
+   - **Config File Path**: set to `apps/dashboard/railway.toml` or `apps/vc-interface/railway.toml`
+   - Leave **Root Directory** empty (the monorepo needs full workspace access)
+3. Under **Networking**, generate a public domain and set the port to **8080**
+4. Add the required **environment variables** (see below)
+5. Push to `main` — Railway auto-deploys on every push
+
+### Environment Variables
+
+**Dids Dashboard:**
+
+| Variable | Description |
+|----------|-------------|
+| `BLOCKFROST_PREPROD_KEY` | Server-side Blockfrost API key |
+| `NEXT_PUBLIC_BLOCKFROST_PREPROD_KEY` | Client-side Blockfrost API key |
+| `NEXT_PUBLIC_PINATA_JWT` | Pinata JWT for IPFS pinning |
+| `NEXT_PUBLIC_DEFAULT_NETWORK` | Network (`preprod` or `mainnet`) |
+| `INDEXER_URL_PREPROD` | DIDs Indexer URL (e.g. `https://prisma-didsindexer-production.up.railway.app`) |
+
+**VCs Dashboard:**
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_VC_INDEXER_ENDPOINT` | ALJ VC Indexer URL |
+| `NEXT_PUBLIC_DID_INDEXER_ENDPOINT` | DIDs Indexer URL |
+| `NEXT_PUBLIC_NETWORK` | Network (`preprod` or `mainnet`) |
+| `NEXT_PUBLIC_BLOCKFROST_API_KEY` | Blockfrost API key |
+| `NEXT_PUBLIC_PINATA_JWT` | Pinata JWT for IPFS pinning |
+| `NEXT_PUBLIC_ISSUER_DIDS` | Comma-separated list of authorized issuer DIDs |
+| `NEXT_PUBLIC_DASHBOARD_URL` | DIDs Dashboard URL for "View in DID Dashboard" links |
+
+### Switching to Mainnet
+
+No code changes are required — the app supports both networks via environment variables. To deploy on mainnet:
+
+1. **Get a mainnet Blockfrost API key** from [blockfrost.io](https://blockfrost.io)
+2. **Deploy new indexer instances** for mainnet (new Indexer + Postgres services) with:
+   - `NETWORK=mainnet`
+   - `BLOCKFROST_API_KEY=<mainnet key>`
+3. **Update dashboard env vars**:
+   - `NEXT_PUBLIC_DEFAULT_NETWORK=mainnet`
+   - `BLOCKFROST_PREPROD_KEY` → replace with mainnet key (or add `BLOCKFROST_MAINNET_KEY`)
+   - `NEXT_PUBLIC_BLOCKFROST_PREPROD_KEY` → replace with mainnet key
+   - `INDEXER_URL_PREPROD` → add `INDEXER_URL_MAINNET` pointing to the mainnet indexer
+4. **Update VCs Dashboard env vars**:
+   - `NEXT_PUBLIC_NETWORK=mainnet`
+   - `NEXT_PUBLIC_BLOCKFROST_API_KEY=<mainnet key>`
+   - `NEXT_PUBLIC_ISSUER_DIDS` → use mainnet DIDs (`stake1...` instead of `stake_test1...`)
+   - `NEXT_PUBLIC_VC_INDEXER_ENDPOINT` → point to mainnet VC indexer
+   - `NEXT_PUBLIC_DID_INDEXER_ENDPOINT` → point to mainnet DID indexer
+
 ## Documentation
 
 - [API Reference](documentation/API.md) - Indexer REST API documentation
