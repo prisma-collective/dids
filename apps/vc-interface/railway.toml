@@ -1,0 +1,7 @@
+[build]
+buildCommand = "pnpm --filter @prisma-dids/vc-interface build"
+
+[deploy]
+startCommand = "cd apps/vc-interface && npx next start --port ${PORT:-3000}"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
