@@ -2,7 +2,7 @@
 
 import { useTranslations, useLocale } from 'next-intl';
 import type { VerifiableCredential } from '@/types/vc';
-import { Card, Button, Badge, truncateDid, formatDate } from '@prisma-dids/ui';
+import { Card, Button, Badge, truncateDid, formatDate, CopyButton } from '@prisma-dids/ui';
 import { StatusBadge } from './StatusBadge';
 
 export interface VCCardProps {
@@ -39,13 +39,14 @@ export function VCCard({
       </div>
 
       <div className="flex flex-col gap-2 mb-3">
-        <div className="flex gap-2 text-sm">
+        <div className="flex gap-2 text-sm items-center">
           <span className="text-text-muted min-w-[60px]">
             {isIssuerView ? t('holder') : t('issuer')}:
           </span>
           <span className="text-text-secondary font-mono">
             {truncateDid(isIssuerView ? credential.holderDid : credential.issuerDid)}
           </span>
+          <CopyButton value={isIssuerView ? credential.holderDid : credential.issuerDid} />
         </div>
         <div className="flex gap-2 text-sm">
           <span className="text-text-muted min-w-[60px]">{t('issued')}:</span>

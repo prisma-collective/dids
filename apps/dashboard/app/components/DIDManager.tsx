@@ -19,6 +19,7 @@ import {
   ErrorState,
   EmptyState,
   Card,
+  CopyButton,
 } from '@prisma-dids/ui';
 import { DIDManagerSkeleton } from './DIDManagerSkeleton';
 import { ExternalLink, RefreshCw } from 'lucide-react';
@@ -228,7 +229,10 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
               {/* DID */}
               <Card className="p-4">
                 <label className="block text-xs text-text-secondary uppercase tracking-wide mb-1.5">DID</label>
-                <code className="text-sm break-all text-text-primary">{status.did}</code>
+                <div className="flex items-start gap-1.5">
+                  <code className="text-sm break-all text-text-primary">{status.did}</code>
+                  {status.did && <CopyButton value={status.did} />}
+                </div>
               </Card>
 
               {hasExistingDID ? (

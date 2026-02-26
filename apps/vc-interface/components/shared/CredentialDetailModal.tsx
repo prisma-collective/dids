@@ -2,7 +2,7 @@
 
 import { useTranslations, useLocale } from 'next-intl';
 import type { VerifiableCredential } from '@/types/vc';
-import { Modal, Button, Card, Badge, truncateDid, formatDate } from '@prisma-dids/ui';
+import { Modal, Button, Card, Badge, truncateDid, formatDate, CopyButton } from '@prisma-dids/ui';
 import { ExternalLink } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 
@@ -67,7 +67,10 @@ export function CredentialDetailModal({
         <div className="flex justify-between items-start py-2.5 border-b border-border/30 gap-4">
           <span className="text-sm text-text-muted shrink-0">{tc('issuer')} DID</span>
           <div className="text-right">
-            <div className="text-xs font-mono text-text-secondary">{truncateDid(credential.issuerDid, 16)}</div>
+            <div className="flex items-center gap-1 justify-end">
+              <span className="text-xs font-mono text-text-secondary">{truncateDid(credential.issuerDid, 16)}</span>
+              <CopyButton value={credential.issuerDid} />
+            </div>
             <a
               href={`${dashboardUrl}?did=${encodeURIComponent(credential.issuerDid)}`}
               target="_blank"
@@ -80,8 +83,9 @@ export function CredentialDetailModal({
         </div>
         <div className="flex justify-between items-start py-2.5 border-b border-border/30 gap-4">
           <span className="text-sm text-text-muted shrink-0">{tc('holder')} DID</span>
-          <div className="text-xs font-mono text-text-secondary text-right">
-            {truncateDid(credential.holderDid, 16)}
+          <div className="flex items-center gap-1 justify-end">
+            <span className="text-xs font-mono text-text-secondary">{truncateDid(credential.holderDid, 16)}</span>
+            <CopyButton value={credential.holderDid} />
           </div>
         </div>
       </section>

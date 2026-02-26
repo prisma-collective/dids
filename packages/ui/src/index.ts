@@ -14,6 +14,8 @@ export { Select, type SelectProps } from './components/select';
 export { Tabs, TabList, Tab, TabPanel, type TabsProps, type TabListProps, type TabProps, type TabPanelProps } from './components/tabs';
 export { Modal, type ModalProps } from './components/modal';
 
+export { CopyButton, type CopyButtonProps } from './components/copy-button';
+
 // Composite
 export { ErrorState, type ErrorStateProps } from './components/error-state';
 export { EmptyState, type EmptyStateProps } from './components/empty-state';
