@@ -13,7 +13,7 @@ import {
   Badge,
   cn,
 } from '@prisma-dids/ui';
-import { Inbox } from 'lucide-react';
+import { Inbox, Search } from 'lucide-react';
 import { VCCard } from './shared/VCCard';
 import { CredentialCardSkeleton } from './shared/CredentialCardSkeleton';
 
@@ -51,11 +51,20 @@ export function CredentialInbox({
   const t = useTranslations('inbox');
   const tc = useTranslations('common');
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [didFilter, setDidFilter] = useState('');
 
   const filteredCredentials = credentials.filter(cred => {
-    if (activeTab === 'all') return true;
-    if (activeTab === 'active') return cred.status === 'active';
-    if (activeTab === 'revoked') return cred.status === 'revoked';
+    const matchesTab =
+      activeTab === 'all' ? true :
+      activeTab === 'active' ? cred.status === 'active' :
+      activeTab === 'revoked' ? cred.status === 'revoked' :
+      true;
+    if (!matchesTab) return false;
+
+    if (didFilter.trim()) {
+      const q = didFilter.trim().toLowerCase();
+      return cred.issuerDid.toLowerCase().includes(q) || cred.holderDid.toLowerCase().includes(q);
+    }
     return true;
   });
 
@@ -130,6 +139,18 @@ export function CredentialInbox({
             )}
           </div>
         )}
+      </div>
+
+      {/* DID Search */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+        <input
+          type="text"
+          value={didFilter}
+          onChange={(e) => setDidFilter(e.target.value)}
+          placeholder={t('searchByDid')}
+          className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-surface border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary"
+        />
       </div>
 
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>

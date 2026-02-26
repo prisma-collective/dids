@@ -17,7 +17,7 @@ import {
   truncateDid,
   formatDate,
 } from '@prisma-dids/ui';
-import { CheckCircle, AlertTriangle, ClipboardList, CheckCheck } from 'lucide-react';
+import { CheckCircle, AlertTriangle, ClipboardList, CheckCheck, Search } from 'lucide-react';
 import { VCCard } from './shared/VCCard';
 import { CredentialDetailModal } from './shared/CredentialDetailModal';
 
@@ -54,6 +54,7 @@ export function RevocationUI({
   const [showConfirm, setShowConfirm] = useState(false);
   const [revokeResult, setRevokeResult] = useState<{ success: boolean; txHash?: string } | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [didFilter, setDidFilter] = useState('');
 
   const handleRevokeClick = (credential: VerifiableCredential) => {
     setSelectedCredential(credential);
@@ -102,7 +103,13 @@ export function RevocationUI({
     );
   }
 
-  const displayedCredentials = showHistory ? revokedCredentials : activeCredentials;
+  const baseCredentials = showHistory ? revokedCredentials : activeCredentials;
+  const displayedCredentials = didFilter.trim()
+    ? baseCredentials.filter(c => {
+        const q = didFilter.trim().toLowerCase();
+        return c.issuerDid.toLowerCase().includes(q) || c.holderDid.toLowerCase().includes(q);
+      })
+    : baseCredentials;
 
   return (
     <div className="max-w-[900px] mx-auto p-4">
@@ -140,6 +147,18 @@ export function RevocationUI({
         >
           {t('revokedCount', { count: revokedCredentials.length })}
         </Button>
+      </div>
+
+      {/* DID Search */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+        <input
+          type="text"
+          value={didFilter}
+          onChange={(e) => setDidFilter(e.target.value)}
+          placeholder={t('searchByDid')}
+          className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-surface border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary"
+        />
       </div>
 
       {/* Grid */}

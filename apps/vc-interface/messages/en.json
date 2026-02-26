@@ -74,7 +74,8 @@
     "noActive": "No active credentials",
     "noRevoked": "No revoked credentials",
     "emptyAll": "Credentials issued to you will appear here.",
-    "emptyFiltered": "You don't have any {tab} credentials."
+    "emptyFiltered": "You don't have any {tab} credentials.",
+    "searchByDid": "Search by DID address..."
   },
   "issuance": {
     "title": "Issue Credential",
@@ -107,6 +108,7 @@
     "noActiveDesc": "Issue credentials to see them here.",
     "noRevoked": "No revoked credentials",
     "noRevokedDesc": "Revoked credentials will appear here.",
+    "searchByDid": "Search by DID address...",
     "revokeTitle": "Revoke Credential",
     "revokedTitle": "Credential Revoked",
     "failedTitle": "Revocation Failed",

@@ -74,7 +74,8 @@
     "noActive": "No hay credenciales activas",
     "noRevoked": "No hay credenciales revocadas",
     "emptyAll": "Las credenciales emitidas para usted aparecerán aquí.",
-    "emptyFiltered": "No tiene ninguna credencial {tab}."
+    "emptyFiltered": "No tiene ninguna credencial {tab}.",
+    "searchByDid": "Buscar por dirección DID..."
   },
   "issuance": {
     "title": "Emitir Credencial",
@@ -107,6 +108,7 @@
     "noActiveDesc": "Emita credenciales para verlas aquí.",
     "noRevoked": "No hay credenciales revocadas",
     "noRevokedDesc": "Las credenciales revocadas aparecerán aquí.",
+    "searchByDid": "Buscar por dirección DID...",
     "revokeTitle": "Revocar Credencial",
     "revokedTitle": "Credencial Revocada",
     "failedTitle": "Error en la Revocación",

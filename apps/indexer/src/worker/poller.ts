@@ -43,7 +43,7 @@ export class Poller {
     this.running = true;
 
     this.baseInterval = this.config.pollIntervalMs ?? 30_000;
-    const confirmInterval = Math.max(this.baseInterval * 10, 5 * 60_000);
+    const confirmInterval = Math.max(this.baseInterval * 6, 3 * 60_000);
     console.log(`Poller starting (base: ${this.baseInterval}ms, confirm: ${confirmInterval}ms, labels: ${this.config.labels.join(', ')})`);
 
     // Immediate first poll + confirmation
