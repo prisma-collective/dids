@@ -4,10 +4,7 @@ import compress from '@fastify/compress';
 import { eq } from 'drizzle-orm';
 import type { IndexerConfig } from '../config/types.js';
 import type { Database } from '../db/connection.js';
-import { syncState, vcEvents } from '../db/schema.js';
-import { verifyCoseSign1Signature, utf8ToBytes, bytesToHex } from '@prisma-dids/sdk';
-import { VCEventPayloadSchema } from '@prisma-dids/schemas';
-import { reconstructFromMetadata } from '../worker/metadata.js';
+import { syncState } from '../db/schema.js';
 import { registerDIDRoutes } from './routes/did.js';
 import { registerUniversalResolverRoute } from './routes/universal.js';
 import {
@@ -61,64 +58,6 @@ export async function createServer(config: IndexerConfig, db: Database) {
         lastBlockHash: r.lastBlockHash,
       })),
     };
-  });
-
-  // Admin: list invalid events for debugging
-  app.get('/admin/invalid-events', async (_request, reply) => {
-    const rows = await db
-      .select({
-        txHash: vcEvents.txHash,
-        event: vcEvents.event,
-        vcHash: vcEvents.vcHash,
-        valid: vcEvents.valid,
-        validationError: vcEvents.validationError,
-        blockHeight: vcEvents.blockHeight,
-        rawEvent: vcEvents.rawEvent,
-      })
-      .from(vcEvents)
-      .where(eq(vcEvents.valid, false));
-    reply.send({ count: rows.length, events: rows });
-  });
-
-  // Admin: debug payload mismatch for a specific tx
-  app.get<{ Params: { txHash: string } }>('/admin/debug-payload/:txHash', async (request, reply) => {
-    const { txHash } = request.params;
-
-    try {
-      const rows = await db.select().from(vcEvents).where(eq(vcEvents.txHash, txHash));
-      if (rows.length === 0) return reply.code(404).send({ error: 'Not found' });
-
-      const row = rows[0]!;
-      const rawMetadata = JSON.parse(row.rawEvent);
-      const reconstructed = reconstructFromMetadata(rawMetadata) as Record<string, unknown>;
-      const parsed = VCEventPayloadSchema.safeParse(reconstructed);
-      if (!parsed.success) return reply.send({ error: 'schema_invalid', details: parsed.error });
-
-      const vcEvent = parsed.data;
-      const payloadSig = JSON.parse(vcEvent.payloadSig);
-      const coseResult = await verifyCoseSign1Signature(payloadSig);
-
-      const expectedPayload = JSON.stringify({
-        event: vcEvent.event, issuerDid: vcEvent.issuerDid, holderDid: vcEvent.holderDid,
-        vcHash: vcEvent.vcHash, vcType: vcEvent.vcType, vcFormat: vcEvent.vcFormat,
-        ...(vcEvent.reason !== undefined && { reason: vcEvent.reason }), ts: vcEvent.ts,
-      });
-
-      let signedStr: string | null = null;
-      if (coseResult.signedPayload) {
-        try { signedStr = new TextDecoder().decode(coseResult.signedPayload); } catch { /* not utf8 */ }
-      }
-
-      return reply.send({
-        txHash, event: vcEvent.event, coseValid: coseResult.valid,
-        signedPayloadStr: signedStr, expectedPayloadStr: expectedPayload,
-        signedHex: coseResult.signedPayload ? bytesToHex(coseResult.signedPayload) : null,
-        expectedHex: bytesToHex(utf8ToBytes(expectedPayload)),
-        match: coseResult.signedPayload ? bytesToHex(coseResult.signedPayload) === bytesToHex(utf8ToBytes(expectedPayload)) : false,
-      });
-    } catch (err) {
-      return reply.code(500).send({ error: String(err) });
-    }
   });
 
   // Admin: reset sync state to force re-scan

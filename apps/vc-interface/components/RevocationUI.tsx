@@ -209,7 +209,7 @@ export function RevocationUI({
               </div>
               <p className="text-text-secondary mb-4">{t('revokedSuccess')}</p>
               {revokeResult.txHash && (
-                <div className="p-3 bg-background rounded-md text-xs font-mono text-text-muted mb-4">
+                <div className="p-3 bg-background rounded-md text-xs font-mono text-text-muted mb-4 break-all">
                   Tx: {revokeResult.txHash}
                 </div>
               )}
