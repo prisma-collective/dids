@@ -82,19 +82,6 @@ export default function IssuePage() {
     );
   }
 
-  // Check issuer authorization
-  const isAuthorized = config.ISSUER_DIDS.length === 0 || config.ISSUER_DIDS.includes(did);
-  if (!isAuthorized) {
-    return (
-      <div className="max-w-[600px] mx-auto p-4">
-        <EmptyState
-          title="Not Authorized"
-          description={`Your DID (${did.slice(0, 30)}...) is not in the authorized issuers list for ${config.ORG_NAME}.`}
-        />
-      </div>
-    );
-  }
-
   return (
     <IssuanceForm
       config={config}
