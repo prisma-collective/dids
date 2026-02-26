@@ -60,6 +60,24 @@ export async function createServer(config: IndexerConfig, db: Database) {
     };
   });
 
+  // Admin: list invalid events for debugging
+  app.get('/admin/invalid-events', async (_request, reply) => {
+    const { vcEvents } = await import('../db/schema.js');
+    const { eq: eqOp } = await import('drizzle-orm');
+    const rows = await db
+      .select({
+        txHash: vcEvents.txHash,
+        event: vcEvents.event,
+        vcHash: vcEvents.vcHash,
+        valid: vcEvents.valid,
+        validationError: vcEvents.validationError,
+        blockHeight: vcEvents.blockHeight,
+      })
+      .from(vcEvents)
+      .where(eqOp(vcEvents.valid, false));
+    reply.send({ count: rows.length, events: rows });
+  });
+
   // Admin: reset sync state to force re-scan
   app.post('/admin/resync', async (request, reply) => {
     const { label } = (request.query as Record<string, string>);
