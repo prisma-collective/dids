@@ -72,10 +72,53 @@ export async function createServer(config: IndexerConfig, db: Database) {
         valid: vcEvents.valid,
         validationError: vcEvents.validationError,
         blockHeight: vcEvents.blockHeight,
+        rawEvent: vcEvents.rawEvent,
       })
       .from(vcEvents)
       .where(eqOp(vcEvents.valid, false));
     reply.send({ count: rows.length, events: rows });
+  });
+
+  // Admin: debug payload mismatch for a specific tx
+  app.get<{ Params: { txHash: string } }>('/admin/debug-payload/:txHash', async (request, reply) => {
+    const { txHash } = request.params;
+    const { vcEvents } = await import('../db/schema.js');
+    const { eq: eqOp } = await import('drizzle-orm');
+    const { verifyCoseSign1Signature, utf8ToBytes, bytesToHex } = await import('@prisma-dids/sdk');
+    const { reconstructFromMetadata } = await import('../worker/metadata.js');
+    const { VCEventPayloadSchema } = await import('@prisma-dids/schemas');
+
+    const rows = await db.select().from(vcEvents).where(eqOp(vcEvents.txHash, txHash));
+    if (rows.length === 0) return reply.code(404).send({ error: 'Not found' });
+
+    const row = rows[0]!;
+    const rawMetadata = JSON.parse(row.rawEvent);
+    const reconstructed = reconstructFromMetadata(rawMetadata) as Record<string, unknown>;
+    const parsed = VCEventPayloadSchema.safeParse(reconstructed);
+    if (!parsed.success) return reply.send({ error: 'schema_invalid', details: parsed.error });
+
+    const vcEvent = parsed.data;
+    const payloadSig = JSON.parse(vcEvent.payloadSig);
+    const coseResult = await verifyCoseSign1Signature(payloadSig);
+
+    const expectedPayload = JSON.stringify({
+      event: vcEvent.event, issuerDid: vcEvent.issuerDid, holderDid: vcEvent.holderDid,
+      vcHash: vcEvent.vcHash, vcType: vcEvent.vcType, vcFormat: vcEvent.vcFormat,
+      ...(vcEvent.reason !== undefined && { reason: vcEvent.reason }), ts: vcEvent.ts,
+    });
+
+    let signedStr: string | null = null;
+    if (coseResult.signedPayload) {
+      try { signedStr = new TextDecoder().decode(coseResult.signedPayload); } catch {}
+    }
+
+    reply.send({
+      txHash, event: vcEvent.event, coseValid: coseResult.valid,
+      signedPayloadStr: signedStr, expectedPayloadStr: expectedPayload,
+      signedHex: coseResult.signedPayload ? bytesToHex(coseResult.signedPayload) : null,
+      expectedHex: bytesToHex(utf8ToBytes(expectedPayload)),
+      match: coseResult.signedPayload ? bytesToHex(coseResult.signedPayload) === bytesToHex(utf8ToBytes(expectedPayload)) : false,
+    });
   });
 
   // Admin: reset sync state to force re-scan
