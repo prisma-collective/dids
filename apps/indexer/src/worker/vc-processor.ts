@@ -1,7 +1,7 @@
 import { VCEventPayloadSchema } from '@prisma-dids/schemas';
 import type { VCEventPayload } from '@prisma-dids/schemas';
 import type { PrismaPayloadSig } from '@prisma-dids/types';
-import { verifyCoseSign1Signature, utf8ToBytes } from '@prisma-dids/sdk';
+import { verifyCoseSign1Signature } from '@prisma-dids/sdk';
 import { vcEvents } from '../db/schema.js';
 import type { MetadataEvent } from '../sources/types.js';
 import type { EventProcessor, VerifyResult, ProcessedResult } from './types.js';
@@ -62,7 +62,7 @@ export const vcEventProcessor: EventProcessor = {
             };
           }
 
-          const expectedPayload = JSON.stringify({
+          const expectedValidate: Record<string, unknown> = {
             event: vcEvent.event,
             issuerDid: vcEvent.issuerDid,
             holderDid: vcEvent.holderDid,
@@ -72,9 +72,8 @@ export const vcEventProcessor: EventProcessor = {
             validatorDid: vcEvent.validatorDid,
             ...(vcEvent.reason !== undefined && { reason: vcEvent.reason }),
             ts: vcEvent.ts,
-          });
-          const expectedBytes = utf8ToBytes(expectedPayload);
-          if (!bytesEqual(coseResult.signedPayload, expectedBytes)) {
+          };
+          if (!jsonPayloadMatch(coseResult.signedPayload, expectedValidate)) {
             return {
               valid: false,
               signerStakeAddress: coseResult.signerStakeAddress,
@@ -95,7 +94,7 @@ export const vcEventProcessor: EventProcessor = {
 
         case 'revoke': {
           // Revoke events sign their own anchor payload — full payload binding required.
-          const expectedPayload = JSON.stringify({
+          const expectedRevoke: Record<string, unknown> = {
             event: vcEvent.event,
             issuerDid: vcEvent.issuerDid,
             holderDid: vcEvent.holderDid,
@@ -104,9 +103,8 @@ export const vcEventProcessor: EventProcessor = {
             vcFormat: vcEvent.vcFormat,
             ...(vcEvent.reason !== undefined && { reason: vcEvent.reason }),
             ts: vcEvent.ts,
-          });
-          const expectedBytes = utf8ToBytes(expectedPayload);
-          if (!bytesEqual(coseResult.signedPayload, expectedBytes)) {
+          };
+          if (!jsonPayloadMatch(coseResult.signedPayload, expectedRevoke)) {
             return {
               valid: false,
               signerStakeAddress: coseResult.signerStakeAddress,
@@ -153,10 +151,24 @@ export const vcEventProcessor: EventProcessor = {
   },
 };
 
-function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false;
+/**
+ * Order-independent JSON payload comparison.
+ * Parses signed COSE payload bytes as JSON and compares each key-value pair
+ * against the expected object. This avoids false `payload_mismatch` errors
+ * caused by JSON.stringify field-order differences between signing and verification.
+ */
+export function jsonPayloadMatch(
+  signedPayload: Uint8Array,
+  expected: Record<string, unknown>,
+): boolean {
+  try {
+    const signedStr = new TextDecoder().decode(signedPayload);
+    const signed = JSON.parse(signedStr) as Record<string, unknown>;
+    const expectedKeys = Object.keys(expected);
+    const signedKeys = Object.keys(signed);
+    if (expectedKeys.length !== signedKeys.length) return false;
+    return expectedKeys.every((key) => signed[key] === expected[key]);
+  } catch {
+    return false;
   }
-  return true;
 }

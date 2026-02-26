@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { vcEventProcessor } from './vc-processor.js';
+import { vcEventProcessor, jsonPayloadMatch } from './vc-processor.js';
 import { VCEventPayloadSchema } from '@prisma-dids/schemas';
 import type { MetadataEvent } from '../sources/types.js';
 import type { ProcessedResult } from './types.js';
@@ -221,5 +221,39 @@ describe('vc-processor', () => {
 
   it('should use VCEventPayloadSchema', () => {
     expect(vcEventProcessor.schema).toBe(VCEventPayloadSchema);
+  });
+
+  // ─── jsonPayloadMatch ───
+
+  describe('jsonPayloadMatch', () => {
+    const encode = (obj: Record<string, unknown>) =>
+      new TextEncoder().encode(JSON.stringify(obj));
+
+    it('should match identical payloads', () => {
+      const payload = { event: 'revoke', vcHash: 'urn:uuid:1', ts: '2025-01-01T00:00:00.000Z' };
+      expect(jsonPayloadMatch(encode(payload), payload)).toBe(true);
+    });
+
+    it('should match payloads with different key order', () => {
+      const signed = encode({ ts: '2025-01-01T00:00:00.000Z', event: 'revoke', reason: 'expired', vcHash: 'urn:uuid:1' });
+      const expected = { event: 'revoke', vcHash: 'urn:uuid:1', reason: 'expired', ts: '2025-01-01T00:00:00.000Z' };
+      expect(jsonPayloadMatch(signed, expected)).toBe(true);
+    });
+
+    it('should reject when signed payload has extra keys', () => {
+      const signed = encode({ event: 'revoke', vcHash: 'urn:uuid:1', ts: '2025-01-01T00:00:00.000Z', extra: 'field' });
+      const expected = { event: 'revoke', vcHash: 'urn:uuid:1', ts: '2025-01-01T00:00:00.000Z' };
+      expect(jsonPayloadMatch(signed, expected)).toBe(false);
+    });
+
+    it('should reject when values differ', () => {
+      const signed = encode({ event: 'revoke', vcHash: 'urn:uuid:WRONG', ts: '2025-01-01T00:00:00.000Z' });
+      const expected = { event: 'revoke', vcHash: 'urn:uuid:1', ts: '2025-01-01T00:00:00.000Z' };
+      expect(jsonPayloadMatch(signed, expected)).toBe(false);
+    });
+
+    it('should return false for invalid bytes', () => {
+      expect(jsonPayloadMatch(new Uint8Array([0xFF, 0xFE]), { event: 'revoke' })).toBe(false);
+    });
   });
 });
