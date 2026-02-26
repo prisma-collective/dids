@@ -31,6 +31,7 @@ export class Poller {
   private idleCycles = 0; // Consecutive cycles with no new events
   private pollCycle = 0; // Total cycles, used for periodic rollback
   private baseInterval: number = 30_000;
+  private firstPoll = true; // Skip heartbeat on first poll after startup
 
   constructor(
     private db: Database,
@@ -98,6 +99,7 @@ export class Poller {
     } catch (err) {
       console.error('Poll cycle error:', err);
     } finally {
+      this.firstPoll = false;
       // Adaptive backoff: reset on new events, increase on idle
       if (foundNew) {
         if (this.idleCycles > 0) {
@@ -133,14 +135,21 @@ export class Poller {
     }
 
     // --- Label-head heartbeat: skip full scan if nothing new ---
-    const headTxHash = checkpoint?.lastTxHash ?? null;
-    let labelChanged = !headTxHash; // If no stored hash, assume changed (first run after upgrade)
-    if (headTxHash) {
-      const head = await this.source.listRawLabelEvents(label, 'desc', 1, 1);
-      if (head.length > 0 && head[0]!.txHash === headTxHash) {
-        labelChanged = false;
-      } else {
-        labelChanged = true;
+    // Always do a full scan on first poll after startup to catch events
+    // that may have been missed if the previous instance crashed mid-cycle.
+    let labelChanged: boolean;
+    if (this.firstPoll) {
+      labelChanged = true;
+    } else {
+      const headTxHash = checkpoint?.lastTxHash ?? null;
+      labelChanged = !headTxHash; // If no stored hash, assume changed (first run after upgrade)
+      if (headTxHash) {
+        const head = await this.source.listRawLabelEvents(label, 'desc', 1, 1);
+        if (head.length > 0 && head[0]!.txHash === headTxHash) {
+          labelChanged = false;
+        } else {
+          labelChanged = true;
+        }
       }
     }
 

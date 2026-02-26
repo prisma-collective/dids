@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import compress from '@fastify/compress';
+import { eq } from 'drizzle-orm';
 import type { IndexerConfig } from '../config/types.js';
 import type { Database } from '../db/connection.js';
 import { syncState } from '../db/schema.js';
@@ -57,6 +58,17 @@ export async function createServer(config: IndexerConfig, db: Database) {
         lastBlockHash: r.lastBlockHash,
       })),
     };
+  });
+
+  // Admin: reset sync state to force re-scan
+  app.post('/admin/resync', async (request, reply) => {
+    const { label } = (request.query as Record<string, string>);
+    if (label) {
+      await db.delete(syncState).where(eq(syncState.label, Number(label)));
+    } else {
+      await db.delete(syncState);
+    }
+    reply.send({ status: 'ok', message: 'Sync state reset. Poller will re-scan on next cycle.' });
   });
 
   // Register config-driven routes
