@@ -2,6 +2,8 @@
 
 W3C-compliant Decentralized Identifiers (DIDs) on Cardano blockchain using transaction metadata.
 
+> **New here?** See the [Developer Setup Guide](DEV_INSTALL.md) to get running locally in minutes.
+
 ## Overview
 
 Prisma DIDs implements a lightweight DID method (`did:cardano:`) that:
