@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { validateDIDChain } from './chain-validator.js';
-import type { DIDEvent } from '@prisma-dids/types';
+import type { DIDEvent } from '@prisma-events/dids-types';
 
 // Mock database
 function createMockDb(queryResults: Record<string, any[]>) {

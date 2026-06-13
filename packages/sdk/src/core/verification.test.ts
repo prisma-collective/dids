@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { verifyDIDEvent } from './verification.js';
 import { deriveStakeAddressFromBaseAddress } from '../utils/stake.js';
-import type { DIDEvent, DidEventPayload } from '@prisma-dids/types';
+import type { DIDEvent, DidEventPayload } from '@prisma-events/dids-types';
 import { ed25519 } from '../utils/crypto-setup.js';
 import { bytesToHex, hexToBytes, utf8ToBytes } from '../utils/encoding.js';
 

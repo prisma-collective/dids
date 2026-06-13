@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { convertForMetadata, serializeEventMetadata, serializeDIDMetadata } from './metadata.js';
-import { L_DID } from '@prisma-dids/types';
+import { L_DID } from '@prisma-events/dids-types';
 
 // ─── convertForMetadata ───
 

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { PinataConfig } from '@prisma-dids/types';
+import type { PinataConfig } from '@prisma-events/dids-types';
 
 /**
  * Pinata IPFS client for pinning DID documents

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import type { VCInterfaceConfig } from '@/config/org-config';
 import { defaultConfig } from '@/config/org-config';
-import { Button, Card, cn, truncateDid, formatDate } from '@prisma-dids/ui';
+import { Button, Card, cn, truncateDid, formatDate } from '@prisma-events/dids-ui';
 import { CheckCircle, XCircle, ShieldCheck, ShieldX, Search } from 'lucide-react';
 import { StatusBadge } from './shared/StatusBadge';
 import { verifyPresentation, fetchCredentialStatus } from '@/services/vcService';

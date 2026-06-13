@@ -79,7 +79,7 @@ Add exports for `deriveFormFields`, the new metadata from contribution.ts, and t
 **Modify:** `apps/vc-interface/components/IssuanceForm.tsx`
 
 - Remove the entire `credentialFields` constant (lines 35-62)
-- Import `getSchema`, `deriveFormFields`, `listSchemas` from `@prisma-dids/schemas`
+- Import `getSchema`, `deriveFormFields`, `listSchemas` from `@prisma-events/dids-schemas`
 - Derive available credential types from `listSchemas()` instead of the hardcoded `CredentialType` union
 - Replace `credentialFields[credentialType]` with `deriveFormFields(entry.schema, entry.disclosableFields, entry.labelOverrides, entry.defaultDisclosed)`
 - The rest of the JSX (select/number/text rendering, disclosure toggles) stays the same since the derived field shape matches the current one

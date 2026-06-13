@@ -16,7 +16,7 @@ import {
   cn,
   truncateDid,
   formatDate,
-} from '@prisma-dids/ui';
+} from '@prisma-events/dids-ui';
 import { CheckCircle, AlertTriangle, ClipboardList, CheckCheck, Search } from 'lucide-react';
 import { VCCard } from './shared/VCCard';
 import { CredentialDetailModal } from './shared/CredentialDetailModal';

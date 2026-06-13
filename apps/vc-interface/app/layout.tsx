@@ -2,7 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
-import { ThemeProvider, Footer } from '@prisma-dids/ui';
+import { ThemeProvider, Footer } from '@prisma-events/dids-ui';
 import { Navigation } from '@/components/Navigation';
 import { WalletProvider } from '@/contexts/WalletContext';
 import { defaultConfig } from '@/config/org-config';

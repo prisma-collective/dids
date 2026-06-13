@@ -32,9 +32,9 @@ cd prisma-DIDs
 pnpm install
 
 # 3. Build workspace packages (required before running)
-pnpm --filter @prisma-dids/types build
-pnpm --filter @prisma-dids/schemas build
-pnpm --filter @prisma-dids/sdk build
+pnpm --filter @prisma-events/dids-types build
+pnpm --filter @prisma-events/dids-schemas build
+pnpm --filter @prisma-events/dids-sdk build
 
 # 4. Configure your instance
 cp apps/vc-interface/.env.example apps/vc-interface/.env.local
@@ -43,7 +43,7 @@ cp apps/vc-interface/.env.example apps/vc-interface/.env.local
 # 5. Customize org-config.ts (see below)
 
 # 6. Run dev server
-pnpm --filter @prisma-dids/vc-interface dev
+pnpm --filter @prisma-events/dids-vc-interface dev
 ```
 
 ---
@@ -169,7 +169,7 @@ CSS custom properties (--theme-primary, --theme-background, ...)
 globals.css @theme block → Tailwind utility classes (bg-primary, text-surface, ...)
 ```
 
-The `ThemeProvider` (from `@prisma-dids/ui`) sets CSS custom properties on `document.documentElement`. Tailwind v4's `@theme` block in `globals.css` maps these to utility classes:
+The `ThemeProvider` (from `@prisma-events/dids-ui`) sets CSS custom properties on `document.documentElement`. Tailwind v4's `@theme` block in `globals.css` maps these to utility classes:
 
 ```css
 @theme {
@@ -277,10 +277,10 @@ Since this is a Turborepo monorepo, Vercel needs to build workspace dependencies
 
 ```javascript
 transpilePackages: [
-  '@prisma-dids/types',
-  '@prisma-dids/schemas',
-  '@prisma-dids/sdk',
-  '@prisma-dids/ui',
+  '@prisma-events/dids-types',
+  '@prisma-events/dids-schemas',
+  '@prisma-events/dids-sdk',
+  '@prisma-events/dids-ui',
 ],
 ```
 
@@ -301,7 +301,7 @@ To preserve upstream compatibility and easy updates:
 | `contexts/WalletContext.tsx` | CIP-30 wallet standard — universal |
 | `app/api/verify/route.ts` | Server-side COSE_Sign1 verification |
 | `VCInterfaceConfig` interface | Breaking the interface breaks resolve-config |
-| Package imports from `@prisma-dids/*` | Upstream SDK compatibility |
+| Package imports from `@prisma-events/*` | Upstream SDK compatibility |
 
 ---
 
@@ -334,7 +334,7 @@ apps/vc-interface/
 ├── i18n/
 │   └── request.ts             ← Locale configuration
 ├── types/
-│   └── vc.ts                  ← UI types (re-exports from @prisma-dids/schemas)
+│   └── vc.ts                  ← UI types (re-exports from @prisma-events/dids-schemas)
 ├── next.config.js             ← WASM support, transpile workspace packages
 ├── package.json
 └── postcss.config.mjs         ← Tailwind v4 PostCSS plugin

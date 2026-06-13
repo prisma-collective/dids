@@ -1,4 +1,4 @@
-import type { DidEventPayload } from '@prisma-dids/types';
+import type { DidEventPayload } from '@prisma-events/dids-types';
 
 export function buildCreatePayload(params: {
   did: string;

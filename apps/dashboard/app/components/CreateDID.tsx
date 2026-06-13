@@ -13,16 +13,16 @@ import {
   PinataClient,
   hexToBytes,
   serializeDIDMetadata,
-} from '@prisma-dids/sdk/browser';
+} from '@prisma-events/dids-sdk/browser';
 import { Lucid, Blockfrost } from 'lucid-cardano';
-import { L_DID } from '@prisma-dids/types';
-import type { DIDEvent } from '@prisma-dids/types';
+import { L_DID } from '@prisma-events/dids-types';
+import type { DIDEvent } from '@prisma-events/dids-types';
 import {
   Button,
   Input,
   Card,
   ProgressSteps,
-} from '@prisma-dids/ui';
+} from '@prisma-events/dids-ui';
 import { CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 
 async function hexStakeAddressToBech32(hexAddress: string): Promise<string> {

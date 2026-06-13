@@ -6,8 +6,8 @@
  *
  * Reference: P2 Implementation Plan §Phase 2, TECHNICAL_DESIGN §7
  */
-import type { CIP30API, PrismaPayloadSig } from '@prisma-dids/types';
-import { getSchema } from '@prisma-dids/schemas';
+import type { CIP30API, PrismaPayloadSig } from '@prisma-events/dids-types';
+import { getSchema } from '@prisma-events/dids-schemas';
 import { utf8ToBytes, bytesToHex } from '../utils/encoding.js';
 import {
   createDisclosures,

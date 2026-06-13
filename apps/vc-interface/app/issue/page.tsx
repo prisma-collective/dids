@@ -6,7 +6,7 @@ import { config } from '@/config/resolve-config';
 import { issueAndAnchorCredential, type IssueStep } from '@/services/vcService';
 import { storeCredential } from '@/services/credentialStore';
 import type { IssuanceFormData } from '@/types/vc';
-import { Button, EmptyState } from '@prisma-dids/ui';
+import { Button, EmptyState } from '@prisma-events/dids-ui';
 
 export default function IssuePage() {
   const { wallet, signingAddress, did, connecting, connect, availableWallets } = useWallet();

@@ -8,7 +8,7 @@ import { fetchLatestDIDEvent, DIDEventRecord, ServiceEntry } from '../services/d
 import { CreateDID } from './CreateDID';
 import { UpdateDID } from './UpdateDID';
 import { RevokeDID } from './RevokeDID';
-import { deriveDID, hexToBytes } from '@prisma-dids/sdk/browser';
+import { deriveDID, hexToBytes } from '@prisma-events/dids-sdk/browser';
 import {
   Tabs,
   TabList,
@@ -20,7 +20,7 @@ import {
   EmptyState,
   Card,
   CopyButton,
-} from '@prisma-dids/ui';
+} from '@prisma-events/dids-ui';
 import { DIDManagerSkeleton } from './DIDManagerSkeleton';
 import { ExternalLink, RefreshCw } from 'lucide-react';
 

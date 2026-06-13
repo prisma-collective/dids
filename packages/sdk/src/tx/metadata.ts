@@ -1,5 +1,5 @@
-import { L_DID } from '@prisma-dids/types';
-import type { DIDEvent } from '@prisma-dids/types';
+import { L_DID } from '@prisma-events/dids-types';
+import type { DIDEvent } from '@prisma-events/dids-types';
 
 const MAX_METADATA_SIZE = 16000;  // ~16KB limit per §3.2.1
 const MAX_STRING_LENGTH = 64;    // Cardano metadata string limit

@@ -1,7 +1,28 @@
 {
-  "name": "@prisma-dids/sdk",
-  "version": "0.1.0",
+  "name": "@prisma-events/dids-sdk",
+  "version": "0.0.0",
+  "description": "[EXPERIMENTAL] Core SDK for Prisma DIDs — DID lifecycle, VC issuance, Cardano anchoring",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/prisma/prisma-dids.git",
+    "directory": "packages/sdk"
+  },
+  "keywords": [
+    "cardano",
+    "did",
+    "w3c",
+    "cip-30",
+    "verifiable-credentials"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -19,18 +40,19 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "node -e \"const fs=require('fs');fs.rmSync('dist',{recursive:true,force:true});try{fs.unlinkSync('tsconfig.tsbuildinfo')}catch(e){}\" && tsc",
     "dev": "tsc --watch",
     "test": "vitest src",
     "test:coverage": "vitest run src --coverage",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
     "@emurgo/cardano-serialization-lib-browser": "^15.0.3",
     "@emurgo/cardano-serialization-lib-nodejs": "^15.0.3",
     "@noble/ed25519": "^3.0.0",
-    "@prisma-dids/schemas": "workspace:*",
-    "@prisma-dids/types": "workspace:*",
+    "@prisma-events/dids-schemas": "workspace:^",
+    "@prisma-events/dids-types": "workspace:^",
     "axios": "^1.7.9",
     "bs58": "^6.0.0",
     "cborg": "^4.5.8",

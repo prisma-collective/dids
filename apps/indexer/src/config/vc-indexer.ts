@@ -1,4 +1,4 @@
-import { L_VC } from '@prisma-dids/schemas';
+import { L_VC } from '@prisma-events/dids-schemas';
 import type { ResolvedIndexerConfig } from './types.js';
 import { vcEventProcessor } from '../worker/vc-processor.js';
 

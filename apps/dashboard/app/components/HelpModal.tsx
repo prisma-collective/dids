@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Modal } from '@prisma-dids/ui';
+import { Modal } from '@prisma-events/dids-ui';
 
 interface HelpModalProps {
   open: boolean;

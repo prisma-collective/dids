@@ -13,7 +13,7 @@ import {
 } from '@/services/vcService';
 import { getCredential, storeCredential } from '@/services/credentialStore';
 import type { VerifiableCredential, VCClaim, RevocationRequest } from '@/types/vc';
-import { Button, EmptyState } from '@prisma-dids/ui';
+import { Button, EmptyState } from '@prisma-events/dids-ui';
 
 export default function ManagePage() {
   const { wallet, signingAddress, did, connecting, connect, availableWallets } = useWallet();

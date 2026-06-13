@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { CIP30API } from '@prisma-dids/types';
+import type { CIP30API } from '@prisma-events/dids-types';
 import { issueSDJwtVC, createPresentation } from './vc.js';
 import { unpackCredential } from './sd-jwt.js';
 import { utf8ToBytes } from '../utils/encoding.js';

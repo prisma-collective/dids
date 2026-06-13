@@ -1,4 +1,4 @@
-import { L_DID } from '@prisma-dids/types';
+import { L_DID } from '@prisma-events/dids-types';
 import type { ResolvedIndexerConfig } from './types.js';
 import { didEventProcessor } from '../worker/did-processor.js';
 

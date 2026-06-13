@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { signDIDPayload, buildDIDEvent } from './signature.js';
-import type { DidEventPayload, PrismaPayloadSig } from '@prisma-dids/types';
+import type { DidEventPayload, PrismaPayloadSig } from '@prisma-events/dids-types';
 
 // ─── Helpers ───
 

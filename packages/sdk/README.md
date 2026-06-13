@@ -1,25 +1,105 @@
-# @prisma-dids/sdk
+# @prisma-events/dids-sdk
+
+> **Experimental** — Pre-release software. APIs may change without notice. There is no stable `latest` release yet.
+> Install with: `pnpm add @prisma-events/dids-sdk@experimental`
 
 Core SDK for Prisma DIDs — DID lifecycle management, Verifiable Credential issuance with selective disclosure, and Cardano on-chain anchoring.
 
 ## Installation
 
 ```bash
-pnpm add @prisma-dids/sdk
+pnpm add @prisma-events/dids-sdk@experimental
+# or
+npm install @prisma-events/dids-sdk@experimental
+```
+
+## Prerequisites
+
+- **Node.js 20+**
+- **CIP-30 wallet** (Eternl, Lace, Nami, etc.) for signing flows
+- **Blockfrost API key** for on-chain transaction submission
+- **Pinata JWT** (or backend proxy) for IPFS pinning of DID documents
+
+## Bundler Setup
+
+The SDK uses Cardano serialization libraries that need special handling in browser bundles.
+
+### Next.js
+
+Add to `next.config.js` (see the [dashboard app](../../apps/dashboard/next.config.js) for a working example):
+
+```javascript
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  transpilePackages: ['@prisma-events/dids-sdk', '@prisma-events/dids-types'],
+
+  turbopack: {
+    resolveAlias: {
+      '@emurgo/cardano-serialization-lib-nodejs':
+        '@emurgo/cardano-serialization-lib-browser',
+    },
+  },
+
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@emurgo/cardano-serialization-lib-nodejs':
+          '@emurgo/cardano-serialization-lib-browser',
+      };
+    }
+    return config;
+  },
+};
+
+module.exports = nextConfig;
+```
+
+### Vite
+
+Add to `vite.config.ts`:
+
+```typescript
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  resolve: {
+    alias: {
+      '@emurgo/cardano-serialization-lib-nodejs':
+        '@emurgo/cardano-serialization-lib-browser',
+    },
+  },
+  optimizeDeps: {
+    exclude: ['@emurgo/cardano-serialization-lib-browser'],
+  },
+});
+```
+
+### Runtime dependencies for browser DID registration
+
+Browser-side DID creation (derive → sign → submit) also requires these packages in your app, even though some are transitive SDK dependencies:
+
+- `lucid-cardano` — transaction building and submission
+- `@emurgo/cardano-serialization-lib-browser` — stake address conversion (hex → bech32)
+
+Install them explicitly in your app:
+
+```bash
+pnpm add lucid-cardano @emurgo/cardano-serialization-lib-browser
 ```
 
 ## Entry Points
 
 | Entry Point | Import | Use Case |
 |-------------|--------|----------|
-| Full (Node.js) | `@prisma-dids/sdk` | Server-side: includes COSE verification, VC anchoring |
-| Browser | `@prisma-dids/sdk/browser` | Client-side: DID ops, signing, VC issuance (no CSL) |
-| Server | `@prisma-dids/sdk/server` | Server-only: VC verification (`verifyPresentation`) |
+| Full (Node.js) | `@prisma-events/dids-sdk` | Server-side: includes COSE verification, VC anchoring |
+| Browser | `@prisma-events/dids-sdk/browser` | Client-side: DID ops, signing, VC issuance (no CSL) |
+| Server | `@prisma-events/dids-sdk/server` | Server-only: VC verification (`verifyPresentation`) |
 
 ## Quick Start — Create a DID
 
 ```typescript
-import { deriveDID, generateDIDDocument, buildCreatePayload, signDIDPayload, buildDIDEvent, serializeDIDMetadata } from '@prisma-dids/sdk/browser';
+import { deriveDID, generateDIDDocument, buildCreatePayload, signDIDPayload, buildDIDEvent, serializeDIDMetadata } from '@prisma-events/dids-sdk/browser';
 
 // 1. Derive DID from wallet's stake address
 const did = deriveDID('stake_test1uz...');
@@ -115,6 +195,6 @@ All events are signed with COSE_Sign1 via CIP-30 and anchored under Cardano meta
 ## Running Tests
 
 ```bash
-pnpm --filter @prisma-dids/sdk test           # Run tests
-pnpm --filter @prisma-dids/sdk test:coverage   # Run with coverage thresholds
+pnpm --filter @prisma-events/dids-sdk test           # Run tests
+pnpm --filter @prisma-events/dids-sdk test:coverage   # Run with coverage thresholds
 ```

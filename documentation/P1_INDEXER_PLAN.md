@@ -259,12 +259,12 @@ apps/indexer/
 
 ### Manual E2E Smoke Test
 1. `docker run -e POSTGRES_PASSWORD=test -p 5432:5432 postgres:16`
-2. `DATABASE_URL=postgresql://postgres:test@localhost:5432/postgres BLOCKFROST_API_KEY=preprod... pnpm --filter @prisma-dids/indexer dev`
+2. `DATABASE_URL=postgresql://postgres:test@localhost:5432/postgres BLOCKFROST_API_KEY=preprod... pnpm --filter @prisma-events/dids-indexer dev`
 3. `curl localhost:3001/health` → verify sync state, network=preprod
 4. Wait ~30s for first poll cycle to complete
 5. `curl localhost:3001/did/did:cardano:stake_test1...` → verify DID document + metadata
 6. `curl localhost:3001/did/did:cardano:stake_test1.../history` → verify event chain + pagination
 7. `curl localhost:3001/did/nonexistent` → verify 404
 8. Stop and restart indexer → verify checkpoint resumes (no reprocessing old events)
-9. Start dashboard: `INDEXER_URL_PREPROD=http://localhost:3001 pnpm --filter @prisma-dids/dashboard dev`
+9. Start dashboard: `INDEXER_URL_PREPROD=http://localhost:3001 pnpm --filter @prisma-events/dids-dashboard dev`
 10. Connect wallet → verify DID status displays correctly (same as before)

@@ -1,4 +1,4 @@
-import type { DIDEvent, PrismaPayloadSig } from '@prisma-dids/types';
+import type { DIDEvent, PrismaPayloadSig } from '@prisma-events/dids-types';
 import { verifyCoseSign1Signature } from './cose-verify.js';
 import { utf8ToBytes } from '../utils/encoding.js';
 

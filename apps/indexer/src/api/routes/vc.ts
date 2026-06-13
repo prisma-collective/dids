@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { eq, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import type { Database } from '../../db/connection.js';
 import { vcEvents } from '../../db/schema.js';
-import { listSchemas } from '@prisma-dids/schemas';
+import { listSchemas } from '@prisma-events/dids-schemas';
 
 // ─── Types ───
 

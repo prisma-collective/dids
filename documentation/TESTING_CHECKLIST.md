@@ -9,7 +9,7 @@ Manual testing procedures for Preprod. Run after any change to DID lifecycle cod
 ### Prerequisites
 
 - [ ] CIP-30 wallet connected (Nami, Eternl, or Lace) with Preprod tADA
-- [ ] Dashboard running locally (`pnpm --filter @prisma-dids/dashboard dev`)
+- [ ] Dashboard running locally (`pnpm --filter @prisma-events/dids-dashboard dev`)
 - [ ] Indexer online (Railway or local) and reachable via `INDEXER_URL_PREPROD`
 - [ ] A DID already created on Preprod (v=1 confirmed)
 

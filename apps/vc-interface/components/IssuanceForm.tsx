@@ -6,7 +6,7 @@ import type { CredentialType, IssuanceFormData } from '@/types/vc';
 import type { IssueStep } from '@/services/vcService';
 import type { VCInterfaceConfig } from '@/config/org-config';
 import { defaultConfig } from '@/config/org-config';
-import { Button, Input, Select, Card, ProgressSteps } from '@prisma-dids/ui';
+import { Button, Input, Select, Card, ProgressSteps } from '@prisma-events/dids-ui';
 import { CheckCircle } from 'lucide-react';
 
 /** Steps shown in the stepper (matches IssueStep from vcService) */

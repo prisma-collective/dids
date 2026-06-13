@@ -12,9 +12,13 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
-    "type-check": "turbo run type-check"
+    "type-check": "turbo run type-check",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm --filter @prisma-events/dids-types build && pnpm --filter @prisma-events/dids-schemas build && pnpm --filter @prisma-events/dids-sdk build && changeset publish --tag experimental"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.0",
     "turbo": "^2.6.1",
     "@types/node": "^24.10.1",
     "typescript": "^5.7.2",

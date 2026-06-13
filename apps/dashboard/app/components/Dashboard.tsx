@@ -14,7 +14,7 @@ import {
   NetworkBadge,
   LanguageSwitcher,
   Button,
-} from '@prisma-dids/ui';
+} from '@prisma-events/dids-ui';
 import { Check, HelpCircle } from 'lucide-react';
 import { HelpModal } from './HelpModal';
 

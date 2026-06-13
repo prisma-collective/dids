@@ -12,7 +12,7 @@ import {
   EmptyState,
   Badge,
   cn,
-} from '@prisma-dids/ui';
+} from '@prisma-events/dids-ui';
 import { Inbox, Search } from 'lucide-react';
 import { VCCard } from './shared/VCCard';
 import { CredentialCardSkeleton } from './shared/CredentialCardSkeleton';

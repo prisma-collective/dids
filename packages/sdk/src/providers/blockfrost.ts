@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { L_DID } from '@prisma-dids/types';
+import { L_DID } from '@prisma-events/dids-types';
 import type { ChainProvider, DIDEventRecord } from './types.js';
 
 export class BlockfrostProvider implements ChainProvider {

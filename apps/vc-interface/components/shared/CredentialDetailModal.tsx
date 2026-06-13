@@ -2,7 +2,7 @@
 
 import { useTranslations, useLocale } from 'next-intl';
 import type { VerifiableCredential } from '@/types/vc';
-import { Modal, Button, Card, Badge, truncateDid, formatDate, CopyButton } from '@prisma-dids/ui';
+import { Modal, Button, Card, Badge, truncateDid, formatDate, CopyButton } from '@prisma-events/dids-ui';
 import { ExternalLink } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 

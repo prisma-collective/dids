@@ -1,6 +1,6 @@
-import { DIDEventSchema } from '@prisma-dids/types';
-import type { DIDEvent, PrismaPayloadSig } from '@prisma-dids/types';
-import { verifyCoseSign1Signature, utf8ToBytes } from '@prisma-dids/sdk';
+import { DIDEventSchema } from '@prisma-events/dids-types';
+import type { DIDEvent, PrismaPayloadSig } from '@prisma-events/dids-types';
+import { verifyCoseSign1Signature, utf8ToBytes } from '@prisma-events/dids-sdk';
 import { didEvents } from '../db/schema.js';
 import type { Database } from '../db/connection.js';
 import type { MetadataEvent } from '../sources/types.js';

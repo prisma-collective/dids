@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { didEventProcessor } from './did-processor.js';
-import { DIDEventSchema } from '@prisma-dids/types';
+import { DIDEventSchema } from '@prisma-events/dids-types';
 import type { MetadataEvent } from '../sources/types.js';
 import type { ProcessedResult } from './types.js';
 

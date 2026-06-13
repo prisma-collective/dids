@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { cn } from '@prisma-dids/ui';
+import { cn } from '@prisma-events/dids-ui';
 
 export type Network = 'preprod' | 'mainnet';
 

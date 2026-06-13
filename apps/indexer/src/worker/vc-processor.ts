@@ -1,7 +1,7 @@
-import { VCEventPayloadSchema } from '@prisma-dids/schemas';
-import type { VCEventPayload } from '@prisma-dids/schemas';
-import type { PrismaPayloadSig } from '@prisma-dids/types';
-import { verifyCoseSign1Signature } from '@prisma-dids/sdk';
+import { VCEventPayloadSchema } from '@prisma-events/dids-schemas';
+import type { VCEventPayload } from '@prisma-events/dids-schemas';
+import type { PrismaPayloadSig } from '@prisma-events/dids-types';
+import { verifyCoseSign1Signature } from '@prisma-events/dids-sdk';
 import { vcEvents } from '../db/schema.js';
 import type { MetadataEvent } from '../sources/types.js';
 import type { EventProcessor, VerifyResult, ProcessedResult } from './types.js';

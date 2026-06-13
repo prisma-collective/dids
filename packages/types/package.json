@@ -1,13 +1,34 @@
 {
-  "name": "@prisma-dids/types",
-  "version": "0.1.0",
+  "name": "@prisma-events/dids-types",
+  "version": "0.0.0",
+  "description": "[EXPERIMENTAL] Shared TypeScript types and constants for Prisma DIDs",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/prisma/prisma-dids.git",
+    "directory": "packages/types"
+  },
+  "keywords": [
+    "cardano",
+    "did",
+    "w3c",
+    "typescript"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
     "zod": "^3.22.0"

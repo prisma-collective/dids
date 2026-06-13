@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import type { VCInterfaceConfig } from '@/config/org-config';
-import { cn, NetworkBadge, LanguageSwitcher } from '@prisma-dids/ui';
+import { cn, NetworkBadge, LanguageSwitcher } from '@prisma-events/dids-ui';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 

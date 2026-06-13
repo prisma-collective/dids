@@ -18,10 +18,10 @@ COPY packages/types/ ./packages/types/
 COPY packages/schemas/ ./packages/schemas/
 COPY packages/sdk/ ./packages/sdk/
 COPY apps/indexer/ ./apps/indexer/
-RUN pnpm --filter @prisma-dids/types build && \
-    pnpm --filter @prisma-dids/schemas build && \
-    pnpm --filter @prisma-dids/sdk build && \
-    pnpm --filter @prisma-dids/indexer build
+RUN pnpm --filter @prisma-events/dids-types build && \
+    pnpm --filter @prisma-events/dids-schemas build && \
+    pnpm --filter @prisma-events/dids-sdk build && \
+    pnpm --filter @prisma-events/dids-indexer build
 
 # Runtime
 FROM base AS runner

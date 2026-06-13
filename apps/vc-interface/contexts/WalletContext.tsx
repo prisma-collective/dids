@@ -15,7 +15,7 @@ import {
   useEffect,
   type ReactNode,
 } from 'react';
-import type { CIP30API } from '@prisma-dids/types';
+import type { CIP30API } from '@prisma-events/dids-types';
 
 // ─── CIP-30 Window Types ───
 

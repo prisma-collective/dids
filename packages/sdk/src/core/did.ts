@@ -1,4 +1,4 @@
-import type { DIDDocument, Service } from '@prisma-dids/types';
+import type { DIDDocument, Service } from '@prisma-events/dids-types';
 import { hexToPublicKeyMultibase } from '../utils/keys.js';
 
 /**

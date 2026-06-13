@@ -79,9 +79,9 @@ Wallet (CIP-30) → SDK (sign + build) → IPFS (upload doc) → Cardano (submit
 
 ### Workspace Packages
 
-- `@prisma-dids/sdk` — DID lifecycle, signing, metadata serialization
-- `@prisma-dids/types` — Shared TypeScript types and Zod schemas
-- `@prisma-dids/ui` — Shared Tailwind component library
+- `@prisma-events/dids-sdk` — DID lifecycle, signing, metadata serialization
+- `@prisma-events/dids-types` — Shared TypeScript types and Zod schemas
+- `@prisma-events/dids-ui` — Shared Tailwind component library
 
 ## Testing on Preprod
 

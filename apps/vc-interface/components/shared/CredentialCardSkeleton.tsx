@@ -1,6 +1,6 @@
 'use client';
 
-import { Skeleton, Card } from '@prisma-dids/ui';
+import { Skeleton, Card } from '@prisma-events/dids-ui';
 
 interface CredentialCardSkeletonProps {
   /** Base delay offset for staggering across multiple cards */

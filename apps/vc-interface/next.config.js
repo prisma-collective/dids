@@ -4,7 +4,7 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ['@prisma-dids/types', '@prisma-dids/schemas', '@prisma-dids/sdk', '@prisma-dids/ui'],
+  transpilePackages: ['@prisma-events/dids-types', '@prisma-events/dids-schemas', '@prisma-events/dids-sdk', '@prisma-events/dids-ui'],
   // Node.js native modules used by SDK verification (API routes only)
   serverExternalPackages: ['@emurgo/cardano-serialization-lib-nodejs'],
   webpack: (config) => {

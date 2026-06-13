@@ -5,7 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import type { VerifiableCredential, PresentationData } from '@/types/vc';
 import type { VCInterfaceConfig } from '@/config/org-config';
 import { defaultConfig } from '@/config/org-config';
-import { Button, Card, Badge, cn, truncateDid, formatDate } from '@prisma-dids/ui';
+import { Button, Card, Badge, cn, truncateDid, formatDate } from '@prisma-events/dids-ui';
 import { ArrowLeft, Link2, Check, Copy } from 'lucide-react';
 import { StatusBadge } from './shared/StatusBadge';
 import { ClaimCheckbox } from './shared/ClaimCheckbox';

@@ -324,7 +324,7 @@ prisma-dids/
 ```
 
 > **Design Rationale:** The distinction is based on **how components are used**, not whether they're forkable:
-> - **Packages** (`packages/`) are **imported** via `npm install @prisma-dids/sdk`
+> - **Packages** (`packages/`) are **imported** via `npm install @prisma-events/dids-sdk`
 > - **Apps** (`apps/`) are **deployed** via `git clone` → configure → `vercel deploy`
 >
 > Both VC Interface and VC Indexer are forkable (organizations clone and customize), but they're deployed as standalone services, not imported as libraries.
@@ -338,7 +338,7 @@ prisma-dids/
 5. Deploy your VC Indexer and VC Interface
 6. Register your VC Indexer in your issuer DID Documents
 
-All apps import from `@prisma-dids/schemas` and `@prisma-dids/sdk`, ensuring they stay synchronized.
+All apps import from `@prisma-events/dids-schemas` and `@prisma-events/dids-sdk`, ensuring they stay synchronized.
 
 ---
 
@@ -607,7 +607,7 @@ Each organization runs their own VC Indexer configured for their metadata labels
 
 ```typescript
 // apps/vc-indexer/config/index.ts
-import { DIDEventPayloadSchema, VCEventPayloadSchema } from '@prisma-dids/schemas';
+import { DIDEventPayloadSchema, VCEventPayloadSchema } from '@prisma-events/dids-schemas';
 
 export const indexerConfig = {
   // Labels to index

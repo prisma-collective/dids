@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Badge } from '@prisma-dids/ui';
+import { Badge } from '@prisma-events/dids-ui';
 import type { VCStatus } from '@/types/vc';
 
 export interface StatusBadgeProps {

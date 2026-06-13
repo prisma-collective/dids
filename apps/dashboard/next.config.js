@@ -3,7 +3,7 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@prisma-dids/sdk', '@prisma-dids/types', '@prisma-dids/ui'],
+  transpilePackages: ['@prisma-events/dids-sdk', '@prisma-events/dids-types', '@prisma-events/dids-ui'],
 
   // Next.js 16 uses Turbopack by default
   // Configure browser build alias for Cardano serialization lib

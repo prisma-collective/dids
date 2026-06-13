@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { defaultConfig } from '@/config/org-config';
-import { Card, Badge } from '@prisma-dids/ui';
+import { Card, Badge } from '@prisma-events/dids-ui';
 import { Inbox, FileEdit, Settings, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 

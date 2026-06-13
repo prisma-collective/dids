@@ -10,8 +10,8 @@
  * Reference: P2 Implementation Plan §Phase 3, TECHNICAL_DESIGN §8
  */
 import { Lucid, Blockfrost } from 'lucid-cardano';
-import type { CIP30API, NetworkConfig, PrismaPayloadSig } from '@prisma-dids/types';
-import { L_VC } from '@prisma-dids/types';
+import type { CIP30API, NetworkConfig, PrismaPayloadSig } from '@prisma-events/dids-types';
+import { L_VC } from '@prisma-events/dids-types';
 import { utf8ToBytes, bytesToHex } from '../utils/encoding.js';
 import { serializeEventMetadata } from '../tx/metadata.js';
 import { base64urlEncode } from './sd-jwt.js';

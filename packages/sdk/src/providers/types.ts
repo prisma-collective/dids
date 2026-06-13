@@ -1,4 +1,4 @@
-import type { DIDEvent } from '@prisma-dids/types';
+import type { DIDEvent } from '@prisma-events/dids-types';
 
 export interface DIDEventRecord {
   txHash: string;

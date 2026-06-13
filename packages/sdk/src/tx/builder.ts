@@ -1,7 +1,7 @@
 import { Lucid, Blockfrost } from 'lucid-cardano';
-import { L_DID } from '@prisma-dids/types';
+import { L_DID } from '@prisma-events/dids-types';
 import { serializeDIDMetadata } from './metadata.js';
-import type { DIDEvent, NetworkConfig } from '@prisma-dids/types';
+import type { DIDEvent, NetworkConfig } from '@prisma-events/dids-types';
 
 export async function submitDIDEvent(
   wallet: any,  // CIP-30 wallet

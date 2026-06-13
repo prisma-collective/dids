@@ -1,7 +1,7 @@
 /**
  * VC Service Layer — wraps SDK calls, indexer queries, and on-chain anchoring.
  *
- * Browser-safe: imports VC functions from @prisma-dids/sdk/browser,
+ * Browser-safe: imports VC functions from @prisma-events/dids-sdk/browser,
  * dynamically imports lucid-cardano for tx submission (WASM).
  *
  * Architecture:
@@ -24,9 +24,9 @@ import {
   getDisclosableClaims,
   serializeEventMetadata,
   PinataClient,
-} from '@prisma-dids/sdk/browser';
-import { L_VC } from '@prisma-dids/types';
-import type { CIP30API, PrismaPayloadSig } from '@prisma-dids/types';
+} from '@prisma-events/dids-sdk/browser';
+import { L_VC } from '@prisma-events/dids-types';
+import type { CIP30API, PrismaPayloadSig } from '@prisma-events/dids-types';
 import type { IssuanceFormData, VCStatus } from '@/types/vc';
 
 // ─── Internal Helpers ───

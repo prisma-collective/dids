@@ -1,0 +1,10 @@
+{
+  "mode": "pre",
+  "tag": "experimental",
+  "initialVersions": {
+    "@prisma-events/dids-types": "0.0.0",
+    "@prisma-events/dids-schemas": "0.0.0",
+    "@prisma-events/dids-sdk": "0.0.0"
+  },
+  "changesets": []
+}

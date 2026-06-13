@@ -2,9 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { buildCreatePayload, buildUpdatePayload, buildRevokePayload } from './payload.js';
 import { signDIDPayload, buildDIDEvent } from './signature.js';
 import { serializeDIDMetadata } from '../tx/metadata.js';
-import { DIDEventSchema, DidEventPayloadSchema } from '@prisma-dids/types';
-import { L_DID } from '@prisma-dids/types';
-import type { CIP30API, DIDEvent } from '@prisma-dids/types';
+import { DIDEventSchema, DidEventPayloadSchema } from '@prisma-events/dids-types';
+import { L_DID } from '@prisma-events/dids-types';
+import type { CIP30API, DIDEvent } from '@prisma-events/dids-types';
 
 /**
  * SDK-level E2E: exercises the full create → update → revoke data pipeline

@@ -9,7 +9,7 @@
  *
  * Indexer endpoint is resolved from server-side config only (no SSRF).
  */
-import { verifyPresentation } from '@prisma-dids/sdk/server';
+import { verifyPresentation } from '@prisma-events/dids-sdk/server';
 import { config } from '@/config/resolve-config';
 
 export async function POST(request: Request) {

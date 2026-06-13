@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { DIDEvent } from '@prisma-dids/types';
+import type { DIDEvent } from '@prisma-events/dids-types';
 
 interface DIDEventRecord {
   txHash: string;

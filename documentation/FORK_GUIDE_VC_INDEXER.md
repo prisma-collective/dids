@@ -52,7 +52,7 @@ Use the existing `vc-indexer.ts` config as-is — it indexes all VC events on th
 Create a new config file at `apps/indexer/src/config/myorg-vc-indexer.ts`:
 
 ```typescript
-import { L_VC } from '@prisma-dids/schemas';
+import { L_VC } from '@prisma-events/dids-schemas';
 import type { ResolvedIndexerConfig } from './types.js';
 import { vcEventProcessor } from '../worker/vc-processor.js';
 
@@ -240,12 +240,12 @@ CONFIRMATION_DEPTH=10
 
 ```bash
 # Build workspace dependencies
-pnpm --filter @prisma-dids/types build && \
-pnpm --filter @prisma-dids/schemas build && \
-pnpm --filter @prisma-dids/sdk build
+pnpm --filter @prisma-events/dids-types build && \
+pnpm --filter @prisma-events/dids-schemas build && \
+pnpm --filter @prisma-events/dids-sdk build
 
 # Build and run the indexer
-pnpm --filter @prisma-dids/indexer build
+pnpm --filter @prisma-events/dids-indexer build
 cd apps/indexer && node dist/index.js
 ```
 
@@ -269,7 +269,7 @@ The monorepo includes a `railway.toml` at the root:
 
 ```toml
 [build]
-buildCommand = "pnpm --filter @prisma-dids/indexer build"
+buildCommand = "pnpm --filter @prisma-events/dids-indexer build"
 
 [deploy]
 startCommand = "cd apps/indexer && node dist/index.js"
@@ -315,10 +315,10 @@ COPY packages/types/ ./packages/types/
 COPY packages/schemas/ ./packages/schemas/
 COPY packages/sdk/ ./packages/sdk/
 COPY apps/indexer/ ./apps/indexer/
-RUN pnpm --filter @prisma-dids/types build && \
-    pnpm --filter @prisma-dids/schemas build && \
-    pnpm --filter @prisma-dids/sdk build && \
-    pnpm --filter @prisma-dids/indexer build
+RUN pnpm --filter @prisma-events/dids-types build && \
+    pnpm --filter @prisma-events/dids-schemas build && \
+    pnpm --filter @prisma-events/dids-sdk build && \
+    pnpm --filter @prisma-events/dids-indexer build
 
 FROM base AS runner
 ENV NODE_ENV=production
@@ -374,7 +374,7 @@ app = "myorg-vc-indexer"
 
 ## Custom Metadata Labels
 
-The default VC metadata label is `L_VC = 199675` (defined in `@prisma-dids/schemas`). All Prisma DIDs VC events use this label.
+The default VC metadata label is `L_VC = 199675` (defined in `@prisma-events/dids-schemas`). All Prisma DIDs VC events use this label.
 
 If you need a separate namespace (rare), you can:
 
@@ -439,7 +439,7 @@ Paginated list of credentials held by a DID.
 
 ### `GET /schemas`
 
-Lists registered credential schemas from `@prisma-dids/schemas` registry.
+Lists registered credential schemas from `@prisma-events/dids-schemas` registry.
 
 ```json
 {

@@ -33,10 +33,10 @@ pnpm build
 Or individually (order matters):
 
 ```bash
-pnpm --filter @prisma-dids/types build
-pnpm --filter @prisma-dids/schemas build
-pnpm --filter @prisma-dids/sdk build
-pnpm --filter @prisma-dids/ui build
+pnpm --filter @prisma-events/dids-types build
+pnpm --filter @prisma-events/dids-schemas build
+pnpm --filter @prisma-events/dids-sdk build
+pnpm --filter @prisma-events/dids-ui build
 ```
 
 ---

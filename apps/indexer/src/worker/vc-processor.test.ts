@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { vcEventProcessor, jsonPayloadMatch } from './vc-processor.js';
-import { VCEventPayloadSchema } from '@prisma-dids/schemas';
+import { VCEventPayloadSchema } from '@prisma-events/dids-schemas';
 import type { MetadataEvent } from '../sources/types.js';
 import type { ProcessedResult } from './types.js';
 

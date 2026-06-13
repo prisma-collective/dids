@@ -1,7 +1,7 @@
 import { eq, and } from 'drizzle-orm';
 import { didEvents } from '../db/schema.js';
 import type { Database } from '../db/connection.js';
-import type { DIDEvent } from '@prisma-dids/types';
+import type { DIDEvent } from '@prisma-events/dids-types';
 
 export interface ChainValidationResult {
   valid: boolean;

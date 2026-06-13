@@ -71,7 +71,7 @@ import {
   buildCreatePayload,
   PinataClient,
   BlockfrostProvider
-} from '@prisma-dids/sdk';
+} from '@prisma-events/dids-sdk';
 
 // 1. Derive DID from stake address
 const did = deriveDID('stake_test1...');
@@ -267,9 +267,17 @@ cd packages/sdk
 pnpm test
 ```
 
+## Publishing
+
+The SDK and its dependencies are published to npm under the `@prisma-events` org as **experimental** pre-releases. See [Publishing Guide](documentation/PUBLISHING.md) for maintainer instructions.
+
+```bash
+pnpm add @prisma-events/dids-sdk@experimental
+```
+
 ## License
 
-[Add your license here]
+MIT — see [LICENSE](LICENSE).
 
 ## Related Resources
 

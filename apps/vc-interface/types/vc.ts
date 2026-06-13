@@ -57,9 +57,9 @@ export interface RevocationRequest {
   customReason?: string;
 }
 
-/** Claim fields for ContributionCredential — re-exported from @prisma-dids/schemas (Audit Fix #6) */
-export type { ContributionCredential as ContributionCredentialClaims } from '@prisma-dids/schemas';
-export { ContributionTypeEnum } from '@prisma-dids/schemas';
+/** Claim fields for ContributionCredential — re-exported from @prisma-events/dids-schemas (Audit Fix #6) */
+export type { ContributionCredential as ContributionCredentialClaims } from '@prisma-events/dids-schemas';
+export { ContributionTypeEnum } from '@prisma-events/dids-schemas';
 
 /** Issuance form data */
 export interface IssuanceFormData {

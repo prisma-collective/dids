@@ -1164,13 +1164,13 @@ For maximum privacy, consider:
 ### 12.1 Installation
 
 ```bash
-npm install @prisma-dids/sdk
+npm install @prisma-events/dids-sdk
 ```
 
 ### 12.2 DID Operations
 
 ```typescript
-import { PrismaSDK } from '@prisma-dids/sdk';
+import { PrismaSDK } from '@prisma-events/dids-sdk';
 
 const sdk = new PrismaSDK({
   network: 'preprod', // or 'mainnet'

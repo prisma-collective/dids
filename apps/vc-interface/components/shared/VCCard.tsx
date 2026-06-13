@@ -2,7 +2,7 @@
 
 import { useTranslations, useLocale } from 'next-intl';
 import type { VerifiableCredential } from '@/types/vc';
-import { Card, Button, Badge, truncateDid, formatDate, CopyButton } from '@prisma-dids/ui';
+import { Card, Button, Badge, truncateDid, formatDate, CopyButton } from '@prisma-events/dids-ui';
 import { StatusBadge } from './StatusBadge';
 
 export interface VCCardProps {

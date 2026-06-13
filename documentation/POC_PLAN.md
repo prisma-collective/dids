@@ -441,7 +441,7 @@ cd ../types && ls -la dist/
 
 **Test 4: Verify Dashboard Runs**
 ```bash
-pnpm --filter @prisma-dids/dashboard dev
+pnpm --filter @prisma-events/dids-dashboard dev
 # Navigate to http://localhost:3000
 # Should see "Prisma DIDs Dashboard" page
 ```
@@ -1023,7 +1023,7 @@ prisma-dids/
 **`packages/sdk/package.json`:**
 ```json
 {
-  "name": "@prisma-dids/sdk",
+  "name": "@prisma-events/dids-sdk",
   "version": "0.1.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -1034,7 +1034,7 @@ prisma-dids/
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@prisma-dids/types": "workspace:*",
+    "@prisma-events/dids-types": "workspace:*",
     "lucid-cardano": "^0.10.7",
     "@emurgo/cardano-serialization-lib-nodejs": "^12.0.0",
     "axios": "^1.6.0",
@@ -1051,7 +1051,7 @@ prisma-dids/
 **`packages/types/package.json`:**
 ```json
 {
-  "name": "@prisma-dids/types",
+  "name": "@prisma-events/dids-types",
   "version": "0.1.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -1072,7 +1072,7 @@ prisma-dids/
 **`apps/dashboard/package.json`:**
 ```json
 {
-  "name": "@prisma-dids/dashboard",
+  "name": "@prisma-events/dids-dashboard",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -1083,8 +1083,8 @@ prisma-dids/
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@prisma-dids/sdk": "workspace:*",
-    "@prisma-dids/types": "workspace:*",
+    "@prisma-events/dids-sdk": "workspace:*",
+    "@prisma-events/dids-types": "workspace:*",
     "next": "14.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
@@ -1105,7 +1105,7 @@ All stub packages get minimal `package.json`:
 
 ```json
 {
-  "name": "@prisma-dids/api",  // or crypto, ui, indexer, etc.
+  "name": "@prisma-events/dids-api",  // or crypto, ui, indexer, etc.
   "version": "0.1.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -1114,7 +1114,7 @@ All stub packages get minimal `package.json`:
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@prisma-dids/types": "workspace:*"
+    "@prisma-events/dids-types": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.3.0"
@@ -1157,7 +1157,7 @@ pnpm install
 pnpm build
 
 # 7. Start dashboard dev server
-pnpm --filter @prisma-dids/dashboard dev
+pnpm --filter @prisma-events/dids-dashboard dev
 ```
 
 **Verification Checklist:**
@@ -1165,7 +1165,7 @@ pnpm --filter @prisma-dids/dashboard dev
 - [ ] `pnpm install` completes without errors
 - [ ] `pnpm build` builds all packages (stubs just compile empty exports)
 - [ ] Dashboard runs on `localhost:3000`
-- [ ] TypeScript resolves imports: `import { L_DID } from '@prisma-dids/types'`
+- [ ] TypeScript resolves imports: `import { L_DID } from '@prisma-events/dids-types'`
 - [ ] All package boundaries are clear
 - [ ] `.env.local` exists with Blockfrost + Pinata keys
 
@@ -1177,7 +1177,7 @@ pnpm --filter @prisma-dids/dashboard dev
 ✅ TypeScript strict mode across all packages
 ✅ Dashboard runs (even if empty)
 ✅ SDK builds with correct internal structure
-✅ Import paths work: `@prisma-dids/sdk`, `@prisma-dids/types`
+✅ Import paths work: `@prisma-events/dids-sdk`, `@prisma-events/dids-types`
 ✅ Future packages stubbed (no surprises later)
 
 ---
@@ -1477,7 +1477,7 @@ export class PinataClient {
 **File: `sdk/src/core/payload.ts`**
 
 ```typescript
-import type { DidEventPayload, DIDEvent } from '@prisma-dids/types';
+import type { DidEventPayload, DIDEvent } from '@prisma-events/dids-types';
 
 export function buildCreatePayload(params: {
   did: string;
@@ -1526,7 +1526,7 @@ export function buildRevokePayload(params: {
 **File: `sdk/src/core/signature.ts`**
 
 ```typescript
-import type { CIP30API, DidEventPayload, PrismaPayloadSig, DIDEvent } from '@prisma-dids/types';
+import type { CIP30API, DidEventPayload, PrismaPayloadSig, DIDEvent } from '@prisma-events/dids-types';
 
 /**
  * Signs a DID event payload using CIP-30 wallet per §3.3.1
@@ -1585,7 +1585,7 @@ export function buildDIDEvent(
 ```typescript
 import { ed25519 } from '@noble/ed25519';
 import { deriveStakeAddressFromBaseAddress } from '../utils/stake';
-import type { DIDEvent, DidEventPayload, PrismaPayloadSig } from '@prisma-dids/types';
+import type { DIDEvent, DidEventPayload, PrismaPayloadSig } from '@prisma-events/dids-types';
 
 /**
  * Verifies a DID event per §3.3.2
@@ -1651,8 +1651,8 @@ export async function verifyDIDEvent(event: DIDEvent): Promise<boolean> {
 **File: `sdk/src/tx/metadata.ts`**
 
 ```typescript
-import { L_DID } from '@prisma-dids/types';
-import type { DIDEvent } from '@prisma-dids/types';
+import { L_DID } from '@prisma-events/dids-types';
+import type { DIDEvent } from '@prisma-events/dids-types';
 
 const MAX_METADATA_SIZE = 16000;  // ~16KB limit per §3.2.1
 
@@ -1678,9 +1678,9 @@ export function serializeDIDMetadata(event: DIDEvent): Record<string, any> {
 
 ```typescript
 import { Lucid, Blockfrost } from 'lucid-cardano';
-import { L_DID } from '@prisma-dids/types';
+import { L_DID } from '@prisma-events/dids-types';
 import { serializeDIDMetadata } from './metadata';
-import type { DIDEvent } from '@prisma-dids/types';
+import type { DIDEvent } from '@prisma-events/dids-types';
 
 export interface NetworkConfig {
   network: 'Preprod' | 'Mainnet';
@@ -1796,7 +1796,7 @@ export interface ChainProvider {
 
 ```typescript
 import axios from 'axios';
-import { L_DID } from '@prisma-dids/types';
+import { L_DID } from '@prisma-events/dids-types';
 import type { ChainProvider, DIDEventRecord } from './types';
 
 export class BlockfrostProvider implements ChainProvider {

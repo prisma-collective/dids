@@ -1,4 +1,4 @@
-import type { CIP30API, DidEventPayload, PrismaPayloadSig, DIDEvent } from '@prisma-dids/types';
+import type { CIP30API, DidEventPayload, PrismaPayloadSig, DIDEvent } from '@prisma-events/dids-types';
 import { utf8ToBytes, bytesToHex } from '../utils/encoding.js';
 
 /**

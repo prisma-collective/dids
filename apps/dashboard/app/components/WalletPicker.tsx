@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useWallet, WalletInfo } from '../contexts/WalletContext';
-import { Button, Badge, cn } from '@prisma-dids/ui';
+import { Button, Badge, cn } from '@prisma-events/dids-ui';
 
 interface WalletPickerProps {
   onConnected?: () => void;

@@ -1,5 +1,5 @@
 [build]
-buildCommand = "pnpm --filter @prisma-dids/indexer build"
+buildCommand = "pnpm --filter @prisma-events/dids-indexer build"
 
 [deploy]
 startCommand = "cd apps/indexer && node dist/index.js"

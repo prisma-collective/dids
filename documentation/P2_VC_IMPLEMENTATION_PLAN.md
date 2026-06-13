@@ -235,7 +235,7 @@ export interface EventProcessor {
 }
 
 // apps/indexer/src/config/types.ts
-import type { IndexerConfig } from '@prisma-dids/types';
+import type { IndexerConfig } from '@prisma-events/dids-types';
 import type { EventProcessor } from '../worker/types.js';
 
 /** IndexerConfig + app-layer processor binding. Only used inside the indexer app. */
@@ -360,7 +360,7 @@ This makes `processors` the single source of truth for per-label schema validati
 **Goal:** Create a shared package that both VC Interface and VC Indexer depend on for credential schema validation. Single source of truth for claim enums (Audit Fix #6).
 
 #### 1.1 Package scaffolding (`2A.0a`)
-- Create `packages/schemas/` with `package.json` (`@prisma-dids/schemas`, ESM, Zod peer dep)
+- Create `packages/schemas/` with `package.json` (`@prisma-events/dids-schemas`, ESM, Zod peer dep)
 - `tsconfig.json` extending root config
 - Add to Turborepo pipeline (`turbo.json`)
 - Wire as workspace dependency in `apps/indexer`, `apps/vc-interface`, and `packages/sdk`
@@ -426,7 +426,7 @@ This makes `processors` the single source of truth for per-label schema validati
 
 #### 1.5 Update VC Interface types to consume schemas
 - `apps/vc-interface/types/vc.ts`:
-  - `ContributionCredentialClaims` re-exports from `@prisma-dids/schemas`
+  - `ContributionCredentialClaims` re-exports from `@prisma-events/dids-schemas`
   - `CredentialType` stays local (UI may support subset of all schemas)
   - `contributionType` enum comes from schemas, not duplicated
 
@@ -444,13 +444,13 @@ This makes `processors` the single source of truth for per-label schema validati
 - New file: `packages/sdk/src/core/vc.ts`
 - **Inputs:** issuer wallet (CIP-30), holder DID, claims object, options `{ disclosable: string[] }`
 - **Process (COSE-SD model):**
-  1. Validate claims against schema registry (`@prisma-dids/schemas`)
+  1. Validate claims against schema registry (`@prisma-events/dids-schemas`)
   2. Generate `jti` as `urn:uuid:<uuid-v4>`
   3. For each disclosable claim: generate random salt, create disclosure `[salt, key, value]`, base64url-encode, compute SHA-256 hash for `_sd` array
   4. Build VC payload: `{ iss, sub, jti, iat, vct, _sd: [hashes...], <non-disclosable claims> }`
   5. Serialize payload as JSON, call `wallet.signData(signingAddress, payloadHex)` — produces COSE_Sign1 (same as `signDIDPayload()` in `signature.ts`)
   6. Return: `{ credential: "<base64url(envelope)>~<disc1>~<disc2>~", jti, payloadSig }`
-- **Dependencies:** `@prisma-dids/schemas` for claim validation
+- **Dependencies:** `@prisma-events/dids-schemas` for claim validation
 - Helper: `src/core/sd-jwt.ts` — disclosure creation, `_sd` hash computation, base64url helpers, credential parsing
 
 #### 2.2 `createPresentation()` (`2A.2`)
@@ -586,7 +586,7 @@ This makes `processors` the single source of truth for per-label schema validati
 
   **`verify()` — event-type-aware signature verification (Audit Fix #19):**
 
-  All event types share the same COSE_Sign1 check via `verifyCoseSign1Signature()` from `@prisma-dids/sdk` (Audit Fix #15). The difference is **who** the signer must be:
+  All event types share the same COSE_Sign1 check via `verifyCoseSign1Signature()` from `@prisma-events/dids-sdk` (Audit Fix #15). The difference is **who** the signer must be:
 
   | Event type | Signer must match | Validation rule |
   |-----------|-------------------|-----------------|
@@ -676,7 +676,7 @@ reduceVCStatus(events: VCEvent[]): VCStatus
   | `GET /vc/:vcHash/status` | `vc:status` | Current status (active/revoked) |
   | `GET /issuer/:did/credentials` | `vc:issuer-list` | Paginated VCs by issuer |
   | `GET /holder/:did/credentials` | `vc:holder-list` | Paginated VCs by holder |
-  | `GET /schemas` | `vc:schemas` | Supported schemas from `@prisma-dids/schemas` registry |
+  | `GET /schemas` | `vc:schemas` | Supported schemas from `@prisma-events/dids-schemas` registry |
 - All list endpoints support `?limit=&offset=&order=` pagination (per §9.3)
 - Register handlers in `server.ts` handler registry
 

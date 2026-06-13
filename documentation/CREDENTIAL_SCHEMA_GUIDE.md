@@ -160,7 +160,7 @@ export {
 ### Step 4: Rebuild
 
 ```bash
-pnpm --filter @prisma-dids/schemas build
+pnpm --filter @prisma-events/dids-schemas build
 ```
 
 ### Step 5: Update VC Interface (Optional)
@@ -175,7 +175,7 @@ CREDENTIAL_TYPES: ['ContributionCredential', 'MembershipCredential'],
 **`apps/vc-interface/types/vc.ts`:**
 ```typescript
 export type CredentialType = 'ContributionCredential' | 'MembershipCredential';
-export { MembershipTierEnum } from '@prisma-dids/schemas';
+export { MembershipTierEnum } from '@prisma-events/dids-schemas';
 ```
 
 **Add translations** for each locale:
@@ -338,7 +338,7 @@ packages/schemas/
 │   └── credentials/
 │       ├── contribution.ts           ← ContributionCredential (built-in)
 │       └── membership.ts             ← Your new credential type
-├── package.json                      ← @prisma-dids/schemas, depends on zod
+├── package.json                      ← @prisma-events/dids-schemas, depends on zod
 └── tsconfig.json
 ```
 
@@ -353,7 +353,7 @@ packages/schemas/
 - [ ] Export TypeScript type via `z.infer<>`
 - [ ] Register in `packages/schemas/src/registry.ts`
 - [ ] Export from `packages/schemas/src/index.ts`
-- [ ] Run `pnpm --filter @prisma-dids/schemas build`
+- [ ] Run `pnpm --filter @prisma-events/dids-schemas build`
 - [ ] (Optional) Update VC Interface `org-config.ts` CREDENTIAL_TYPES
 - [ ] (Optional) Update VC Interface types and translations
 - [ ] Verify: `curl your-indexer/schemas` shows the new type

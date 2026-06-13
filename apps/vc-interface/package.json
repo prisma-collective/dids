@@ -1,5 +1,5 @@
 {
-  "name": "@prisma-dids/vc-interface",
+  "name": "@prisma-events/dids-vc-interface",
   "version": "0.1.0",
   "private": true,
   "description": "Forkable VC Interface app for Prisma DIDs",
@@ -11,10 +11,10 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@prisma-dids/schemas": "workspace:*",
-    "@prisma-dids/sdk": "workspace:*",
-    "@prisma-dids/types": "workspace:*",
-    "@prisma-dids/ui": "workspace:*",
+    "@prisma-events/dids-schemas": "workspace:*",
+    "@prisma-events/dids-sdk": "workspace:*",
+    "@prisma-events/dids-types": "workspace:*",
+    "@prisma-events/dids-ui": "workspace:*",
     "lucid-cardano": "^0.10.7",
     "lucide-react": "^0.468.0",
     "next": "^16.1.6",

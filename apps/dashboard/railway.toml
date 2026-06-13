@@ -1,5 +1,5 @@
 [build]
-buildCommand = "pnpm --filter @prisma-dids/dashboard... build"
+buildCommand = "pnpm --filter @prisma-events/dids-dashboard... build"
 
 [deploy]
 startCommand = "cd apps/dashboard && npx next start --port ${PORT:-3000}"

@@ -1461,7 +1461,7 @@ export type {
 **Create DID:**
 
 ```typescript
-import { deriveDID, generateDIDDocument, buildCreatePayload } from '@prisma-dids/sdk';
+import { deriveDID, generateDIDDocument, buildCreatePayload } from '@prisma-events/dids-sdk';
 
 const stakeAddress = await wallet.getRewardAddresses()[0];
 const did = deriveDID(stakeAddress);
@@ -1471,7 +1471,7 @@ const didDoc = generateDIDDocument({ did, publicKeyHex: walletPubKey });
 **Issue SD-JWT Credential:**
 
 ```typescript
-import { createSdJwtIssuer, issueSdJwtVC } from '@prisma-dids/sdk';
+import { createSdJwtIssuer, issueSdJwtVC } from '@prisma-events/dids-sdk';
 
 const issuer = await createSdJwtIssuer(privateKey, publicKey);
 const credential = await issueSdJwtVC(issuer, {
@@ -1485,7 +1485,7 @@ const credential = await issueSdJwtVC(issuer, {
 **Create Presentation (Hide Hours):**
 
 ```typescript
-import { presentSdJwtVC } from '@prisma-dids/sdk';
+import { presentSdJwtVC } from '@prisma-events/dids-sdk';
 
 const presentation = await presentSdJwtVC(credential, {
   hours: false,        // Hide
