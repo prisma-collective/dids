@@ -20,7 +20,7 @@ The pilots differ in *what* is protected and *how* roles are scoped:
 | Pilot | Repository | Protected resource | Role scope |
 |-------|------------|-------------------|------------|
 | **Propagate** | `propagate` | Deployment workflow & infrastructure manifests | Hub-level (`OWNER` / `MEMBER`) |
-| **Docs** | `docs-secret` | Per-page knowledge in a federated markdown corpus | Event-scoped participant roles (`participant`, `general-participant`, …) |
+| **Docs** | `docs-secret` | Per-page knowledge in a federated markdown corpus | Event-scoped participant roles (`participant`, …) |
 
 Together they validate the DID indexer as the shared resolution layer for identity-backed authorization across federated Prisma infrastructure.
 
@@ -38,7 +38,7 @@ flowchart TB
     Indexer["DID indexer"]
     Wallet -->|"reward/stake address"| DID
     DID -->|"GET /did/:did"| Indexer
-    Indexer -->|"document.authRole / role"| Role["Resolved role"]
+    Indexer -->|"document.role"| Role["Resolved role"]
   end
 
   subgraph auth["Authentication layer"]
@@ -64,7 +64,7 @@ flowchart TB
 | **DID method** | `did:cardano:{bech32StakeAddress}` — derived from the wallet reward/stake address |
 | **DID indexer** | Fast REST resolver (`GET /did/:did`) indexing on-chain L_DID (199674) metadata events; returns the current DID Document |
 | **Wallet proof** | CIP-30 `signData` over a server-issued nonce, verified with Mesh SDK `checkSignature` |
-| **Role source** | Indexer-resolved DID Document fields (`authRole`, `role`) or hub-specific mapping (Propagate V1) |
+| **Role source** | Indexer-resolved DID Document fields (`role`) or hub-specific mapping (Propagate V1) |
 | **Role issuance** | Per-event enrolment via `register.prisma.events` (enrol app); roles are issued in the context of in-person Action Learning Journey events, not as generic platform accounts |
 
 The enrol app (`enrol`, deployed at **register.prisma.events**) is the registration and role-enrolment surface. Its `src/lib/securedid/secureDIDCheck.ts` utility already queries the indexer to confirm an active on-chain DID, and `src/lib/auth/did-lookup.ts` defines the planned wallet → DID → role resolution path consumed by downstream auth APIs.
@@ -95,13 +95,10 @@ Role metadata is read from the resolved document:
   "document": {
     "@context": ["https://www.w3.org/ns/did/v1"],
     "id": "did:cardano:stake1u9...",
-    "authRole": "participant",
     "role": "participant"
   }
 }
 ```
-
-Consumers prefer `authRole` when present, falling back to `role` (see docs-secret `did-prepare` route).
 
 ### Indexer deployments referenced in pilots
 
@@ -219,7 +216,7 @@ After wallet login, Propagate performs separate OAuth/App-install flows for GitH
 
 The docs app is a **hyperlink markdown repository** representing networked knowledge across Prisma's federated ecosystem. Content lives under `content/` as MDX pages with YAML frontmatter.
 
-Roles are issued **per event** (in-person Action Learning Journey intensives, not generic platform events). A participant enrolled for one journey may hold `participant` or `general-participant` for that cohort's knowledge boundary. Introducing **hybrid time- and role-scoped permissions** gives the living document corpus another level of dynamism: the publisher selects, at page granularity, which information is accessible to whom.
+Roles are issued **per event** (in-person Action Learning Journey intensives, not generic platform events). A participant enrolled for one journey may hold `participant` or for that cohort's knowledge boundary. Introducing **hybrid time- and role-scoped permissions** gives the living document corpus another level of dynamism: the publisher selects, at page granularity, which information is accessible to whom.
 
 This is distinct from Propagate's hub-operator model — here roles gate **read access to knowledge**, not **write access to infrastructure**.
 
@@ -300,7 +297,7 @@ Session JWT embeds `{ address, did, role }` (`lib/private-auth.ts`). Two credent
 
 | Concept | Source |
 |---------|--------|
-| **Issued role** | Enrolment / DID indexer (`authRole` or `role` on DID Document) |
+| **Issued role** | Enrolment / DID indexer (`role` on DID Document) |
 | **Required role** | Page frontmatter `access` field |
 | **Default** | `general-participant` when `private: true` and no `access` set |
 
