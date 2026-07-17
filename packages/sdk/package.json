@@ -1,6 +1,6 @@
 {
   "name": "@prisma-events/dids-sdk",
-  "version": "0.0.0",
+  "version": "0.1.0-experimental.0",
   "description": "[EXPERIMENTAL] Core SDK for Prisma DIDs — DID lifecycle, VC issuance, Cardano anchoring",
   "type": "module",
   "license": "MIT",

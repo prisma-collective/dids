@@ -1,6 +1,6 @@
 {
   "name": "@prisma-events/dids-types",
-  "version": "0.0.0",
+  "version": "0.1.0-experimental.0",
   "description": "[EXPERIMENTAL] Shared TypeScript types and constants for Prisma DIDs",
   "type": "module",
   "license": "MIT",

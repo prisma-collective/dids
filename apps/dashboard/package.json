@@ -1,6 +1,6 @@
 {
   "name": "@prisma-events/dids-dashboard",
-  "version": "0.1.0",
+  "version": "0.1.1-experimental.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

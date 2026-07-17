@@ -1,6 +1,6 @@
 {
   "name": "@prisma-events/dids-schemas",
-  "version": "0.0.0",
+  "version": "0.1.0-experimental.0",
   "description": "[EXPERIMENTAL] VC credential schemas and registry for Prisma DIDs",
   "type": "module",
   "license": "MIT",

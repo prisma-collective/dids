@@ -4,7 +4,14 @@
   "initialVersions": {
     "@prisma-events/dids-types": "0.0.0",
     "@prisma-events/dids-schemas": "0.0.0",
-    "@prisma-events/dids-sdk": "0.0.0"
+    "@prisma-events/dids-sdk": "0.0.0",
+    "@prisma-events/dids-dashboard": "0.1.0",
+    "@prisma-events/dids-indexer": "0.1.0",
+    "@prisma-events/dids-vc-interface": "0.1.0",
+    "@prisma-events/dids-crypto": "0.1.0",
+    "@prisma-events/dids-ui": "0.1.0"
   },
-  "changesets": []
+  "changesets": [
+    "initial-release"
+  ]
 }

@@ -1,6 +1,6 @@
 {
   "name": "@prisma-events/dids-vc-interface",
-  "version": "0.1.0",
+  "version": "0.1.1-experimental.0",
   "private": true,
   "description": "Forkable VC Interface app for Prisma DIDs",
   "scripts": {
