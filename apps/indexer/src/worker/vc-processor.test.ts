@@ -1,8 +1,21 @@
-import { describe, it, expect } from 'vitest';
-import { vcEventProcessor, jsonPayloadMatch } from './vc-processor.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { vcEventProcessor, jsonPayloadMatch, buildExpectedIssueAnchor, isLegacyCredentialSignedPayload } from './vc-processor.js';
 import { VCEventPayloadSchema } from '@prisma-dids/schemas';
+import type { VCEventPayload } from '@prisma-dids/schemas';
 import type { MetadataEvent } from '../sources/types.js';
 import type { ProcessedResult } from './types.js';
+
+vi.mock('@prisma-dids/sdk', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@prisma-dids/sdk')>();
+  return {
+    ...actual,
+    verifyCoseSign1Signature: vi.fn(),
+  };
+});
+
+import { verifyCoseSign1Signature } from '@prisma-dids/sdk';
+
+const mockVerifyCose = vi.mocked(verifyCoseSign1Signature);
 
 /**
  * 2D.4: Integration tests — VC processor makeRow + schema validation.
@@ -254,6 +267,128 @@ describe('vc-processor', () => {
 
     it('should return false for invalid bytes', () => {
       expect(jsonPayloadMatch(new Uint8Array([0xFF, 0xFE]), { event: 'revoke' })).toBe(false);
+    });
+  });
+
+  // ─── buildExpectedIssueAnchor / legacy detection ───
+
+  describe('buildExpectedIssueAnchor', () => {
+    it('should include only signed anchor fields (not ipfsCid)', () => {
+      const event = makeVCEventPayload({ ipfsCid: 'QmTest123' }) as VCEventPayload;
+      expect(buildExpectedIssueAnchor(event)).toEqual({
+        event: 'issue',
+        issuerDid: ISSUER_DID,
+        holderDid: HOLDER_DID,
+        vcHash: VC_HASH,
+        vcType: 'ContributionCredential',
+        vcFormat: 'cose-sd',
+        ts: '2025-01-01T00:00:00.000Z',
+      });
+    });
+  });
+
+  describe('isLegacyCredentialSignedPayload', () => {
+    const encode = (obj: Record<string, unknown>) =>
+      new TextEncoder().encode(JSON.stringify(obj));
+
+    it('should detect credential-shaped signed payloads', () => {
+      expect(isLegacyCredentialSignedPayload(encode({
+        iss: ISSUER_DID,
+        sub: HOLDER_DID,
+        jti: VC_HASH,
+        vct: 'ContributionCredential',
+      }))).toBe(true);
+    });
+
+    it('should reject minimal anchor payloads', () => {
+      expect(isLegacyCredentialSignedPayload(encode(
+        buildExpectedIssueAnchor(makeVCEventPayload() as VCEventPayload)
+      ))).toBe(false);
+    });
+  });
+
+  // ─── verify (issue event, F-META-01) ───
+
+  describe('verify — issue events', () => {
+    beforeEach(() => {
+      mockVerifyCose.mockReset();
+    });
+
+    const makeIssueEvent = (): VCEventPayload => ({
+      event: 'issue',
+      issuerDid: ISSUER_DID,
+      holderDid: HOLDER_DID,
+      vcHash: VC_HASH,
+      vcType: 'ContributionCredential',
+      vcFormat: 'cose-sd',
+      payloadSig: '{}',
+      ts: '2025-01-01T00:00:00.000Z',
+    });
+
+    it('should accept issue event when anchor payload binding matches', async () => {
+      const event = makeIssueEvent();
+      const anchorPayload = buildExpectedIssueAnchor(event);
+      mockVerifyCose.mockResolvedValue({
+        valid: true,
+        signerStakeAddress: ISSUER_STAKE,
+        signedPayload: new TextEncoder().encode(JSON.stringify(anchorPayload)),
+      });
+
+      const result = await vcEventProcessor.verify!(event);
+      expect(result.valid).toBe(true);
+      expect(result.signerStakeAddress).toBe(ISSUER_STAKE);
+    });
+
+    it('should reject issue event when anchor payload does not match', async () => {
+      const event = makeIssueEvent();
+      mockVerifyCose.mockResolvedValue({
+        valid: true,
+        signerStakeAddress: ISSUER_STAKE,
+        signedPayload: new TextEncoder().encode(JSON.stringify({
+          event: 'issue',
+          issuerDid: ISSUER_DID,
+          holderDid: HOLDER_DID,
+          vcHash: 'urn:uuid:wrong',
+          vcType: 'ContributionCredential',
+          vcFormat: 'cose-sd',
+          ts: event.ts,
+        })),
+      });
+
+      const result = await vcEventProcessor.verify!(event);
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe('payload_mismatch');
+    });
+
+    it('should accept legacy issue events with credential-shaped signed payload', async () => {
+      const event = makeIssueEvent();
+      mockVerifyCose.mockResolvedValue({
+        valid: true,
+        signerStakeAddress: ISSUER_STAKE,
+        signedPayload: new TextEncoder().encode(JSON.stringify({
+          iss: ISSUER_DID,
+          sub: HOLDER_DID,
+          jti: VC_HASH,
+          vct: 'ContributionCredential',
+          evidenceUrl: 'https://example.com/secret',
+        })),
+      });
+
+      const result = await vcEventProcessor.verify!(event);
+      expect(result.valid).toBe(true);
+    });
+
+    it('should reject issue event when signer is not issuer', async () => {
+      const event = makeIssueEvent();
+      mockVerifyCose.mockResolvedValue({
+        valid: true,
+        signerStakeAddress: 'stake_test1uz_attacker',
+        signedPayload: new TextEncoder().encode(JSON.stringify(buildExpectedIssueAnchor(event))),
+      });
+
+      const result = await vcEventProcessor.verify!(event);
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe('signer_not_issuer');
     });
   });
 });

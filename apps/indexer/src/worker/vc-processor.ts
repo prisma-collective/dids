@@ -13,7 +13,8 @@ import type { EventProcessor, VerifyResult, ProcessedResult } from './types.js';
  *   1. COSE_Sign1 cryptographic validity
  *   2. Payload binding — signed content matches event fields (anti-tamper)
  *   3. Event-type-aware signer matching (Audit Fix #19):
- *      - issue  → signer must match issuerDid
+ *      - issue  → anchor payload binding + signer must match issuerDid
+ *                 (legacy: pre-F-META-01 events signed credential payload)
  *      - validate → validatorDid required + signer must match validatorDid
  *      - revoke → COSE validity only (authorization deferred to reducer, Audit Fix #20)
  *
@@ -37,10 +38,6 @@ export const vcEventProcessor: EventProcessor = {
       // Event-type-aware verification (Audit Fix #19)
       switch (vcEvent.event) {
         case 'issue': {
-          // Issue events reuse the credential's payloadSig (signed credential payload,
-          // not anchor fields). Payload binding is skipped — COSE validity + signer
-          // matching is sufficient. The credential payload was signed by the issuer's
-          // wallet via signData, proving identity.
           const issuerStake = vcEvent.issuerDid.replace('did:cardano:', '');
           if (issuerStake !== coseResult.signerStakeAddress) {
             return {
@@ -49,7 +46,22 @@ export const vcEventProcessor: EventProcessor = {
               error: 'signer_not_issuer',
             };
           }
-          return { valid: true, signerStakeAddress: coseResult.signerStakeAddress };
+
+          const expectedIssue = buildExpectedIssueAnchor(vcEvent);
+          if (jsonPayloadMatch(coseResult.signedPayload, expectedIssue)) {
+            return { valid: true, signerStakeAddress: coseResult.signerStakeAddress };
+          }
+
+          // Legacy (pre-F-META-01): payloadSig signed the credential claims, not anchor fields.
+          if (isLegacyCredentialSignedPayload(coseResult.signedPayload)) {
+            return { valid: true, signerStakeAddress: coseResult.signerStakeAddress };
+          }
+
+          return {
+            valid: false,
+            signerStakeAddress: coseResult.signerStakeAddress,
+            error: 'payload_mismatch',
+          };
         }
 
         case 'validate': {
@@ -150,6 +162,29 @@ export const vcEventProcessor: EventProcessor = {
     };
   },
 };
+
+/** Expected signed payload for issue anchor events (F-META-01). ipfsCid is not signed. */
+export function buildExpectedIssueAnchor(vcEvent: VCEventPayload): Record<string, unknown> {
+  return {
+    event: vcEvent.event,
+    issuerDid: vcEvent.issuerDid,
+    holderDid: vcEvent.holderDid,
+    vcHash: vcEvent.vcHash,
+    vcType: vcEvent.vcType,
+    vcFormat: vcEvent.vcFormat,
+    ts: vcEvent.ts,
+  };
+}
+
+/** Pre-F-META-01 issue events signed the credential JSON (iss/vct/_sd), not anchor fields. */
+export function isLegacyCredentialSignedPayload(signedPayload: Uint8Array): boolean {
+  try {
+    const signed = JSON.parse(new TextDecoder().decode(signedPayload)) as Record<string, unknown>;
+    return 'vct' in signed || 'iss' in signed || '_sd' in signed || 'jti' in signed;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Order-independent JSON payload comparison.

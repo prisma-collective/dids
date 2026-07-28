@@ -10,13 +10,10 @@
  * - Status/credentials → indexer REST API (fetch)
  * - Verify → delegates to /api/verify (server-side, needs Node.js COSE verify)
  *
- * Signing optimization (issue flow):
- *   issueSDJwtVC() already signs the credential payload via wallet.signData().
- *   The returned payloadSig is reused for the anchor event — no second signData.
- *   This reduces wallet popups from 3→2 (signData + signTx).
- *   The indexer skips payload-binding for issue events since the signed content
- *   is the credential payload, not the anchor fields. COSE validity + signer
- *   matching is sufficient for issuance.
+ * Issue anchoring (F-META-01):
+ *   issueSDJwtVC() signs the credential payload (off-chain, stored in IPFS).
+ *   A separate signData signs minimal anchor fields for the on-chain event —
+ *   credential claims must not appear in label 199675 metadata.
  */
 import {
   issueSDJwtVC,
@@ -39,7 +36,7 @@ function utf8ToHex(str: string): string {
 
 /**
  * Sign a VC event payload via CIP-30 wallet.signData().
- * Used for revoke events (issue events reuse the credential's payloadSig).
+ * Used for issue and revoke anchor events.
  */
 async function signVCPayload(
   wallet: CIP30API,
@@ -82,6 +79,7 @@ async function submitVCEvent(
 export type IssueStep =
   | 'signing-credential'
   | 'pinning-ipfs'
+  | 'signing-anchor'
   | 'anchoring-tx';
 
 export interface IssueResult {
@@ -94,12 +92,12 @@ export interface IssueResult {
 /**
  * Issue a COSE-SD Verifiable Credential, pin to IPFS, and anchor on-chain.
  *
- * 1. issueSDJwtVC() → credential string + jti + payloadSig (wallet.signData)
- * 2. Pin credential to IPFS → ipfsCid (natural delay replaces 800ms sleep)
- * 3. Build anchor event with ipfsCid + reused payloadSig (no second signData)
+ * 1. issueSDJwtVC() → credential string + jti (wallet.signData on credential claims)
+ * 2. Pin credential to IPFS → ipfsCid
+ * 3. signData on minimal anchor fields → anchor payloadSig (F-META-01)
  * 4. Submit anchor tx via Lucid (wallet.signTx)
  *
- * Only 2 wallet popups: signData (credential) + signTx (transaction).
+ * Wallet popups: signData (credential) + signData (anchor) + signTx.
  */
 export async function issueAndAnchorCredential(
   wallet: CIP30API,
@@ -121,7 +119,7 @@ export async function issueAndAnchorCredential(
     formData.claims,
     { disclosable: formData.disclosableClaims }
   );
-  const { credential, jti, payloadSig } = issued;
+  const { credential, jti } = issued;
 
   // 2. Pin credential to IPFS
   onProgress?.('pinning-ipfs');
@@ -139,18 +137,24 @@ export async function issueAndAnchorCredential(
     issuedAt: new Date().toISOString(),
   });
 
-  // 3. Build anchor event with IPFS CID + reused payloadSig (no second signData).
+  // 3. Sign minimal anchor fields — credential claims stay off-chain (F-META-01).
+  onProgress?.('signing-anchor');
   const ts = new Date().toISOString();
-  const event: Record<string, unknown> = {
+  const anchorFields: Record<string, unknown> = {
     event: 'issue',
     issuerDid,
     holderDid,
     vcHash: jti,
     vcType: formData.credentialType,
     vcFormat: 'cose-sd',
-    ipfsCid,
     ts,
-    payloadSig: JSON.stringify(payloadSig),
+  };
+  const anchorPayloadSig = await signVCPayload(wallet, signingAddress, anchorFields);
+
+  const event: Record<string, unknown> = {
+    ...anchorFields,
+    ipfsCid,
+    payloadSig: JSON.stringify(anchorPayloadSig),
   };
 
   // 4. Submit tx via Lucid (calls wallet.signTx)

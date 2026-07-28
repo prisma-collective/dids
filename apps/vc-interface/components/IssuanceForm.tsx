@@ -13,6 +13,7 @@ import { CheckCircle } from 'lucide-react';
 const stepOrder: IssueStep[] = [
   'signing-credential',
   'pinning-ipfs',
+  'signing-anchor',
   'anchoring-tx',
 ];
 

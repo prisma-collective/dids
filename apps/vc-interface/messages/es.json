@@ -96,6 +96,7 @@
     "steps": {
       "signing-credential": "Firmando credencial",
       "pinning-ipfs": "Guardando en IPFS",
+      "signing-anchor": "Firmando ancla en cadena",
       "anchoring-tx": "Enviando transacción"
     }
   },
