@@ -24,6 +24,7 @@ import {
 } from '@prisma-dids/sdk/browser';
 import { L_VC } from '@prisma-dids/types';
 import type { CIP30API, PrismaPayloadSig } from '@prisma-dids/types';
+import { RevocationReasonEnum, type RevocationReason } from '@prisma-dids/schemas';
 import type { IssuanceFormData, VCStatus } from '@/types/vc';
 
 // ─── Internal Helpers ───
@@ -203,6 +204,7 @@ export function extractDisclosableClaims(
 
 /**
  * Revoke a credential by anchoring a revoke event on-chain.
+ * Reason must be an allowlisted enum value (F-META-03).
  */
 export async function revokeCredential(
   wallet: CIP30API,
@@ -212,10 +214,20 @@ export async function revokeCredential(
     holderDid: string;
     vcHash: string;
     vcType: string;
-    reason?: string;
+    reason?: RevocationReason;
   },
   networkConfig: { network: string; blockfrostApiKey: string }
 ): Promise<{ txHash: string }> {
+  if (params.reason !== undefined) {
+    const parsed = RevocationReasonEnum.safeParse(params.reason);
+    if (!parsed.success) {
+      throw new Error(
+        `Invalid revocation reason: ${params.reason}. ` +
+        `Allowed: ${RevocationReasonEnum.options.join(', ')}`
+      );
+    }
+  }
+
   const ts = new Date().toISOString();
   const fields: Record<string, unknown> = {
     event: 'revoke',

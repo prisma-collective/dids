@@ -12,6 +12,7 @@
 import { Lucid, Blockfrost } from 'lucid-cardano';
 import type { CIP30API, NetworkConfig, PrismaPayloadSig } from '@prisma-dids/types';
 import { L_VC } from '@prisma-dids/types';
+import { RevocationReasonEnum, type RevocationReason } from '@prisma-dids/schemas';
 import { utf8ToBytes, bytesToHex } from '../utils/encoding.js';
 import { serializeEventMetadata } from '../tx/metadata.js';
 import { base64urlEncode } from './sd-jwt.js';
@@ -43,8 +44,8 @@ export interface AnchorRevocationParams {
   vcHash: string;
   vcType: string;
   vcFormat: 'cose-sd' | 'ed25519';
-  /** Optional revocation reason */
-  reason?: string;
+  /** Optional revocation reason — allowlisted enum only (F-META-03) */
+  reason?: RevocationReason;
 }
 
 export interface AnchorResult {
@@ -100,7 +101,7 @@ interface UnsignedVCEventFields {
   vcType: string;
   vcFormat: 'cose-sd' | 'ed25519';
   validatorDid?: string;
-  reason?: string;
+  reason?: RevocationReason;
   ts: string;
 }
 
@@ -266,6 +267,16 @@ export async function anchorVCRevocation(
   params: AnchorRevocationParams,
   config: NetworkConfig
 ): Promise<AnchorResult> {
+  if (params.reason !== undefined) {
+    const parsed = RevocationReasonEnum.safeParse(params.reason);
+    if (!parsed.success) {
+      throw new Error(
+        `Invalid revocation reason: ${params.reason}. ` +
+        `Allowed: ${RevocationReasonEnum.options.join(', ')}`
+      );
+    }
+  }
+
   const ts = new Date().toISOString();
   const fields: UnsignedVCEventFields = {
     event: 'revoke',

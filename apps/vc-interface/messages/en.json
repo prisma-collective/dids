@@ -115,8 +115,6 @@
     "failedTitle": "Revocation Failed",
     "revokedSuccess": "The credential has been successfully revoked.",
     "reason": "Revocation Reason",
-    "customReason": "Custom Reason",
-    "customPlaceholder": "Enter reason for revocation...",
     "warningTitle": "This action cannot be undone.",
     "warningDesc": "Once revoked, this credential will be permanently marked as invalid on the blockchain.",
     "reasonLabel": "Reason:",
@@ -128,7 +126,8 @@
       "holder_request": "Holder Request",
       "policy_violation": "Policy Violation",
       "expired": "Expired",
-      "other": "Other"
+      "compromised": "Compromised",
+      "withdrawn_by_holder": "Withdrawn by Holder"
     }
   },
   "disclosure": {

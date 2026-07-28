@@ -115,8 +115,6 @@
     "failedTitle": "Falha na Revogação",
     "revokedSuccess": "A credencial foi revogada com sucesso.",
     "reason": "Motivo da Revogação",
-    "customReason": "Motivo Personalizado",
-    "customPlaceholder": "Insira o motivo da revogação...",
     "warningTitle": "Esta ação não pode ser desfeita.",
     "warningDesc": "Uma vez revogada, esta credencial será permanentemente marcada como inválida na blockchain.",
     "reasonLabel": "Motivo:",
@@ -128,7 +126,8 @@
       "holder_request": "Solicitação do Titular",
       "policy_violation": "Violação de Política",
       "expired": "Expirada",
-      "other": "Outro"
+      "compromised": "Comprometida",
+      "withdrawn_by_holder": "Retirada pelo Titular"
     }
   },
   "disclosure": {

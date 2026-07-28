@@ -119,8 +119,6 @@ export default function ManagePage() {
     const cred = issuedCredentials.find(c => c.id === request.credentialId);
     if (!cred) throw new Error('Credential not found');
 
-    const reason = request.reason === 'other' ? request.customReason : request.reason;
-
     const result = await revokeCredential(
       wallet,
       signingAddress,
@@ -129,7 +127,7 @@ export default function ManagePage() {
         holderDid: cred.holderDid,
         vcHash: cred.id,
         vcType: cred.type,
-        reason: reason || undefined,
+        reason: request.reason,
       },
       { network: config.NETWORK, blockfrostApiKey: blockfrostKey }
     );

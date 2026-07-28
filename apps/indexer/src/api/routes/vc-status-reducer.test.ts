@@ -88,7 +88,7 @@ describe('reduceVCStatus', () => {
         blockHeight: 1005,
         txHash: 'tx_revoke',
         signerStakeAddress: ISSUER_STAKE, // same as issuer
-        reason: 'credential expired',
+        reason: 'expired',
         timestamp: new Date('2025-01-02T00:00:00Z'),
       }),
     ];
@@ -97,7 +97,7 @@ describe('reduceVCStatus', () => {
 
     expect(status.status).toBe('revoked');
     expect(status.revokedTxHash).toBe('tx_revoke');
-    expect(status.reason).toBe('credential expired');
+    expect(status.reason).toBe('expired');
     expect(status.issuedTxHash).toBe('tx_issue');
   });
 
@@ -296,13 +296,13 @@ describe('reduceVCStatus', () => {
         blockHeight: 1005,
         txHash: 'tx_good_revoke',
         signerStakeAddress: ISSUER_STAKE,
-        reason: 'superseded',
+        reason: 'issued_in_error',
       }),
     ];
 
     const status = reduceVCStatus(events);
     expect(status.status).toBe('revoked');
     expect(status.revokedTxHash).toBe('tx_good_revoke'); // first authorized revoke
-    expect(status.reason).toBe('superseded');
+    expect(status.reason).toBe('issued_in_error');
   });
 });

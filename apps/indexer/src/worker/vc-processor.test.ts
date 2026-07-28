@@ -80,10 +80,36 @@ describe('vc-processor', () => {
     it('should validate a revoke event with reason', () => {
       const payload = makeVCEventPayload({
         event: 'revoke',
-        reason: 'credential superseded',
+        reason: 'issued_in_error',
       });
       const result = VCEventPayloadSchema.safeParse(payload);
       expect(result.success).toBe(true);
+    });
+
+    it('should reject revoke event with free-text reason (F-META-03)', () => {
+      const payload = makeVCEventPayload({
+        event: 'revoke',
+        reason: 'Revoked: personal data in free text',
+      });
+      const result = VCEventPayloadSchema.safeParse(payload);
+      expect(result.success).toBe(false);
+    });
+
+    it('should accept all allowlisted revocation reasons', () => {
+      const reasons = [
+        'issued_in_error',
+        'holder_request',
+        'policy_violation',
+        'expired',
+        'compromised',
+        'withdrawn_by_holder',
+      ] as const;
+      for (const reason of reasons) {
+        const result = VCEventPayloadSchema.safeParse(
+          makeVCEventPayload({ event: 'revoke', reason })
+        );
+        expect(result.success).toBe(true);
+      }
     });
 
     it('should reject event with missing required fields', () => {
@@ -155,7 +181,7 @@ describe('vc-processor', () => {
       const raw = makeRawEvent();
       const reconstructed = makeVCEventPayload({
         event: 'revoke',
-        reason: 'credential expired',
+        reason: 'expired',
       });
       const processedResult: ProcessedResult = {
         valid: true,
@@ -165,7 +191,7 @@ describe('vc-processor', () => {
 
       const row = vcEventProcessor.makeRow(raw, reconstructed, processedResult);
 
-      expect(row.reason).toBe('credential expired');
+      expect(row.reason).toBe('expired');
       expect(row.event).toBe('revoke');
     });
 

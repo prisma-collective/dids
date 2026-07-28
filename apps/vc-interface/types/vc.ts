@@ -3,6 +3,8 @@
  * Types for the forkable VC Interface components
  */
 
+import type { RevocationReason } from '@prisma-dids/schemas';
+
 /** Status of a Verifiable Credential */
 export type VCStatus = 'active' | 'revoked' | 'pending' | 'not_found';
 
@@ -42,24 +44,19 @@ export interface VerifiableCredential {
   credentialString?: string;
 }
 
-/** Revocation reason options */
-export type RevocationReason =
-  | 'issued_in_error'
-  | 'holder_request'
-  | 'policy_violation'
-  | 'expired'
-  | 'other';
+/** Claim fields for ContributionCredential — re-exported from @prisma-dids/schemas (Audit Fix #6) */
+export type { ContributionCredential as ContributionCredentialClaims } from '@prisma-dids/schemas';
+export { ContributionTypeEnum } from '@prisma-dids/schemas';
+
+/** Revocation reason options — re-exported from schemas (F-META-03) */
+export type { RevocationReason } from '@prisma-dids/schemas';
+export { REVOCATION_REASONS, RevocationReasonEnum } from '@prisma-dids/schemas';
 
 /** Revocation request data */
 export interface RevocationRequest {
   credentialId: string;
   reason: RevocationReason;
-  customReason?: string;
 }
-
-/** Claim fields for ContributionCredential — re-exported from @prisma-dids/schemas (Audit Fix #6) */
-export type { ContributionCredential as ContributionCredentialClaims } from '@prisma-dids/schemas';
-export { ContributionTypeEnum } from '@prisma-dids/schemas';
 
 /** Issuance form data */
 export interface IssuanceFormData {

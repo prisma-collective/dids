@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import type { VerifiableCredential, RevocationReason, RevocationRequest } from '@/types/vc';
+import { REVOCATION_REASONS } from '@/types/vc';
 import type { VCInterfaceConfig } from '@/config/org-config';
 import { defaultConfig } from '@/config/org-config';
 import {
   Button,
   Card,
   Modal,
-  Input,
   Select,
   LoadingState,
   EmptyState,
@@ -49,7 +49,6 @@ export function RevocationUI({
   const [selectedCredential, setSelectedCredential] = useState<VerifiableCredential | null>(null);
   const [detailCredential, setDetailCredential] = useState<VerifiableCredential | null>(null);
   const [revocationReason, setRevocationReason] = useState<RevocationReason>('issued_in_error');
-  const [customReason, setCustomReason] = useState('');
   const [isRevoking, setIsRevoking] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [revokeResult, setRevokeResult] = useState<{ success: boolean; txHash?: string } | null>(null);
@@ -59,7 +58,6 @@ export function RevocationUI({
   const handleRevokeClick = (credential: VerifiableCredential) => {
     setSelectedCredential(credential);
     setRevocationReason('issued_in_error');
-    setCustomReason('');
     setShowConfirm(false);
     setRevokeResult(null);
   };
@@ -71,7 +69,6 @@ export function RevocationUI({
       const result = await onRevoke({
         credentialId: selectedCredential.id,
         reason: revocationReason,
-        customReason: revocationReason === 'other' ? customReason : undefined,
       });
       setRevokeResult({ success: true, txHash: (result as any)?.txHash });
     } catch {
@@ -87,13 +84,9 @@ export function RevocationUI({
     setRevokeResult(null);
   };
 
-  const reasonOptions: Array<{ value: string; label: string }> = [
-    { value: 'issued_in_error', label: t('reasons.issued_in_error') },
-    { value: 'holder_request', label: t('reasons.holder_request') },
-    { value: 'policy_violation', label: t('reasons.policy_violation') },
-    { value: 'expired', label: t('reasons.expired') },
-    { value: 'other', label: t('reasons.other') },
-  ];
+  const reasonOptions: Array<{ value: RevocationReason; label: string }> = REVOCATION_REASONS.map(
+    (value) => ({ value, label: t(`reasons.${value}`) })
+  );
 
   if (isLoading) {
     return (
@@ -249,26 +242,11 @@ export function RevocationUI({
                     </Select>
                   </div>
 
-                  {revocationReason === 'other' && (
-                    <div className="mb-5">
-                      <label className="block text-sm text-text-secondary mb-2 font-medium">
-                        {t('customReason')} *
-                      </label>
-                      <Input
-                        value={customReason}
-                        onChange={(e) => setCustomReason(e.target.value)}
-                        placeholder={t('customPlaceholder')}
-                        required
-                      />
-                    </div>
-                  )}
-
                   <div className="flex justify-end gap-3 pt-4 border-t border-border">
                     <Button variant="secondary" onClick={handleCloseModal}>{tc('cancel')}</Button>
                     <Button
                       variant="danger"
                       onClick={() => setShowConfirm(true)}
-                      disabled={revocationReason === 'other' && !customReason.trim()}
                     >
                       {t('continue')}
                     </Button>
@@ -287,7 +265,7 @@ export function RevocationUI({
                   <div className="mb-4">
                     <span className="text-xs text-text-muted">{t('reasonLabel')}</span>
                     <span className="text-text-primary ml-2">
-                      {revocationReason === 'other' ? customReason : reasonOptions.find(r => r.value === revocationReason)?.label}
+                      {reasonOptions.find(r => r.value === revocationReason)?.label}
                     </span>
                   </div>
 

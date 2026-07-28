@@ -2,7 +2,14 @@
 export { BaseCredentialSchema, type BaseCredential } from './base.js';
 
 // VC on-chain event schema
-export { VCEventPayloadSchema, type VCEventPayload, L_VC } from './vc-event.js';
+export {
+  VCEventPayloadSchema,
+  type VCEventPayload,
+  L_VC,
+  RevocationReasonEnum,
+  REVOCATION_REASONS,
+  type RevocationReason,
+} from './vc-event.js';
 
 // Credential schemas
 export {
