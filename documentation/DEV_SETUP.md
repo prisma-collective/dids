@@ -48,9 +48,9 @@ pnpm --filter @prisma-dids/ui build
 Copy-paste ready:
 
 ```env
-BLOCKFROST_PREPROD_KEY=preproddSZqNe9ntOeiAHn3akhfnPu0G8krsHjh
-NEXT_PUBLIC_BLOCKFROST_PREPROD_KEY=preproddSZqNe9ntOeiAHn3akhfnPu0G8krsHjh
-NEXT_PUBLIC_PINATA_JWT=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI2OGJmY2NmNC02Y2QwLTQ0NGEtOTNhYy04YjU1NTU5YmExOTgiLCJlbWFpbCI6Im1hdGVvZGF6YUBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJOWUMxIn1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiN2YyMDZjNjkzNjY3NWE4NzgyZTMiLCJzY29wZWRLZXlTZWNyZXQiOiJhOGNiMzQyYzliMTQ0NDhjMTNhYWJjNGZiMDI4NjQ3NzI1NTFlZDU3ZjRhNzU1ZGM1ZDJhODYwMzY0MDU4OTZmIiwiZXhwIjoxNzk1NTU3NjIyfQ.csKx2i9kQwQmtjqoefwDqXqPBm1hWCMQCbpRsxhRfLA
+BLOCKFROST_PREPROD_KEY=<your-blockfrost-preprod-key>
+NEXT_PUBLIC_BLOCKFROST_PREPROD_KEY=<your-blockfrost-preprod-key>
+PINATA_JWT=<your-pinata-jwt>
 INDEXER_URL_PREPROD=https://prisma-didsindexer-production.up.railway.app
 NEXT_PUBLIC_DEFAULT_NETWORK=preprod
 ```
@@ -63,8 +63,8 @@ Copy-paste ready:
 NEXT_PUBLIC_VC_INDEXER_ENDPOINT=https://alj-vc-indexer-production.up.railway.app
 NEXT_PUBLIC_DID_INDEXER_ENDPOINT=https://prisma-didsindexer-production.up.railway.app
 NEXT_PUBLIC_NETWORK=preprod
-NEXT_PUBLIC_BLOCKFROST_API_KEY=preproddSZqNe9ntOeiAHn3akhfnPu0G8krsHjh
-NEXT_PUBLIC_PINATA_JWT=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI2OGJmY2NmNC02Y2QwLTQ0NGEtOTNhYy04YjU1NTU5YmExOTgiLCJlbWFpbCI6Im1hdGVvZGF6YUBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJOWUMxIn1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiN2YyMDZjNjkzNjY3NWE4NzgyZTMiLCJzY29wZWRLZXlTZWNyZXQiOiJhOGNiMzQyYzliMTQ0NDhjMTNhYWJjNGZiMDI4NjQ3NzI1NTFlZDU3ZjRhNzU1ZGM1ZDJhODYwMzY0MDU4OTZmIiwiZXhwIjoxNzk1NTU3NjIyfQ.csKx2i9kQwQmtjqoefwDqXqPBm1hWCMQCbpRsxhRfLA
+NEXT_PUBLIC_BLOCKFROST_API_KEY=<your-blockfrost-preprod-key>
+PINATA_JWT=<your-pinata-jwt>
 ```
 
 ### `apps/indexer/.env`
@@ -122,7 +122,7 @@ pnpm --filter indexer dev
 |----------|-----------|----------|---------|---------|
 | `NEXT_PUBLIC_BLOCKFROST_PREPROD_KEY` | Client | Yes | — | Blockfrost Preprod key for Lucid tx submission |
 | `NEXT_PUBLIC_BLOCKFROST_MAINNET_KEY` | Client | No | — | Blockfrost Mainnet key (when running on mainnet) |
-| `NEXT_PUBLIC_PINATA_JWT` | Client | Yes | — | Pinata JWT for DID document IPFS pinning |
+| `PINATA_JWT` | Server | Yes | — | Pinata JWT for DID document IPFS pinning (`POST /api/ipfs/pin`) |
 | `NEXT_PUBLIC_DEFAULT_NETWORK` | Client | No | `preprod` | Which Cardano network to use |
 | `INDEXER_URL_PREPROD` | Server | Yes | — | DID Indexer API for Preprod (used by `/api/did/[did]` proxy) |
 | `INDEXER_URL_MAINNET` | Server | No | — | DID Indexer API for Mainnet |
@@ -135,7 +135,7 @@ pnpm --filter indexer dev
 | `NEXT_PUBLIC_DID_INDEXER_ENDPOINT` | Client | Yes | org-config.ts | Global DID Indexer URL (for verification flow) |
 | `NEXT_PUBLIC_NETWORK` | Client | No | `preprod` | Cardano network |
 | `NEXT_PUBLIC_BLOCKFROST_API_KEY` | Client | Yes | — | Blockfrost key for VC anchor transactions |
-| `NEXT_PUBLIC_PINATA_JWT` | Client | Yes | — | Pinata JWT for VC credential IPFS pinning |
+| `PINATA_JWT` | Server | Yes | — | Pinata JWT for VC credential IPFS pinning (`POST /api/ipfs/pin`) |
 | `NEXT_PUBLIC_DASHBOARD_URL` | Client | No | `http://localhost:3000` | DID Dashboard link in credential details |
 
 ### Indexer

@@ -9,6 +9,7 @@
  * - Anchor (issue/revoke) → dynamic Lucid import (wallet.signTx)
  * - Status/credentials → indexer REST API (fetch)
  * - Verify → delegates to /api/verify (server-side, needs Node.js COSE verify)
+ * - IPFS pin → /api/ipfs/pin (server-side Pinata JWT, F-CFG-01)
  *
  * Issue anchoring (F-META-01):
  *   issueSDJwtVC() signs the credential payload (off-chain, stored in IPFS).
@@ -20,12 +21,12 @@ import {
   createPresentation,
   getDisclosableClaims,
   serializeEventMetadata,
-  PinataClient,
 } from '@prisma-dids/sdk/browser';
 import { L_VC } from '@prisma-dids/types';
 import type { CIP30API, PrismaPayloadSig } from '@prisma-dids/types';
 import { RevocationReasonEnum, type RevocationReason } from '@prisma-dids/schemas';
 import type { IssuanceFormData, VCStatus } from '@/types/vc';
+import { pinToIPFS } from '@/lib/pinToIPFS';
 
 // ─── Internal Helpers ───
 
@@ -122,14 +123,9 @@ export async function issueAndAnchorCredential(
   );
   const { credential, jti } = issued;
 
-  // 2. Pin credential to IPFS
+  // 2. Pin credential to IPFS (server-side Pinata JWT)
   onProgress?.('pinning-ipfs');
-  const pinataJwt = process.env.NEXT_PUBLIC_PINATA_JWT;
-  if (!pinataJwt) {
-    throw new Error('NEXT_PUBLIC_PINATA_JWT not configured');
-  }
-  const pinata = new PinataClient({ jwt: pinataJwt });
-  const ipfsCid = await pinata.pinJSON({
+  const ipfsCid = await pinToIPFS({
     credentialString: credential,
     jti,
     vct: formData.credentialType,

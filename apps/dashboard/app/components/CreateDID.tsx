@@ -10,7 +10,6 @@ import {
   buildCreatePayload,
   signDIDPayload,
   buildDIDEvent,
-  PinataClient,
   hexToBytes,
   serializeDIDMetadata,
 } from '@prisma-dids/sdk/browser';
@@ -24,6 +23,7 @@ import {
   ProgressSteps,
 } from '@prisma-dids/ui';
 import { CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { pinToIPFS } from '../../lib/pinToIPFS';
 
 async function hexStakeAddressToBech32(hexAddress: string): Promise<string> {
   const CSL = await import('@emurgo/cardano-serialization-lib-browser');
@@ -116,12 +116,7 @@ export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
 
       // — pinning-ipfs —
       setState(prev => ({ ...prev, step: 'pinning-ipfs' }));
-      const pinataJwt = process.env.NEXT_PUBLIC_PINATA_JWT;
-      if (!pinataJwt) {
-        throw new Error('Pinata JWT not configured. Set NEXT_PUBLIC_PINATA_JWT in .env.local');
-      }
-      const pinata = new PinataClient({ jwt: pinataJwt });
-      const ipfsCid = await pinata.pinJSON(didDocument);
+      const ipfsCid = await pinToIPFS(didDocument);
       setState(prev => ({ ...prev, ipfsCid }));
 
       // — signing: build final payload + sign —

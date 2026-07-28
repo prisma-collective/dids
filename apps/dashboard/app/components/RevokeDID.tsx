@@ -9,7 +9,6 @@ import {
   buildRevokePayload,
   signDIDPayload,
   buildDIDEvent,
-  PinataClient,
   hexToBytes,
   serializeDIDMetadata,
 } from '@prisma-dids/sdk/browser';
@@ -24,6 +23,7 @@ import {
   ProgressSteps,
 } from '@prisma-dids/ui';
 import { AlertTriangle, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { pinToIPFS } from '../../lib/pinToIPFS';
 
 async function hexStakeAddressToBech32(hexAddress: string): Promise<string> {
   const CSL = await import('@emurgo/cardano-serialization-lib-browser');
@@ -119,10 +119,7 @@ export function RevokeDID({ wallet, network, currentDID, onComplete }: RevokeDID
         revokedAt: new Date().toISOString(),
       };
 
-      const pinataJwt = process.env.NEXT_PUBLIC_PINATA_JWT;
-      if (!pinataJwt) throw new Error('Pinata JWT not configured.');
-      const pinata = new PinataClient({ jwt: pinataJwt });
-      const revokedCid = await pinata.pinJSON(revokedDocument);
+      const revokedCid = await pinToIPFS(revokedDocument);
       setState(prev => ({ ...prev, revokedCid }));
 
       setState(prev => ({ ...prev, step: 'building-payload' }));

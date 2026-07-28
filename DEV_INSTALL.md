@@ -46,7 +46,7 @@ pnpm --filter @prisma-dids/ui build
 ```env
 BLOCKFROST_PREPROD_KEY=<your-blockfrost-preprod-key>
 NEXT_PUBLIC_BLOCKFROST_PREPROD_KEY=<your-blockfrost-preprod-key>
-NEXT_PUBLIC_PINATA_JWT=<your-pinata-jwt>
+PINATA_JWT=<your-pinata-jwt>
 INDEXER_URL_PREPROD=https://prisma-didsindexer-production.up.railway.app
 NEXT_PUBLIC_DEFAULT_NETWORK=preprod
 ```
@@ -58,7 +58,7 @@ NEXT_PUBLIC_VC_INDEXER_ENDPOINT=https://alj-vc-indexer-production.up.railway.app
 NEXT_PUBLIC_DID_INDEXER_ENDPOINT=https://prisma-didsindexer-production.up.railway.app
 NEXT_PUBLIC_NETWORK=preprod
 NEXT_PUBLIC_BLOCKFROST_API_KEY=<your-blockfrost-preprod-key>
-NEXT_PUBLIC_PINATA_JWT=<your-pinata-jwt>
+PINATA_JWT=<your-pinata-jwt>
 ```
 
 ### `apps/indexer/.env`
@@ -116,7 +116,7 @@ pnpm --filter indexer dev
 |----------|-----------|----------|---------|---------|
 | `NEXT_PUBLIC_BLOCKFROST_PREPROD_KEY` | Client | Yes | — | Blockfrost Preprod key for Lucid tx submission |
 | `NEXT_PUBLIC_BLOCKFROST_MAINNET_KEY` | Client | No | — | Blockfrost Mainnet key (when running on mainnet) |
-| `NEXT_PUBLIC_PINATA_JWT` | Client | Yes | — | Pinata JWT for DID document IPFS pinning |
+| `PINATA_JWT` | Server | Yes | — | Pinata JWT for DID document IPFS pinning (`POST /api/ipfs/pin`) |
 | `NEXT_PUBLIC_DEFAULT_NETWORK` | Client | No | `preprod` | Which Cardano network to use |
 | `INDEXER_URL_PREPROD` | Server | Yes | — | DID Indexer API for Preprod (used by `/api/did/[did]` proxy) |
 | `INDEXER_URL_MAINNET` | Server | No | — | DID Indexer API for Mainnet |
@@ -129,7 +129,7 @@ pnpm --filter indexer dev
 | `NEXT_PUBLIC_DID_INDEXER_ENDPOINT` | Client | Yes | org-config.ts | Global DID Indexer URL (for verification flow) |
 | `NEXT_PUBLIC_NETWORK` | Client | No | `preprod` | Cardano network |
 | `NEXT_PUBLIC_BLOCKFROST_API_KEY` | Client | Yes | — | Blockfrost key for VC anchor transactions |
-| `NEXT_PUBLIC_PINATA_JWT` | Client | Yes | — | Pinata JWT for VC credential IPFS pinning |
+| `PINATA_JWT` | Server | Yes | — | Pinata JWT for VC credential IPFS pinning (`POST /api/ipfs/pin`) |
 | `NEXT_PUBLIC_DASHBOARD_URL` | Client | No | `http://localhost:3000` | DID Dashboard link in credential details |
 
 ### Indexer

@@ -207,7 +207,7 @@ All services deploy to [Railway](https://railway.com) from the same GitHub repo.
 |----------|-------------|
 | `BLOCKFROST_PREPROD_KEY` | Server-side Blockfrost API key |
 | `NEXT_PUBLIC_BLOCKFROST_PREPROD_KEY` | Client-side Blockfrost API key |
-| `NEXT_PUBLIC_PINATA_JWT` | Pinata JWT for IPFS pinning |
+| `PINATA_JWT` | Server-side Pinata JWT for IPFS pinning (`POST /api/ipfs/pin`) |
 | `NEXT_PUBLIC_DEFAULT_NETWORK` | Network (`preprod` or `mainnet`) |
 | `INDEXER_URL_PREPROD` | DIDs Indexer URL (e.g. `https://prisma-didsindexer-production.up.railway.app`) |
 
@@ -219,7 +219,7 @@ All services deploy to [Railway](https://railway.com) from the same GitHub repo.
 | `NEXT_PUBLIC_DID_INDEXER_ENDPOINT` | DIDs Indexer URL |
 | `NEXT_PUBLIC_NETWORK` | Network (`preprod` or `mainnet`) |
 | `NEXT_PUBLIC_BLOCKFROST_API_KEY` | Blockfrost API key |
-| `NEXT_PUBLIC_PINATA_JWT` | Pinata JWT for IPFS pinning |
+| `PINATA_JWT` | Server-side Pinata JWT for IPFS pinning (`POST /api/ipfs/pin`) |
 | `NEXT_PUBLIC_ISSUER_DIDS` | Comma-separated list of authorized issuer DIDs |
 | `NEXT_PUBLIC_DASHBOARD_URL` | DIDs Dashboard URL for "View in DID Dashboard" links |
 

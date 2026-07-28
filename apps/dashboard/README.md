@@ -26,7 +26,7 @@ Create `apps/dashboard/.env.local`:
 ```env
 BLOCKFROST_PREPROD_KEY=preprodXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 NEXT_PUBLIC_BLOCKFROST_PREPROD_KEY=preprodXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-NEXT_PUBLIC_PINATA_JWT=your_pinata_jwt_token
+PINATA_JWT=your_pinata_jwt_token
 INDEXER_URL_PREPROD=https://prisma-didsindexer-production.up.railway.app
 NEXT_PUBLIC_DEFAULT_NETWORK=preprod
 ```
