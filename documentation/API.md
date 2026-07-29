@@ -300,7 +300,7 @@ Returns all on-chain anchor events for a credential, ordered by block height. Th
 | `events[].vcType` | string | Credential type identifier (e.g. `PrismaIdentityCredential`) |
 | `events[].vcFormat` | string | Credential format. One of `cose-sd` or `ed25519` |
 | `events[].ipfsCid` | string or null | IPFS CID where the credential payload is pinned. Only present on `issue` events |
-| `events[].reason` | string or null | Revocation reason, only present on `revoke` events |
+| `events[].reason` | string or null | Allowlisted revocation reason on `revoke` events (`issued_in_error`, `holder_request`, `policy_violation`, `expired`, `compromised`, `withdrawn_by_holder`) |
 | `events[].confirmed` | boolean | Whether this event has reached confirmation depth |
 | `events[].blockHeight` | number | Block number |
 | `events[].timestamp` | string | Block timestamp |
@@ -361,7 +361,7 @@ Returns the current status of a credential. The indexer looks at all events for 
   "issuedTxConfirmed": true,
   "revokedAt": "2025-02-10T08:00:00.000Z",
   "revokedTxHash": "ghi789...",
-  "reason": "key_compromised"
+  "reason": "compromised"
 }
 ```
 
@@ -378,7 +378,7 @@ Returns the current status of a credential. The indexer looks at all events for 
 | `issuedTxConfirmed` | boolean | Whether the issue transaction is confirmed |
 | `revokedAt` | string | When the credential was revoked (only if `status` is `revoked`) |
 | `revokedTxHash` | string | Transaction hash of the revoke event (only if revoked) |
-| `reason` | string | Revocation reason (only if provided by the issuer) |
+| `reason` | string | Allowlisted revocation reason (only if provided): `issued_in_error`, `holder_request`, `policy_violation`, `expired`, `compromised`, `withdrawn_by_holder` |
 
 **Caching**: Responses are cached for 30 seconds.
 

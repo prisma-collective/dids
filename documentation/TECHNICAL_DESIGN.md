@@ -710,11 +710,14 @@ interface VCEventPayload {
   event: 'issue' | 'validate' | 'revoke';
   issuerDid: string;
   holderDid: string;
-  vcHash: string; // jti for SD-JWT, SHA-256 for Ed25519
+  vcHash: string; // jti for SD-JWT / COSE-SD, SHA-256 for Ed25519
   vcType: string; // e.g., "ContributionCredential"
-  vcFormat: 'sd-jwt' | 'ed25519' | 'bbs'; // REQUIRED for verification
+  vcFormat: 'cose-sd' | 'ed25519' | 'bbs'; // REQUIRED for verification
   validatorDid?: string; // For validate events
-  reason?: string; // For revoke events
+  reason?: RevocationReason; // Allowlisted enum only (F-META-03)
+  ipfsCid?: string; // IPFS CID of credential payload (issue)
+  payloadSig: string; // COSE over minimal anchor fields for issue (F-META-01)
+  ts: string;
 }
 ```
 
@@ -729,7 +732,10 @@ interface VCEventPayload {
 | `vcType`       | REQUIRED    | Credential type name                     |
 | `vcFormat`     | REQUIRED    | Format identifier for verification rules |
 | `validatorDid` | OPTIONAL    | Required only for `validate` events      |
-| `reason`       | OPTIONAL    | Recommended for `revoke` events          |
+| `reason`       | OPTIONAL    | Allowlisted enum for `revoke` (never free text) |
+| `ipfsCid`      | OPTIONAL    | IPFS CID of full credential (issue)      |
+| `payloadSig`   | REQUIRED    | COSE_Sign1 wrapper; issue signs minimal anchors only |
+| `ts`           | REQUIRED    | ISO 8601 timestamp                       |
 
 ### 8.2 vcHash Strategy
 
@@ -805,7 +811,7 @@ function computeEd25519VcHash(credential: object): string {
     "vcHash": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
     "vcType": "ContributionCredential",
     "vcFormat": "sd-jwt",
-    "reason": "Duplicate credential issued in error"
+    "reason": "issued_in_error"
   }
 }
 ```
@@ -890,7 +896,7 @@ A **customizable indexer** designed to be forked or configured per organization:
 | vc_hash       | TEXT      | Credential identifier (jti)       |
 | vc_type       | TEXT      | Credential type                   |
 | vc_format     | TEXT      | sd-jwt, ed25519, bbs              |
-| reason        | TEXT      | Revocation reason (optional)      |
+| reason        | TEXT      | Allowlisted revocation reason enum (optional) |
 | block_height  | BIGINT    | Block number                      |
 | timestamp     | TIMESTAMP | Block time                        |
 
@@ -1238,7 +1244,7 @@ await sdk.revokeVC(wallet, {
   issuerDid,
   holderDid,
   vcHash: jti,
-  reason: 'Issued in error',
+  reason: 'issued_in_error',
 });
 ```
 

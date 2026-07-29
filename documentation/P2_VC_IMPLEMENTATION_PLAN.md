@@ -1,9 +1,22 @@
 # P2: Verifiable Credentials Implementation Plan
 
-**Status:** v8 — Approved for Implementation
+**Status:** v8 — Approved for Implementation (implemented; see post-audit remediations below)
 **Date:** 2026-02-15
 **Scope:** P2a (SDK VC & Anchoring) + P2b (VC Integration & VC Indexer Config)
-**Reference:** [TECHNICAL_DESIGN.md §7-§8](./TECHNICAL_DESIGN.md) · [POC_PLAN.md lines 241-300](./POC_PLAN.md)
+**Reference:** [TECHNICAL_DESIGN.md §7-§8](./TECHNICAL_DESIGN.md) · [POC_PLAN.md lines 241-300](./POC_PLAN.md) · [TEST_PLAN.md](./TEST_PLAN.md)
+
+---
+
+## Post-audit remediations (2026-07)
+
+Landed after the REFAZ engagement; supersede earlier plan snippets where they conflict:
+
+| ID | Change |
+|----|--------|
+| **F-META-01** | Issue `payloadSig` signs minimal anchor fields only; full claims on IPFS via `ipfsCid` |
+| **F-META-03** | `reason: RevocationReasonEnum.optional()` — not free `z.string()` |
+| **F-CFG-01** | Apps pin via `POST /api/ipfs/pin` with server `PINATA_JWT` |
+| **F-IDX-05** | Indexer binds issue payloads to minimal anchors (legacy credential-signed payloads for historical preprod only) |
 
 ---
 
@@ -387,13 +400,16 @@ This makes `processors` the single source of truth for per-label schema validati
     vcType: z.string()
     vcFormat: z.enum(['cose-sd', 'ed25519'])
     validatorDid: z.string().optional()
-    reason: z.string().optional()
+    reason: RevocationReasonEnum.optional()  // F-META-03 — not free text
+    ipfsCid: z.string().optional()           // credential payload off-chain
     payloadSig: z.string()   // ← ADDED: JSON.stringify({ sig, key, address })
+    ts: z.string().datetime()
   }
   ```
   The `payloadSig` field uses `PrismaPayloadSig` structure: `{ sig: hex, key: hex, address: hex }`.
   All three fields are hex strings (Audit Fix #7). The `address` field is hex-encoded Cardano address bytes (CIP-30 native format), **not** bech32.
-  The indexer verifies: (a) COSE_Sign1 signature is valid, (b) signer matches the expected DID per event type (`issuerDid` for `issue`, `validatorDid` for `validate`; revoke authorization deferred to query-time reducer — see Audit Fix #19, #20).
+  For **issue** events, `payloadSig` covers the minimal anchor field set (F-META-01), not credential claims.
+  The indexer verifies: (a) COSE_Sign1 signature is valid, (b) signer matches the expected DID per event type (`issuerDid` for `issue`, `validatorDid` for `validate`; revoke authorization deferred to query-time reducer — see Audit Fix #19, #20), (c) issue/validate payload binding to signed fields (F-IDX-05).
 
 #### 1.3 ContributionCredential schema (`2A.0c`)
 - `src/credentials/contribution.ts`:

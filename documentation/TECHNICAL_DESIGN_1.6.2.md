@@ -29,6 +29,13 @@ Prisma DIDs provides a **Cardano-native identity and verifiable contributions la
 * **Shared Schemas Package (§1.5):** Monorepo structure with shared credential schemas between VC Interface and VC Indexer
 * **Verifier Discovery (§2.2):** DID Document `service` field now includes `VCIndexer` endpoint for credential status lookups
 
+### Security remediations (post–REFAZ audit, 2026-07)
+
+* **F-META-01:** Issue anchors sign minimal fields only; credential claims stay on IPFS (`ipfsCid`)
+* **F-META-03:** Revocation `reason` is `RevocationReasonEnum` — no free text on-chain
+* **F-CFG-01:** Pinata write credentials use server-only `PINATA_JWT` via `POST /api/ipfs/pin` (never `NEXT_PUBLIC_PINATA_*`)
+* Details and regression tests: [`TEST_PLAN.md`](./TEST_PLAN.md)
+
 ### What's New in v1.5
 
 * **DID/VC Interface Separation (§1.3):** DID Dashboard as universal Cardano infrastructure; VC Interface as forkable/parametrized module
@@ -588,7 +595,7 @@ Each organization runs their own VC Indexer configured for their metadata labels
 | `vc_hash` | VARCHAR | Credential identifier (jti for SD-JWT) |
 | `vc_type` | VARCHAR | Credential type |
 | `vc_format` | VARCHAR | Format: ed25519, sd-jwt, bbs+ |
-| `reason` | VARCHAR | Revocation reason (nullable) |
+| `reason` | VARCHAR | Allowlisted revocation reason enum (nullable; F-META-03) |
 | `block_height` | INT | Block number |
 | `timestamp` | TIMESTAMP | Event timestamp |
 

@@ -1009,7 +1009,7 @@ When a VC is **issued**, **validated**, or **revoked**, we emit an anchor under 
   "issuer": "did:cardano:stake1Issuer...",
   "vcHash": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
   "vcType": "ContributionCredential",
-  "reason": "employment_ended",
+  "reason": "holder_request",
   "ts": "2025-03-15T09:00:00Z"
 }
 ```
@@ -1027,7 +1027,7 @@ When a VC is **issued**, **validated**, or **revoked**, we emit an anchor under 
 | `vcType` | Yes | Credential type (e.g., `"ContributionCredential"`) |
 | `vcFormat` | Yes | Format identifier: `"ed25519"`, `"sd-jwt"`, or `"bbs+"` |
 | `validator` | For validated | DID of the validating party |
-| `reason` | For revoked (optional) | Human-readable revocation reason |
+| `reason` | For revoked (optional) | Allowlisted enum only (F-META-03): `issued_in_error`, `holder_request`, `policy_violation`, `expired`, `compromised`, `withdrawn_by_holder` — **no free text** |
 | `ts` | Yes | ISO 8601 timestamp |
 
 **Event Verb Compatibility:**
@@ -1121,7 +1121,7 @@ The SDK exposes:
 // Issue and optionally anchor
 anchorVC(vc: VerifiableCredential | string, event: "issued" | "validated" | "revoked", options?: {
   validatorDid?: string;
-  reason?: string;
+  reason?: RevocationReason; // allowlisted enum only (F-META-03)
   format?: "ed25519" | "sd-jwt" | "bbs+";
 }): Promise<TxHash>
 
@@ -1148,14 +1148,15 @@ async function revokeVC(
   issuerDid: string,
   vcHash: string,
   vcType: string,
-  reason?: string
+  reason?: RevocationReason
 ): Promise<string> {
   const revocationEvent = {
     event: 'revoked',
     issuer: issuerDid,
     vcHash: vcHash,
     vcType: vcType,
-    reason: reason || 'unspecified',
+    // Omit reason if unset — never free text or 'unspecified' (F-META-03)
+    ...(reason !== undefined && { reason }),
     ts: new Date().toISOString(),
   };
 
@@ -1197,16 +1198,16 @@ async function isVCRevoked(vcHash: string): Promise<boolean> {
 
 #### 6.4.3 Revocation Reasons
 
-Common revocation reasons:
+Revocation reasons are an **allowlisted enum** (F-META-03 / DP-02). Free-text reasons are rejected by schema and SDK so PII cannot be written permanently on-chain.
 
 | Reason | Description |
 |--------|-------------|
-| `"employment_ended"` | Holder no longer associated with issuer |
-| `"credential_superseded"` | Replaced by updated credential |
 | `"issued_in_error"` | Credential was issued incorrectly |
 | `"holder_request"` | Holder requested revocation |
-| `"compliance"` | Regulatory or policy compliance |
-| `"unspecified"` | No specific reason provided |
+| `"policy_violation"` | Policy or terms violation |
+| `"expired"` | Credential superseded / past validity for operational revoke |
+| `"compromised"` | Key or credential compromise |
+| `"withdrawn_by_holder"` | Holder withdrew consent / association |
 
 ### 6.5 Privacy Implications of Anchoring
 
@@ -1217,15 +1218,18 @@ Common revocation reasons:
 * Holder DID,
 * Optional validator DID,
 * VC type (e.g. `ContributionCredential`),
-* VC format (`ed25519`, `sd-jwt`, `bbs+`),
-* Timestamps.
+* VC format (`ed25519`, `sd-jwt` / `cose-sd`, `bbs+`),
+* Timestamps,
+* Optional IPFS CID (pointer to off-chain credential),
+* Optional allowlisted revocation reason (enum only).
 
 **What anchoring does *not* reveal:**
 
-* Credential contents (hours, URLs, detailed data),
+* Credential claim contents (hours, URLs, detailed data) — **`payloadSig` for issue events signs minimal anchor fields only (F-META-01)**; full credential stays on IPFS,
 * Any unanchored fields of the VC,
+* Free-text revocation narratives or other PII in `reason`,
 * Underlying PII beyond what can be inferred from the DID itself,
-* Which fields are disclosable (for SD-JWT).
+* Which fields are disclosable (for SD-JWT / COSE-SD).
 
 **When anchoring is recommended:**
 

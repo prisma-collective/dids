@@ -151,9 +151,14 @@ NEXT_PUBLIC_NETWORK=preprod
 # Blockfrost API key (required for on-chain anchoring)
 # Get one at https://blockfrost.io — must match NETWORK
 NEXT_PUBLIC_BLOCKFROST_API_KEY=preprodXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# Pinata JWT for IPFS credential pinning (server-only — F-CFG-01)
+# Used by POST /api/ipfs/pin. Never use NEXT_PUBLIC_PINATA_*.
+# Get one at https://pinata.cloud — prefer a scoped JWT with pinJSON only
+PINATA_JWT=your-pinata-jwt
 ```
 
-**Note:** `NEXT_PUBLIC_` prefix makes these available in both server and client code. Environment variables override `org-config.ts` values at runtime via `resolve-config.ts`.
+**Note:** `NEXT_PUBLIC_` prefix makes values available in both server and client code. **`PINATA_JWT` must stay server-only** so write credentials are not shipped in the client bundle. Environment variables override `org-config.ts` values at runtime via `resolve-config.ts`.
 
 ---
 
@@ -269,6 +274,7 @@ git push origin main
 # NEXT_PUBLIC_DID_INDEXER_ENDPOINT
 # NEXT_PUBLIC_NETWORK
 # NEXT_PUBLIC_BLOCKFROST_API_KEY
+# PINATA_JWT (server-only — do not prefix with NEXT_PUBLIC_)
 ```
 
 ### Monorepo Build Settings

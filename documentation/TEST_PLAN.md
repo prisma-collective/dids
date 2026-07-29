@@ -27,7 +27,9 @@ This section covers the audit-scoped slice of the suite: testing across four dom
 | POSITIVE | 16 | Regression guards for confirmed secure patterns |
 | DATA PROTECTION | 5 | DP-01 through DP-05 — manual/compliance procedures |
 
-**Overall assessment (post-execution):** Integrity and authentication are strong — every on-chain event is cryptographically verified, DID chain rules hold, VC status reduction is deterministic, and private keys never leave the wallet. Residual risk concentrates on **data minimization** (what reaches the permanent ledger) and **web/infrastructure hardening**.
+**Overall assessment (post-execution):** Integrity and authentication are strong — every on-chain event is cryptographically verified, DID chain rules hold, VC status reduction is deterministic, and private keys never leave the wallet.
+
+**Remediation update (2026-07):** **F-META-01**, **F-META-03**, and **F-CFG-01** are **Remediated** in code (minimal issue anchors, allowlisted revocation reasons, server-only `PINATA_JWT` via `POST /api/ipfs/pin`). Residual risk concentrates on remaining open items: **canonical JSON signing (F-SIG-01)**, **web/infrastructure hardening (F-WEB-*)**, and deferred revoke authorization at ingest (**F-IDX-03**).
 
 This plan is designed so that any findings surfaced — whether via the external audit, automated suites, or manual procedures — are:
 
@@ -71,11 +73,11 @@ Domains and components below were defined ahead of the audit engagement as the a
 
 | ID | Severity | CVSS | Status | Location | Summary |
 |----|----------|------|--------|----------|---------|
-| **F-META-01** | **MEDIUM-HIGH** | 5.2 | Open | `vc-anchor.ts`; label 199675 | Full VC claim data embedded in on-chain `payloadSig` COSE blob — contradicts TECHNICAL_DESIGN §11.4 and CNIL off-chain pattern |
-| **F-META-03** | MEDIUM | 3.7 | Open | `vc-anchor.ts`, `vc-event.ts` | `reason` field is unconstrained free text, permanent on-chain |
+| **F-META-01** | **MEDIUM-HIGH** | 5.2 | **Remediated** | `vcService.ts`, `vc-anchor.ts`; label 199675 | Issue flow signs minimal anchor fields only; credential claims stay IPFS-only. Indexer binds issue payload with legacy fallback for preprod historical events |
+| **F-META-03** | MEDIUM | 3.7 | **Remediated** | `vc-event.ts`, `vc-anchor.ts`, `RevocationUI.tsx` | `reason` constrained to `RevocationReasonEnum` (no free text on-chain) |
 | **F-SIG-01** | MEDIUM | 2.1 | Open | `vc-anchor.ts`, `signature.ts` | Signs `JSON.stringify()` without RFC 8785 JCS; `stableSort()` for `vcHash` is not full JCS |
 | **F-IDX-03** | MEDIUM | 3.7 | Open (trade-off) | `vc-processor.ts`, `vc.ts` | Unauthorized revokes stored at ingest; authorization at query time only |
-| **F-CFG-01** | MEDIUM | — | Open | Next.js env (`NEXT_PUBLIC_*`) | Pinata API secret and Blockfrost key exposed in client bundle |
+| **F-CFG-01** | MEDIUM | — | **Remediated** | `POST /api/ipfs/pin`, `PINATA_JWT` | Pinata write credentials are server-only; clients call `/api/ipfs/pin`. Blockfrost remains `NEXT_PUBLIC_` for Lucid wallet txs (read/submit key — review separately) |
 | **F-WEB-01** | MEDIUM | — | Open | `next.config.js` (both apps) | Missing HTTP security headers and Content-Security-Policy |
 | **F-SIG-03** | LOW-MEDIUM | 1.3 | Accepted | `signature.ts` | DID `ts` appended after signing (VC events include `ts` in signature) |
 | **F-KEY-03** | LOW-MEDIUM | 2.7 | Open | `keys.ts` | `extractRawPublicKey()` byte-scan with silent 32-byte fallback |
@@ -84,7 +86,7 @@ Domains and components below were defined ahead of the audit engagement as the a
 | **F-WEB-03** | LOW-MEDIUM | — | Open | `credentialStore.ts` | Credentials stored unencrypted in `localStorage` |
 | **F-SIG-05** | LOW | — | Mitigated | `vc-verify.ts` | SDK credential verify uses non-canonical JSON; mitigated by indexer |
 | **F-KEY-05** | LOW | — | Open | `signature.ts`, `vc-anchor.ts` | No address validation before `wallet.signData()` |
-| **F-IDX-05** | LOW | — | Accepted | `vc-processor.ts` (issue) | Issue events skip anchor payload binding — related to F-META-01 |
+| **F-IDX-05** | LOW | — | **Remediated** | `vc-processor.ts` (issue) | Issue events require anchor payload binding; legacy credential-signed payloads accepted for historical preprod txs only |
 | **F-META-02** | LOW | — | **Mitigated** | Indexer | Duplicate on-chain events; handled by chain validator + status reducer |
 | **F-WEB-04** | LOW | — | Open | API routes | No rate limiting / body-size limits on public verify and DID proxy routes |
 | **F-SIG-07** | INFO | — | **Resolved** | Schema/SDK | `ipfsCid` optional in schema but not populated by SDK builder |
@@ -178,37 +180,41 @@ pnpm audit --prod                      # Production surface only (F-DEP-04)
 
 Legend: ✅ Covered · ⚠️ Partial · ❌ Gap · 🔵 Positive (regression guard)
 
-### F-META-01 / DP-01 — PII in on-chain VC signatures (P0)
+### F-META-01 / DP-01 — PII in on-chain VC signatures (P0) — **Remediated**
 
-**Risk:** Semantically rich personal data permanently on Cardano; defeats selective-disclosure privacy promise at anchoring layer.
+**Risk (pre-fix):** Semantically rich personal data permanently on Cardano; defeats selective-disclosure privacy promise at anchoring layer.
+
+**Fix:** Issue flow signs `{event, issuerDid, holderDid, vcHash, vcType, vcFormat, ts}` only; full credential is pinned to IPFS (`ipfsCid` on the event). Indexer verifies issue `payloadSig` against that minimal set (legacy credential-signed payloads still accepted for historical preprod events).
 
 | Test ID | Type | Procedure | Status |
 |---------|------|-----------|--------|
-| META-01-A | Auto | `vc.test.ts` — COSE-SD issuance produces `payloadSig` | ⚠️ |
-| META-01-B | Auto | `vc-processor.test.ts` — issue schema validation | ⚠️ |
-| META-01-C | Manual | Issue VC on Preprod; decode label **199675** metadata | ❌ |
-| META-01-D | Manual | Assert no claim fields in anchor after R1 fix (CNIL pattern) | ❌ |
-| META-01-E | Unit | `buildIssueAnchorEvent()` signs minimal field set only | ❌ (recommended) |
-| META-01-F | Unit | Serialized metadata size bounded when claims contain long URLs | ❌ (recommended) |
+| META-01-A | Auto | `vc.test.ts` — COSE-SD issuance produces `payloadSig` | ✅ |
+| META-01-B | Auto | `vc-processor.test.ts` — issue schema + anchor binding | ✅ |
+| META-01-C | Manual | Issue VC on Preprod; decode label **199675** metadata | ✅ (regression) |
+| META-01-D | Manual | Assert no claim fields in signed COSE payload (CNIL pattern) | ✅ (regression) |
+| META-01-E | Unit | Issue path signs minimal field set only (`vcService` / `vc-anchor`) | ✅ |
+| META-01-F | Unit | Serialized metadata size bounded when claims contain long URLs | ⚠️ (claims off-chain; metadata size tests remain in `metadata.test.ts`) |
 
-**Pass criteria (post-remediation R1):** On-chain anchor contains only `{event, issuerDid, holderDid, vcHash, vcType, vcFormat, ts}` — matching validate/revoke pattern. Full credential remains IPFS-only.
+**Pass criteria:** On-chain anchor contains only `{event, issuerDid, holderDid, vcHash, vcType, vcFormat, ts}` (+ optional `ipfsCid` on the event object, unsigned relative to claims). Full credential remains IPFS-only.
 
 ---
 
-### F-META-03 / DP-02 — Unconstrained revocation `reason` (P1)
+### F-META-03 / DP-02 — Unconstrained revocation `reason` (P1) — **Remediated**
 
-**Risk:** Free-text PII (names, CPF, dismissal reasons) written permanently on-chain.
+**Risk (pre-fix):** Free-text PII (names, CPF, dismissal reasons) written permanently on-chain.
+
+**Fix:** `RevocationReasonEnum` in `@prisma-dids/schemas` — allowlisted values only (`issued_in_error`, `holder_request`, `policy_violation`, `expired`, `compromised`, `withdrawn_by_holder`). Enforced in schema, SDK `anchorRevocation`, and VC Interface UI.
 
 | Test ID | Type | Procedure | Status |
 |---------|------|-----------|--------|
-| META-03-A | Auto | `vc-processor.test.ts` — accepts any reason string | ⚠️ |
-| META-03-B | Auto | `vc-processor.test.ts` — makeRow persists reason | ⚠️ |
+| META-03-A | Auto | Schema / processor reject free-text reasons | ✅ |
+| META-03-B | Auto | `vc-processor.test.ts` — makeRow persists allowlisted reason | ✅ |
 | META-03-C | Auto | `vc-status-reducer.test.ts` — reason from authorized revoke | ✅ |
-| META-03-D | Manual | Submit revoke with 10 KB / PII-like reason | ❌ |
-| META-03-E | Schema | Reject reason ∉ `{issued_in_error, expired, compromised, withdrawn_by_holder}` | ❌ (post-R2) |
-| META-03-F | Schema | Reject reason > 64 chars | ❌ (post-R2) |
+| META-03-D | Manual | Submit revoke with free-text / oversized reason → rejected client/SDK | ✅ (regression) |
+| META-03-E | Schema | Reject reason ∉ `RevocationReasonEnum` | ✅ |
+| META-03-F | Schema | Enum values are short (≪ 64 chars); free-text length limit N/A | ✅ |
 
-**Report recommendation:** Allowlist enum + 64-char max + PII keyword filter.
+**Implemented recommendation:** Allowlist enum only (no free text on-chain).
 
 ---
 
@@ -241,12 +247,12 @@ Legend: ✅ Covered · ⚠️ Partial · ❌ Gap · 🔵 Positive (regression gu
 
 ---
 
-### F-IDX-05 — Issue events skip payload binding (LOW, related to F-META-01)
+### F-IDX-05 — Issue events skip payload binding (LOW, related to F-META-01) — **Remediated**
 
 | Test ID | Type | Procedure | Status |
 |---------|------|-----------|--------|
-| IDX-05-A | Auto | `vc-processor.test.ts` — issue validation (signer = issuer) | ⚠️ |
-| IDX-05-B | Design | Document intentional skip vs. F-META-01 remediation | ❌ |
+| IDX-05-A | Auto | `vc-processor.test.ts` — issue: signer = issuer + anchor binding | ✅ |
+| IDX-05-B | Design | Documented: minimal-anchor binding + legacy credential-payload fallback | ✅ |
 
 ---
 
@@ -312,16 +318,16 @@ Legend: ✅ Covered · ⚠️ Partial · ❌ Gap · 🔵 Positive (regression gu
 
 ---
 
-### F-CFG-01 — Client-exposed secrets (P7)
+### F-CFG-01 — Client-exposed secrets (P7) — **Remediated**
 
 | Test ID | Type | Procedure | Status |
 |---------|------|-----------|--------|
-| CFG-01-A | Build | Grep production bundle for `NEXT_PUBLIC_PINATA_API_SECRET` | ❌ |
-| CFG-01-B | Build | Confirm Pinata write ops use server route only (post-fix) | ❌ |
-| CFG-01-C | Config | Railway panel: no write secrets under `NEXT_PUBLIC_` | ❌ (manual) |
-| CFG-01-D | Static | `.env.example` documents server-only secrets | ⚠️ |
+| CFG-01-A | Build | Grep production bundle for `NEXT_PUBLIC_PINATA_*` / Pinata JWT | ✅ (regression) |
+| CFG-01-B | Build | Pinata write ops use `POST /api/ipfs/pin` only | ✅ |
+| CFG-01-C | Config | Railway / deploy: `PINATA_JWT` server-only (not `NEXT_PUBLIC_`) | ✅ (ops) |
+| CFG-01-D | Static | `.env.example` documents `PINATA_JWT` as server-only | ✅ |
 
-**Report evidence:** `NEXT_PUBLIC_PINATA_JWT` used in `CreateDID.tsx`, `RevokeDID.tsx`, `UpdateDID.tsx`.
+**Implementation:** Dashboard and VC Interface call `pinToIPFS()` → `POST /api/ipfs/pin` with server `PINATA_JWT`. No `NEXT_PUBLIC_PINATA_*` in client components.
 
 ---
 
@@ -450,10 +456,10 @@ Legend: ✅ Covered · ⚠️ Partial · ❌ Gap · 🔵 Positive (regression gu
 ### MAN-03 — Unauthorized revocation (F-IDX-06 / F-IDX-03 / DP-02)
 
 1. Issue VC as Issuer A.
-2. Revoke from Wallet B with reason `unauthorized attempt`.
-3. **API:** `GET /vc/{vcHash}/status` → `active`.
-4. **DB (F-IDX-03):** Row exists with reason text stored.
-5. Authorized revoke from Issuer A → `revoked`; `revokedTxHash` is A's tx.
+2. Attempt revoke from Wallet B with an allowlisted reason (e.g. `issued_in_error`) — free-text reasons must be rejected by schema/UI.
+3. **API:** `GET /vc/{vcHash}/status` → `active` (unauthorized revoke ignored by reducer).
+4. **DB (F-IDX-03):** Unauthorized revoke row may still exist at ingest; status API remains `active`.
+5. Authorized revoke from Issuer A with allowlisted reason → `revoked`; `revokedTxHash` is A's tx.
 
 ### MAN-04 — DID lifecycle (F-IDX-02)
 
@@ -498,19 +504,19 @@ Verify presence of: `Content-Security-Policy`, `Strict-Transport-Security`, `X-F
 
 Priority order set by this plan's severity taxonomy and confirmed by the audit's own ordering. Test cases above use matching P0–P10 labels.
 
-| Prio | Finding | Effort | Test gate |
-|------|---------|--------|-----------|
-| **P0** | F-META-01 / DP-01 — minimal on-chain anchor | 2–4 h | MAN-01, META-01-E/F |
-| **P1** | F-META-03 / DP-02 — reason enum + 64 chars | 30 min | META-03-E/F |
-| **P2** | F-IDX-03 — ingest reject + rate limit | 1 h | IDX-03-E/H |
-| **P3** | F-SIG-01 — canonicalize with stableSort/JCS | 1 h | SIG-01-D/E |
-| **P4** | F-KEY-03 — cborg.decode() for COSE_Key | 1 h | KEY-03-E/F |
-| **P5** | F-SIG-03 — sign DID ts | 15 min | SIG-03-D |
-| **P6** | F-DEP-01 — dependency update | 1 h | DEP-01-A/B |
-| **P7** | F-CFG-01 — Pinata secret server-side | 1–2 h | CFG-01-A/B |
-| **P8** | DP-04 — Pinata DPA + SCCs | Legal | MAN-09 |
-| **P9** | DP-05 — subject-rights + DPIA | 1 day | MAN-09 |
-| **P10** | F-KEY-05 — address validation | 15 min | KEY-05-A |
+| Prio | Finding | Effort | Test gate | Status |
+|------|---------|--------|-----------|--------|
+| **P0** | F-META-01 / DP-01 — minimal on-chain anchor | 2–4 h | MAN-01, META-01-E/F | **Done** |
+| **P1** | F-META-03 / DP-02 — reason enum | 30 min | META-03-E/F | **Done** |
+| **P2** | F-IDX-03 — ingest reject + rate limit | 1 h | IDX-03-E/H | Open |
+| **P3** | F-SIG-01 — canonicalize with stableSort/JCS | 1 h | SIG-01-D/E | Open |
+| **P4** | F-KEY-03 — cborg.decode() for COSE_Key | 1 h | KEY-03-E/F | Open |
+| **P5** | F-SIG-03 — sign DID ts | 15 min | SIG-03-D | Accepted |
+| **P6** | F-DEP-01 — dependency update | 1 h | DEP-01-A/B | Open |
+| **P7** | F-CFG-01 — Pinata secret server-side | 1–2 h | CFG-01-A/B | **Done** |
+| **P8** | DP-04 — Pinata DPA + SCCs | Legal | MAN-09 | Open (legal) |
+| **P9** | DP-05 — subject-rights + DPIA | 1 day | MAN-09 | Open (compliance) |
+| **P10** | F-KEY-05 — address validation | 15 min | KEY-05-A | Open |
 
 ---
 
@@ -543,8 +549,8 @@ Priority order set by this plan's severity taxonomy and confirmed by the audit's
 
 | Finding | Severity | Automated tests | Manual |
 |---------|----------|-----------------|--------|
-| F-META-01 / DP-01 | MEDIUM-HIGH | `vc.test.ts` (partial) | MAN-01 |
-| F-META-03 / DP-02 | MEDIUM | `vc-processor.test.ts`, `vc-status-reducer.test.ts` | MAN-03 |
+| F-META-01 / DP-01 | MEDIUM-HIGH | **Remediated** — `vc-processor.test.ts`, issue path | MAN-01 |
+| F-META-03 / DP-02 | MEDIUM | **Remediated** — schema enum + UI | MAN-03 |
 | F-META-02 | LOW (mitigated) | `chain-validator.test.ts`, `vc-status-reducer.test.ts` | MAN-02 |
 | F-SIG-01 | MEDIUM | `vc-processor.test.ts`, `vc-verify.test.ts` | — |
 | F-SIG-03 | LOW-MEDIUM | `signature.test.ts`, `did-lifecycle.e2e.test.ts` | MAN-04 |
@@ -556,9 +562,9 @@ Priority order set by this plan's severity taxonomy and confirmed by the audit's
 | F-IDX-02 | POSITIVE | `chain-validator.test.ts`, `did-lifecycle.e2e.test.ts` | MAN-02, MAN-04 |
 | F-IDX-03 | MEDIUM | `vc-status-reducer.test.ts` | MAN-03 |
 | F-IDX-04 | POSITIVE | `poller.test.ts` | — |
-| F-IDX-05 | LOW | `vc-processor.test.ts` (partial) | — |
+| F-IDX-05 | LOW | **Remediated** — `vc-processor.test.ts` | — |
 | F-IDX-06 | POSITIVE | `vc-status-reducer.test.ts`, `vc-verify.test.ts` | MAN-03 |
-| F-CFG-01 | MEDIUM | — | MAN-07 |
+| F-CFG-01 | MEDIUM | **Remediated** — `/api/ipfs/pin`, `PINATA_JWT` | MAN-07 |
 | F-WEB-01 | MEDIUM | — | MAN-06 |
 | F-WEB-02 | LOW-MEDIUM | — | MAN-08 |
 | F-WEB-03 | LOW-MEDIUM | — | MAN-08 |
@@ -570,4 +576,4 @@ Priority order set by this plan's severity taxonomy and confirmed by the audit's
 
 ---
 
-*This plan governed the REFAZ Security Audit Report (2026-06-25, commit `84c3cffc82ce8af3508c8fd068cfe5fee5f1911e`) and is kept in sync with the Vitest suite as of 2026-07-26.*
+*This plan governed the REFAZ Security Audit Report (2026-06-25, commit `84c3cffc82ce8af3508c8fd068cfe5fee5f1911e`) and is kept in sync with the Vitest suite and remediations as of 2026-07-29 (F-META-01, F-META-03, F-CFG-01, F-IDX-05 closed in code).*

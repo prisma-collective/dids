@@ -175,7 +175,7 @@ CREATE TABLE "vc_events" (
   "vc_hash" text NOT NULL,             -- jti (credential ID)
   "vc_type" text NOT NULL,             -- e.g., ContributionCredential
   "vc_format" text NOT NULL,           -- cose-sd, ed25519
-  "reason" text,
+  "reason" text,                       -- Allowlisted enum only (F-META-03); never free text
   "valid" boolean NOT NULL DEFAULT true,
   "validation_error" text,
   "confirmed" boolean NOT NULL DEFAULT false,

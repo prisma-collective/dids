@@ -9,10 +9,10 @@
 
 ### Shared API Keys (Preprod)
 
-These keys are shared across the team for Preprod development:
+These keys are shared across the team for Preprod development. Obtain current values from the team vault / project maintainers — **do not commit live secrets** into this file (F-CFG-01 / F-CFG-02).
 
-- **Blockfrost Preprod**: `preproddSZqNe9ntOeiAHn3akhfnPu0G8krsHjh`
-- **Pinata JWT**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiI2OGJmY2NmNC02Y2QwLTQ0NGEtOTNhYy04YjU1NTU5YmExOTgiLCJlbWFpbCI6Im1hdGVvZGF6YUBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwicGluX3BvbGljeSI6eyJyZWdpb25zIjpbeyJkZXNpcmVkUmVwbGljYXRpb25Db3VudCI6MSwiaWQiOiJOWUMxIn1dLCJ2ZXJzaW9uIjoxfSwibWZhX2VuYWJsZWQiOmZhbHNlLCJzdGF0dXMiOiJBQ1RJVkUifSwiYXV0aGVudGljYXRpb25UeXBlIjoic2NvcGVkS2V5Iiwic2NvcGVkS2V5S2V5IjoiN2YyMDZjNjkzNjY3NWE4NzgyZTMiLCJzY29wZWRLZXlTZWNyZXQiOiJhOGNiMzQyYzliMTQ0NDhjMTNhYWJjNGZiMDI4NjQ3NzI1NTFlZDU3ZjRhNzU1ZGM1ZDJhODYwMzY0MDU4OTZmIiwiZXhwIjoxNzk1NTU3NjIyfQ.csKx2i9kQwQmtjqoefwDqXqPBm1hWCMQCbpRsxhRfLA`
+- **Blockfrost Preprod**: ask maintainers for the shared preprod project key
+- **Pinata JWT**: scoped JWT with pinJSON only — set as **`PINATA_JWT`** (server-only) in each app; never `NEXT_PUBLIC_PINATA_*`
 
 ---
 
@@ -73,7 +73,7 @@ Copy-paste ready (for local development — uses local Postgres):
 
 ```env
 DATABASE_URL=postgresql://postgres:test@localhost:5432/prisma_dids
-BLOCKFROST_API_KEY=preproddSZqNe9ntOeiAHn3akhfnPu0G8krsHjh
+BLOCKFROST_API_KEY=<your-blockfrost-preprod-key>
 INDEXER_CONFIG=did
 PORT=3001
 HOST=0.0.0.0

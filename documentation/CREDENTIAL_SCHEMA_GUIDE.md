@@ -305,9 +305,15 @@ If a `vct` is not registered in the schema registry, the SDK **skips validation*
 
 ## On-Chain Event Schema
 
-VC lifecycle events are stored on Cardano under metadata label `L_VC` (199675). The event schema is defined in `packages/schemas/src/vc-event.ts`:
+VC lifecycle events are stored on Cardano under metadata label `L_VC` (199675). The event schema is defined in `packages/schemas/src/vc-event.ts`.
+
+**Privacy (F-META-01):** For `issue` events, `payloadSig` covers the **minimal anchor fields** only (`event`, `issuerDid`, `holderDid`, `vcHash`, `vcType`, `vcFormat`, `ts`). Credential claims are **not** signed into on-chain metadata — pin the full credential to IPFS and store `ipfsCid` on the event.
+
+**Revocation reason (F-META-03):** `reason` is an allowlisted enum — never free text on-chain.
 
 ```typescript
+import { RevocationReasonEnum } from '@prisma-dids/schemas';
+
 export const VCEventPayloadSchema = z.object({
   event: z.enum(['issue', 'validate', 'revoke']),
   issuerDid: z.string().startsWith('did:cardano:'),
@@ -316,8 +322,9 @@ export const VCEventPayloadSchema = z.object({
   vcType: z.string().min(1),        // Must match your schema's vct
   vcFormat: z.enum(['cose-sd', 'ed25519']),
   validatorDid: z.string().optional(),
-  reason: z.string().optional(),
-  payloadSig: z.string(),           // COSE_Sign1 signature
+  reason: RevocationReasonEnum.optional(), // issued_in_error | holder_request | policy_violation | expired | compromised | withdrawn_by_holder
+  ipfsCid: z.string().optional(),   // IPFS CID of credential payload (issue)
+  payloadSig: z.string(),           // COSE_Sign1 over minimal anchor fields
   ts: z.string().datetime(),
 });
 ```
