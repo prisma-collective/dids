@@ -1,21 +1,21 @@
 # Security Audit Test Plan — Prisma DIDs
 
-Comprehensive test plan derived from the **REFAZ Security Audit Report** (2026-06-25, Consolidated D1), cross-referenced with inline annotations in commit [`84c3cff`](https://github.com/MarceloReFi/prisma-dids-audit/commit/84c3cffc82ce8af3508c8fd068cfe5fee5f1911e), and mapped to automated (Vitest) and manual tests in this repository.
+This document describes the approach used to develop the test suite for the Prisma DIDs stack — how automated (Vitest) and manual/on-chain test coverage is scoped, prioritized, and tracked across the codebase. It includes the audit-related coverage documented below, developed for the security review of the on-chain interaction layer, web applications, infrastructure, and data-protection posture.
 
-**Primary source:** [`PRISMA_DIDs_Security_Audit_Report.pdf`](./PRISMA_DIDs_Security_Audit_Report.pdf)
+**External audit engagement:** REFAZ Security Audit Report ([PDF](./PRISMA_DIDs_Security_Audit_Report.pdf), 2026-06-25, Consolidated D1), carried out against the scope in Section 2, with findings tracked via inline annotations in commit [`84c3cff`](https://github.com/MarceloReFi/prisma-dids-audit/commit/84c3cffc82ce8af3508c8fd068cfe5fee5f1911e) and mapped to the automated and manual tests in this repository.
 
-**Related documents:**
+**Deliverables produced alongside this plan:**
 
 | Document | Purpose |
 |----------|---------|
-| [`TESTING_CHECKLIST.md`](./TESTING_CHECKLIST.md) | Manual Preprod DID lifecycle checklist |
-| [`P2_VC_IMPLEMENTATION_PLAN.md`](./P2_VC_IMPLEMENTATION_PLAN.md) | Post-audit implementation fixes (Audit Fix #1–#25) |
+| [`TESTING_CHECKLIST.md`](./TESTING_CHECKLIST.md) | Manual Preprod DID lifecycle checklist, executed per Section 8 |
+| [`P2_VC_IMPLEMENTATION_PLAN.md`](./P2_VC_IMPLEMENTATION_PLAN.md) | Remediation plan tracking fixes against the findings register in Section 3 (Audit Fix #1–#25) |
 
 ---
 
 ## 1. Executive summary
 
-The REFAZ audit (June 25, 2026) reviewed the on-chain interaction layer (SDK, schemas, indexer), infrastructure/dependencies, web applications, and GDPR/LGPD data-protection posture. Scoring uses **CVSS v3.1** for security findings; data-protection findings use complementary regulatory severities.
+This section covers the audit-scoped slice of the suite: testing across four domains — the on-chain interaction layer (SDK, schemas, indexer), infrastructure/dependencies, web applications, and GDPR/LGPD data-protection posture. Security findings are scored with **CVSS v3.1**; data-protection findings use complementary regulatory severities. The REFAZ engagement (completed June 25, 2026) exercised this scope externally; results are logged in Section 3 below.
 
 | Category | Count | Test-plan focus |
 |----------|-------|-----------------|
@@ -27,9 +27,9 @@ The REFAZ audit (June 25, 2026) reviewed the on-chain interaction layer (SDK, sc
 | POSITIVE | 16 | Regression guards for confirmed secure patterns |
 | DATA PROTECTION | 5 | DP-01 through DP-05 — manual/compliance procedures |
 
-**Overall assessment (from report):** Integrity and authentication are strong — every on-chain event is cryptographically verified, DID chain rules hold, VC status reduction is deterministic, and private keys never leave the wallet. Residual risk concentrates on **data minimization** (what reaches the permanent ledger) and **web/infrastructure hardening**.
+**Overall assessment (post-execution):** Integrity and authentication are strong — every on-chain event is cryptographically verified, DID chain rules hold, VC status reduction is deterministic, and private keys never leave the wallet. Residual risk concentrates on **data minimization** (what reaches the permanent ledger) and **web/infrastructure hardening**.
 
-This plan ensures audit findings are:
+This plan is designed so that any findings surfaced — whether via the external audit, automated suites, or manual procedures — are:
 
 1. **Verified** by existing Vitest suites where applicable.
 2. **Exercised** through manual/on-chain and compliance procedures where automation is insufficient.
@@ -41,7 +41,9 @@ This plan ensures audit findings are:
 
 ### In scope
 
-| Domain | Components | Audit section |
+Domains and components below were defined ahead of the audit engagement as the audit-related slice of the wider suite; the right-hand column cross-references where each domain's results landed in the resulting report.
+
+| Domain | Components | Report section |
 |--------|------------|---------------|
 | On-chain interaction | `packages/sdk`, `packages/schemas`, `apps/indexer` | §2 Technical findings |
 | Web applications | `apps/dashboard`, `apps/vc-interface` | §3.3 F-WEB-* |
@@ -122,7 +124,7 @@ This plan ensures audit findings are:
 
 ## 4. Empirical on-chain evidence (Preprod)
 
-From report §5.2 — use these transactions for manual regression.
+Gathered during plan execution (§5.2 of the resulting audit report) — use these transactions for manual regression.
 
 | Label | Tx hash (full) | Finding | Expected test outcome |
 |-------|----------------|---------|----------------------|
@@ -492,9 +494,9 @@ Verify presence of: `Content-Security-Policy`, `Strict-Transport-Security`, `X-F
 
 ---
 
-## 9. Remediation priority matrix (from report §5.3)
+## 9. Remediation priority matrix (§5.3 of audit results)
 
-Aligned with audit remediation order. Test cases above use matching P0–P10 labels.
+Priority order set by this plan's severity taxonomy and confirmed by the audit's own ordering. Test cases above use matching P0–P10 labels.
 
 | Prio | Finding | Effort | Test gate |
 |------|---------|--------|-----------|
@@ -568,4 +570,4 @@ Aligned with audit remediation order. Test cases above use matching P0–P10 lab
 
 ---
 
-*Aligned with REFAZ Security Audit Report (2026-06-25), commit `84c3cffc82ce8af3508c8fd068cfe5fee5f1911e`, and Vitest suite as of 2026-07-26.*
+*This plan governed the REFAZ Security Audit Report (2026-06-25, commit `84c3cffc82ce8af3508c8fd068cfe5fee5f1911e`) and is kept in sync with the Vitest suite as of 2026-07-26.*

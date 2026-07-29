@@ -7,7 +7,7 @@
  *
  * Uses PINATA_JWT (server-only). Never expose write credentials via NEXT_PUBLIC_*.
  */
-import { PinataClient } from '@prisma-dids/sdk';
+import { PinataClient } from '@prisma-dids/sdk/browser';
 
 const MAX_BODY_BYTES = 512 * 1024; // 512 KB
 
