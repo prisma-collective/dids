@@ -149,6 +149,7 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
     }
 
     const prevVersion = status.currentEvent?.event.v ?? 0;
+    const wasCreation = !status.currentEvent; 
     setSyncing(true);
     setActiveTab('status');
 
