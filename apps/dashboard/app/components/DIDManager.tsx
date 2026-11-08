@@ -174,6 +174,24 @@ export function DIDManager({ wallet, network }: DIDManagerProps) {
           pollingRef.current = null;
           setSyncing(false);
           checkDIDStatus();
+       //return method to prisma reg
+          if (wasCreation) {
+    const params = new URLSearchParams(window.location.search);
+    const returnTo = params.get('returnTo');
+    if (returnTo) {
+      try {
+        const url = new URL(returnTo);
+        const allowed = ['register.prisma.events', 'localhost:3000', 'localhost:3002', 'localhost:3003'];
+        if (allowed.some(h => url.hostname === h)) {
+          window.location.href = returnTo;
+        }
+      } catch {
+        // Invalid URL, stay on page
+      }
+    }
+  }
+}
+    
         }
       } catch {
         // Keep polling on transient errors
