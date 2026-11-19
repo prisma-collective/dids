@@ -129,7 +129,7 @@ export function UpdateDID({ wallet, network, currentDID, onComplete }: UpdateDID
 
       // — pinning-ipfs —
       setState(prev => ({ ...prev, step: 'pinning-ipfs' }));
-      const ipfsCid = await pinToIPFS(didDocument);
+      const ipfsCid = await pinToIPFS(didDocument as unknown as Record<string, unknown>, wallet.api, baseAddressHex);
       setState(prev => ({ ...prev, newIpfsCid: ipfsCid }));
 
       // — signing: build final payload + sign —

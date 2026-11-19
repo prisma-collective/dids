@@ -132,7 +132,7 @@ export async function issueAndAnchorCredential(
     issuerDid,
     holderDid,
     issuedAt: new Date().toISOString(),
-  });
+  }, wallet, signingAddress);
 
   // 3. Sign minimal anchor fields — credential claims stay off-chain (F-META-01).
   onProgress?.('signing-anchor');

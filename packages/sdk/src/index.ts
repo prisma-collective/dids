@@ -8,6 +8,7 @@ export * from './core/did.js';
 export * from './core/payload.js';
 export * from './core/signature.js';
 export * from './core/ipfs.js';
+export * from './core/pin-intent.js';
 
 // Utilities (browser-compatible)
 export * from './utils/keys.js';
@@ -21,6 +22,7 @@ export * from './utils/encoding.js';
 
 // Verification (requires stake address derivation)
 export * from './core/cose-verify.js';
+export * from './core/pin-auth.js';
 export * from './core/verification.js';
 
 // VC issuance, presentation (browser-compatible)

@@ -2,12 +2,17 @@
  * Server-side IPFS pinning via Pinata (F-CFG-01).
  *
  * POST /api/ipfs/pin
- * Body: { data: object }
+ * Body: { data: object, ts: string, payloadSig: { sig, key, address } }
  * Returns: { cid: string }
+ *
+ * Pins only a DID document or a credential envelope, and only when the
+ * DID's own wallet signed this pin (see verifyPinRequest). Without that
+ * check, anyone could pin anything on Prisma's Pinata account.
  *
  * Uses PINATA_JWT (server-only). Never expose write credentials via NEXT_PUBLIC_*.
  */
 import { PinataClient } from '@prisma-dids/sdk';
+import { verifyPinRequest } from '@prisma-dids/sdk/server';
 
 const MAX_BODY_BYTES = 512 * 1024; // 512 KB
 
@@ -23,18 +28,13 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Request body too large' }, { status: 413 });
     }
 
-    const body = (await request.json()) as { data?: unknown };
-    if (!body.data || typeof body.data !== 'object' || Array.isArray(body.data)) {
-      return Response.json({ error: 'Missing or invalid data object' }, { status: 400 });
-    }
-
-    const serialized = JSON.stringify(body.data);
-    if (serialized.length > MAX_BODY_BYTES) {
-      return Response.json({ error: 'Request body too large' }, { status: 413 });
+    const check = await verifyPinRequest(await request.json());
+    if (!check.ok) {
+      return Response.json({ error: check.error }, { status: check.status });
     }
 
     const pinata = new PinataClient({ jwt: pinataJwt });
-    const cid = await pinata.pinJSON(body.data as object);
+    const cid = await pinata.pinJSON(check.data);
 
     return Response.json({ cid });
   } catch (err) {
