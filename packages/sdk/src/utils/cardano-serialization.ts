@@ -19,4 +19,4 @@
  * }
  * ```
  */
-export { Address, BaseAddress, RewardAddress } from '@emurgo/cardano-serialization-lib-nodejs';
+export { Address, BaseAddress, PublicKey, RewardAddress } from '@emurgo/cardano-serialization-lib-nodejs';
