@@ -1,6 +1,6 @@
 import { ed25519 } from '../utils/crypto-setup.js';
 import { deriveStakeAddressFromBaseAddress } from '../utils/stake.js';
-import { Address } from '../utils/cardano-serialization.js';
+import { Address, BaseAddress, PublicKey } from '../utils/cardano-serialization.js';
 import { hexToBytes } from '../utils/encoding.js';
 import { decode as cborDecode, encode as cborEncode } from 'cborg';
 
@@ -23,7 +23,10 @@ export interface CoseVerifyResult {
  * 1. Decode COSE_Sign1 from payloadSig.sig (hex → CBOR)
  * 2. Extract Ed25519 public key from COSE_Key (payloadSig.key)
  * 3. Build Sig_structure, verify Ed25519
- * 4. Convert payloadSig.address hex → bech32 → derive stake address
+ * 4. Check the key is the address's payment key: blake2b-224(key) must
+ *    equal the address's payment key hash. Without this, anyone could sign
+ *    with their own key and claim any address, and so any DID.
+ * 5. Convert payloadSig.address hex → bech32 → derive stake address
  */
 export async function verifyCoseSign1Signature(
   payloadSig: { sig: string; key: string; address: string }
@@ -69,9 +72,18 @@ export async function verifyCoseSign1Signature(
       return { valid: false, error: 'invalid_signature' };
     }
 
-    // 4. Derive stake address from signing address
+    // 4. The signing key must own the address (CIP-30 signs a base
+    //    address's data with its payment key).
+    const address = Address.from_bytes(hexToBytes(payloadSig.address));
+    const paymentKeyHash = BaseAddress.from_address(address)?.payment_cred().to_keyhash()?.to_bytes();
+    const keyHash = PublicKey.from_bytes(rawPublicKey).hash().to_bytes();
+    if (!paymentKeyHash || !bytesEqual(paymentKeyHash, keyHash)) {
+      return { valid: false, error: 'key_does_not_match_address' };
+    }
+
+    // 5. Derive stake address from signing address
     //    CIP-30 signData returns address as hex — convert to bech32 first
-    const addrBech32 = Address.from_bytes(hexToBytes(payloadSig.address)).to_bech32();
+    const addrBech32 = address.to_bech32();
     const signerStakeAddress = deriveStakeAddressFromBaseAddress(addrBech32);
 
     return { valid: true, signerStakeAddress, signedPayload: cosePayload };
@@ -79,4 +91,12 @@ export async function verifyCoseSign1Signature(
     const message = error instanceof Error ? error.message : String(error);
     return { valid: false, error: `cose_verify_failed: ${message}` };
   }
+}
+
+function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
 }

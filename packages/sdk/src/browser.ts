@@ -9,6 +9,7 @@ export * from './core/did.js';
 export * from './core/payload.js';
 export * from './core/signature.js';
 export * from './core/ipfs.js';
+export * from './core/pin-intent.js';
 
 // Transaction metadata (browser-compatible)
 export * from './tx/metadata.js';

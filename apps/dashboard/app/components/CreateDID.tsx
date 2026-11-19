@@ -116,7 +116,7 @@ export function CreateDID({ wallet, network, onComplete }: CreateDIDProps) {
 
       // — pinning-ipfs —
       setState(prev => ({ ...prev, step: 'pinning-ipfs' }));
-      const ipfsCid = await pinToIPFS(didDocument);
+      const ipfsCid = await pinToIPFS(didDocument as unknown as Record<string, unknown>, wallet.api, baseAddressHex);
       setState(prev => ({ ...prev, ipfsCid }));
 
       // — signing: build final payload + sign —

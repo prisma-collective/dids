@@ -119,7 +119,7 @@ export function RevokeDID({ wallet, network, currentDID, onComplete }: RevokeDID
         revokedAt: new Date().toISOString(),
       };
 
-      const revokedCid = await pinToIPFS(revokedDocument);
+      const revokedCid = await pinToIPFS(revokedDocument, wallet.api, baseAddressHex);
       setState(prev => ({ ...prev, revokedCid }));
 
       setState(prev => ({ ...prev, step: 'building-payload' }));
